@@ -1,3 +1,8 @@
 .vs/
 Library/ShaderCache/
 *.meta
+Library/metadata/
+Temp/
+Library/*.log
+*.buildreport
+Release/
