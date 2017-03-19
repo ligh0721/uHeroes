@@ -1,0 +1,20 @@
+{
+  "root": "Units/Mage",
+  "name": "Mage",
+  "maxHp": 500,
+  "move": 1.6,
+  "revivable": false,
+  "attackSkill": {
+    "cd": 1.75,
+    "type": "Magical",
+    "value": 90,
+    "vrange": 0.5,
+    "range": 2.5,
+    "horizontal": false,
+    "animations": [
+      "act1",
+      "act2"
+    ],
+    "projectile": "ProjectilesData/MageBolt"
+  }
+}

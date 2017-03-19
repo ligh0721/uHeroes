@@ -1,0 +1,13 @@
+{
+  "default": "default",
+  "actions": {
+    "die": {
+      "frames": 8,
+      "delay": 0.05,
+      "special": 0
+    }
+  },
+  "frames": [
+    "default"
+  ]
+}
