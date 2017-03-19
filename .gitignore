@@ -6,3 +6,7 @@ Temp/
 Library/*.log
 *.buildreport
 Release/
+Library/AssetImportState
+Library/CurrentLayout.dwlt
+Library/ScriptAssemblies/
+Library/assetDatabase3
