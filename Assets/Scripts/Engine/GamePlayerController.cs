@@ -193,6 +193,7 @@ public class GamePlayerController : NetworkBehaviour
     }
 
     // ======== 创建单位 ========
+    [Server]
     public void ServerCreateUnits()
     {
         Vector2 sz = Utils.halfCameraSize;
@@ -373,7 +374,7 @@ public class GamePlayerController : NetworkBehaviour
             return;
         }
 
-        //Debug.LogFormat("SyncActions|Recv: {0}", data.Length);
+        //Debug.LogFormat("ServerSyncActions|Recv: {0}", data.Length);
         m_syncActionReceive.Write(data, 0, data.Length);
 
         if (end)
@@ -384,7 +385,7 @@ public class GamePlayerController : NetworkBehaviour
             m_syncActionReceive.Read(buf, 0, (int)size);
             m_syncActionReceive.Position = 0;
             SyncGameAction[] sync = (SyncGameAction[])Utils.Deserialize(buf);
-            GameController.instance.PlayActions(sync);
+            GameController.instance.ClientPlayActions(sync);
         }
     }
 }

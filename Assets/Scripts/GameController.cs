@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 using System.Collections.Generic;
 
 
@@ -38,12 +39,14 @@ public class GameController
         return m_forceIndex;
     }
 
+    [Client]
     public void ClientAddPlayer(int playerId, GameObject gameObject)
     {
         m_allPlayers.Add(playerId, gameObject.GetComponent<GamePlayerController>());
     }
 
     Dictionary<int, bool> m_playerReady = new Dictionary<int, bool>();
+    [Server]
     public void ServerResetPlayersReady()
     {
         m_playerReady.Clear();
@@ -58,6 +61,7 @@ public class GameController
     /// </summary>
     /// <param name="playerId"></param>
     /// <returns></returns>
+    [Server]
     public bool ServerPlayerReady(int playerId)
     {
         m_playerReady[playerId] = true;
@@ -67,16 +71,19 @@ public class GameController
     // Sync Actions
 
     // 只有服务端调用时才会加入到队列
-    public void AddSyncAction(SyncGameAction sync)
+    [Server]
+    public void ServerAddSyncAction(SyncGameAction sync)
     {
-        if (!isServer || !sync.valid)
+        if (!sync.valid)
         {
+            // sync不合法
             return;
         }
         m_syncActionsSend.Add(sync);
     }
 
-    public void SyncActions()
+    [Server]
+    public void ServerSyncActions()
     {
         Debug.Assert(GamePlayerController.localClient.isServer);
         if (m_syncActionsSend.Count > 0)
@@ -84,7 +91,7 @@ public class GameController
             var arr = m_syncActionsSend.ToArray();
             int total;
             byte[][] data = Utils.Serialize(arr, out total);
-            //Debug.LogFormat("SyncActions|Send: {0}B", total);
+            //Debug.LogFormat("ServerSyncActions|Send: {0}B", total);
             for (int i = 0; i < data.Length; ++i)
             {
                 GamePlayerController.localClient.RpcSyncActions(data[i], i + 1 == data.Length);
@@ -93,7 +100,8 @@ public class GameController
         }
     }
 
-    public void PlayActions(SyncGameAction[] syncActions)
+    [Client]
+    public void ClientPlayActions(SyncGameAction[] syncActions)
     {
         m_cacheUnit = null;
         for (int i = 0; i < syncActions.Length; ++i)
@@ -127,7 +135,7 @@ public class GameController
     /// <param name="playerId"></param>
     public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0)
     {
-        AddSyncAction(new SyncCreateUnit(syncInfo, playerId));
+        ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
 
         GamePlayerController client;
         if (allPlayers.TryGetValue(playerId, out client))
@@ -157,17 +165,17 @@ public class GameController
 
     public void RemoveUnit(Unit unit, bool revivalbe)
     {
-        AddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
+        ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
     }
 
     public void StartWorld()
     {
-        AddSyncAction(new SyncStartWorld());
+        ServerAddSyncAction(new SyncStartWorld());
     }
 
     public void FireProjectile(Projectile projectile)
     {
         SyncProjectileInfo syncInfo = SyncProjectileInfo.Create(projectile);
-        AddSyncAction(new SyncFireProjectile(syncInfo));
+        ServerAddSyncAction(new SyncFireProjectile(syncInfo));
     }
 }

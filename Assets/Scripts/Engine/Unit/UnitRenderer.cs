@@ -23,49 +23,49 @@ public class UnitRenderer : ObjectRenderer, INetworkable<GamePlayerController>
 
     public override void StopAction(int tag)
     {
-        GameController.instance.AddSyncAction(new SyncStopAction(m_unit.Id, tag));
+        GameController.instance.ServerAddSyncAction(new SyncStopAction(m_unit.Id, tag));
         base.StopAction(tag);
     }
 
     public override void StopAllActions()
     {
-        GameController.instance.AddSyncAction(new SyncStopAllActions(m_unit.Id));
+        GameController.instance.ServerAddSyncAction(new SyncStopAllActions(m_unit.Id));
         base.StopAllActions();
     }
 
     public override void SetActionSpeed(int tag, float speed)
     {
-        GameController.instance.AddSyncAction(new SyncSetActionSpeed(m_unit.Id, tag, speed));
+        GameController.instance.ServerAddSyncAction(new SyncSetActionSpeed(m_unit.Id, tag, speed));
         base.SetActionSpeed(tag, speed);
     }
 
     public override void SetFrame(int id)
     {
-        GameController.instance.AddSyncAction(new SyncSetFrame(m_unit.Id, id));
+        GameController.instance.ServerAddSyncAction(new SyncSetFrame(m_unit.Id, id));
         base.SetFrame(id);
     }
 
     public override void SetFlippedX(bool flippedX)
     {
-        GameController.instance.AddSyncAction(new SyncSetFlippedX(m_unit.Id, flippedX));
+        GameController.instance.ServerAddSyncAction(new SyncSetFlippedX(m_unit.Id, flippedX));
         base.SetFlippedX(flippedX);
     }
 
     public override void DoMoveTo(Vector2 pos, float duration, Function onFinished, float speed = 1.0f)
 	{
-        GameController.instance.AddSyncAction(new SyncDoMoveTo(m_unit.Id, pos, duration, speed));
+        GameController.instance.ServerAddSyncAction(new SyncDoMoveTo(m_unit.Id, pos, duration, speed));
 		base.DoMoveTo (pos, duration, onFinished, speed);
 	}
 
 	public override void DoAnimate(int id, Function onSpecial, int loop, Function onFinished, float speed = 1.0f)
 	{
-        GameController.instance.AddSyncAction(new SyncDoAnimate(m_unit.Id, id, loop, speed));
+        GameController.instance.ServerAddSyncAction(new SyncDoAnimate(m_unit.Id, id, loop, speed));
         base.DoAnimate (id, onSpecial, loop, onFinished, speed);
 	}
 
     public void SetHp(float hp)
     {
-        GameController.instance.AddSyncAction(new SyncSetHp(m_unit.Id, hp));
+        GameController.instance.ServerAddSyncAction(new SyncSetHp(m_unit.Id, hp));
         m_unit.Hp = hp;
     }
 

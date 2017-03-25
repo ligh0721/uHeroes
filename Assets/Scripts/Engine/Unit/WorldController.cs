@@ -80,7 +80,7 @@ public class WorldController : MonoBehaviour
         ActionManager.instance.update(Time.deltaTime);
         if (GamePlayerController.localClient && GamePlayerController.localClient.isServer)
         {
-            GameController.instance.SyncActions();
+            GameController.instance.ServerSyncActions();
         }
     }
 
