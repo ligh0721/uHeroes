@@ -88,10 +88,14 @@ public class AttackAct : ActiveSkill
         }
 
         AttackData ad = new AttackData();
-		ad.setAttackValueBase (m_attackValue.type, RandomAttackValue);
+		ad.SetAttackValueBase (m_attackValue.type, RandomAttackValue);
         if (o.Attack(ad, target) == false)
         {
             return;
+        }
+
+        if (Utils.Random.NextDouble() < o.CriticalRate) {
+            ad.SetAttackValueCoef(1.0f + o.CriticalDamage, ad.attackValue.b);
         }
 
         if (target != null)

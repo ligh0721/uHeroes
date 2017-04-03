@@ -3,13 +3,10 @@ using UnityEngine.Networking;
 using System.Collections.Generic;
 
 
-public class GameController
-{
+public class GameController {
     static GameController s_inst;
-    public static GameController instance
-    {
-        get
-        {
+    public static GameController instance {
+        get {
             return s_inst ?? (s_inst = new GameController());
         }
     }
@@ -18,40 +15,33 @@ public class GameController
 
     int m_forceIndex;
     Dictionary<int, GamePlayerController> m_allPlayers = new Dictionary<int, GamePlayerController>();
-    public Dictionary<int, GamePlayerController> allPlayers
-    {
-        get
-        {
+    public Dictionary<int, GamePlayerController> allPlayers {
+        get {
             return m_allPlayers;
         }
     }
 
-    public void Reset()
-    {
+    public void Reset() {
         GamePlayerController.s_localClient = null;
         m_forceIndex = 0;
         m_allPlayers.Clear();
     }
 
-    public int ServerAddNewForce()
-    {
+    public int ServerAddNewForce() {
         ++m_forceIndex;
         return m_forceIndex;
     }
 
     [Client]
-    public void ClientAddPlayer(int playerId, GameObject gameObject)
-    {
+    public void ClientAddPlayer(int playerId, GameObject gameObject) {
         m_allPlayers.Add(playerId, gameObject.GetComponent<GamePlayerController>());
     }
 
     Dictionary<int, bool> m_playerReady = new Dictionary<int, bool>();
     [Server]
-    public void ServerResetPlayersReady()
-    {
+    public void ServerResetPlayersReady() {
         m_playerReady.Clear();
-        foreach (var playerId in m_allPlayers.Keys)
-        {
+        foreach (var playerId in m_allPlayers.Keys) {
             m_playerReady[playerId] = false;
         }
     }
@@ -62,8 +52,7 @@ public class GameController
     /// <param name="playerId"></param>
     /// <returns></returns>
     [Server]
-    public bool ServerPlayerReady(int playerId)
-    {
+    public bool ServerPlayerReady(int playerId) {
         m_playerReady[playerId] = true;
         return !m_playerReady.ContainsValue(false);
     }
@@ -72,10 +61,8 @@ public class GameController
 
     // 只有服务端调用时才会加入到队列
     [Server]
-    public void ServerAddSyncAction(SyncGameAction sync)
-    {
-        if (!sync.valid)
-        {
+    public void ServerAddSyncAction(SyncGameAction sync) {
+        if (!sync.valid) {
             // sync不合法
             return;
         }
@@ -83,17 +70,14 @@ public class GameController
     }
 
     [Server]
-    public void ServerSyncActions()
-    {
+    public void ServerSyncActions() {
         Debug.Assert(GamePlayerController.localClient.isServer);
-        if (m_syncActionsSend.Count > 0)
-        {
+        if (m_syncActionsSend.Count > 0) {
             var arr = m_syncActionsSend.ToArray();
             int total;
             byte[][] data = Utils.Serialize(arr, out total);
             //Debug.LogFormat("ServerSyncActions|Send: {0}B", total);
-            for (int i = 0; i < data.Length; ++i)
-            {
+            for (int i = 0; i < data.Length; ++i) {
                 GamePlayerController.localClient.RpcSyncActions(data[i], i + 1 == data.Length);
             }
             m_syncActionsSend.Clear();
@@ -101,23 +85,18 @@ public class GameController
     }
 
     [Client]
-    public void ClientPlayActions(SyncGameAction[] syncActions)
-    {
+    public void ClientPlayActions(SyncGameAction[] syncActions) {
         m_cacheUnit = null;
-        for (int i = 0; i < syncActions.Length; ++i)
-        {
+        for (int i = 0; i < syncActions.Length; ++i) {
             syncActions[i].Play();
         }
     }
 
-    public Unit GetUnit(int id)
-    {
-        if (id == 0)
-        {
+    public Unit GetUnit(int id) {
+        if (id == 0) {
             return null;
         }
-        if (m_cacheUnit != null && m_cacheUnit.Id == id)
-        {
+        if (m_cacheUnit != null && m_cacheUnit.Id == id) {
             return m_cacheUnit;
         }
         return WorldController.instance.world.GetUnit(id);
@@ -133,18 +112,15 @@ public class GameController
     /// </summary>
     /// <param name="syncInfo"></param>
     /// <param name="playerId"></param>
-    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0)
-    {
+    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
         ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
 
         GamePlayerController client;
-        if (allPlayers.TryGetValue(playerId, out client))
-        {
+        if (allPlayers.TryGetValue(playerId, out client)) {
             UnitController unitCtrl = UnitController.Create(syncInfo, client);
             client.unitCtrl = unitCtrl;
             Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
-            if (client == GamePlayerController.localClient)
-            {
+            if (client == GamePlayerController.localClient) {
                 Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
             }
 
@@ -153,28 +129,25 @@ public class GameController
             unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
             unitCtrl.unit.AttackSkill.coolDownBase = 0;
             unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 20;
+            unitCtrl.unit.CriticalRateBase = 0.2f;
+            unitCtrl.unit.CriticalDamageBase = 10.0f;
 
             SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
             unitCtrl.unit.AddPassiveSkill(splash);
-        }
-        else
-        {
+        } else {
             UnitController.Create(syncInfo, null);
         }
     }
 
-    public void RemoveUnit(Unit unit, bool revivalbe)
-    {
+    public void RemoveUnit(Unit unit, bool revivalbe) {
         ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
     }
 
-    public void StartWorld()
-    {
+    public void StartWorld() {
         ServerAddSyncAction(new SyncStartWorld());
     }
 
-    public void FireProjectile(Projectile projectile)
-    {
+    public void FireProjectile(Projectile projectile) {
         SyncProjectileInfo syncInfo = SyncProjectileInfo.Create(projectile);
         ServerAddSyncAction(new SyncFireProjectile(syncInfo));
     }

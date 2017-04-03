@@ -1,18 +1,9 @@
-﻿<Properties StartupItem="Assembly-CSharp.csproj">
-  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.iPhonePlayer" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Engine/ResourceManager.cs">
+﻿<Properties StartupItem="uHeroes.CSharp.csproj">
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\Engine\Unit\Unit.cs">
     <Files>
-      <File FileName="Assets/TEST.cs" Line="41" Column="1" />
-      <File FileName="Assets/Scripts/Engine/ResourceManager.cs" Line="396" Column="4" />
-      <File FileName="Assets/Scripts/Engine/GamePlayerController.cs" Line="281" Column="56" />
-      <File FileName="Assets/Scripts/Engine/Skill/Skill.cs" Line="17" Column="5" />
-      <File FileName="Assets/Scripts/Engine/Value.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/GameController.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/Engine/Utils.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/Engine/Skill/PassiveSkill.cs" Line="71" Column="19" />
-      <File FileName="Assets/Scripts/Engine/Skill/ActiveSkill.cs" Line="23" Column="6" />
-      <File FileName="Assets/Scripts/Engine/Skill/AttackAct.cs" Line="15" Column="5" />
-      <File FileName="Assets/Scripts/Engine/Skill/BuffSkill.cs" Line="11" Column="1" />
+      <File FileName="Assets\Scripts\Engine\Utils.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\Engine\Unit\Unit.cs" Line="4" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
