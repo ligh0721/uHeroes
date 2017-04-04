@@ -80,7 +80,7 @@ public class WorldController : MonoBehaviour
         ActionManager.instance.update(Time.deltaTime);
         if (GamePlayerController.localClient && GamePlayerController.localClient.isServer)
         {
-            GameController.instance.ServerSyncActions();
+            GamePlayerController.localClient.ServerSyncActions();
         }
     }
 
@@ -117,9 +117,9 @@ public class WorldController : MonoBehaviour
     public void OnTestBtn()
     {
         StopWorld();
-        GameController.instance.Reset();
+        GameController.Reset();
 
-        if (GameController.instance.isServer)
+        if (GameController.isServer)
         {
             NetworkManager.singleton.StopHost();
         }

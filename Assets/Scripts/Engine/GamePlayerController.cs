@@ -20,6 +20,9 @@ public struct PlayerInfo {
     public string heroData;
 }
 
+/// <summary>
+/// 网络玩家控制器，发送请求，储存玩家信息
+/// </summary>
 public class GamePlayerController : NetworkBehaviour {
     public List<TextAsset> m_heroes;
 
@@ -37,9 +40,6 @@ public class GamePlayerController : NetworkBehaviour {
             return s_localClient;
         }
     }
-
-    //[SyncVar]
-    //internal int m_playerId;
 
     public int playerId {
         get {
@@ -67,14 +67,16 @@ public class GamePlayerController : NetworkBehaviour {
         }
     }
 
+    
+
+    
+
+
     void Start() {
         DontDestroyOnLoad(gameObject);
-
         if (isLocalPlayer) {
             // 创建新接入的可控本地，具备发送Cmd能力
             s_localClient = this;
-
-            // InitLocalPlayer
 
             PlayerInfo playerInfo;
             ClientLoadUserData(out playerInfo);
@@ -85,7 +87,7 @@ public class GamePlayerController : NetworkBehaviour {
         } else /*if (m_playerInfo.Initialized)*/
           {
             // 创建已接入的远程，需要同步到本地
-            ClientAddPlayer();
+            ClientAddPlayerToSlot();
         }
     }
 
@@ -99,14 +101,90 @@ public class GamePlayerController : NetworkBehaviour {
         }
     }
 
-    void ClientSaveUserData() {
+    /// <summary>
+    /// 添加同步动作
+    /// </summary>
+    /// <param name="sync"></param>
+    [Server]
+    public void ServerAddSyncAction(SyncGameAction sync) {
+        if (!sync.valid) {
+            // sync不合法
+            return;
+        }
+        GameController.ServerAddSyncAction(sync);
     }
+
+    /// <summary>
+    /// 同步动作（定时被调用）
+    /// </summary>
+    [Server]
+    public void ServerSyncActions() {
+        var data = GameController.ServerSerializeSyncActions();
+        if (data != null) {
+            for (int i = 0; i < data.Length; ++i) {
+                localClient.RpcSyncActions(data[i], i + 1 == data.Length);
+            }
+        }
+    }
+
+    // ============== Game Actions ==============
+
+    /// <summary>
+    /// playerId 不为0时，为玩家单位
+    /// </summary>
+    /// <param name="syncInfo"></param>
+    /// <param name="playerId"></param>
+    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
+        ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
+
+        GamePlayerController client;
+        if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
+            UnitController unitCtrl = UnitController.Create(syncInfo, client);
+            client.unitCtrl = unitCtrl;
+            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
+            if (client == localClient) {
+                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
+            }
+
+            // TEST !!!!
+            unitCtrl.unit.MaxHpBase = 100000;  // test
+            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
+            unitCtrl.unit.AttackSkill.coolDownBase = 0;
+            unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 2;
+            unitCtrl.unit.CriticalRateBase = 0.2f;
+            unitCtrl.unit.CriticalDamageBase = 20.0f;
+
+            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
+            unitCtrl.unit.AddPassiveSkill(splash);
+        } else {
+            UnitController.Create(syncInfo, null);
+        }
+    }
+
+    public void RemoveUnit(Unit unit, bool revivalbe) {
+        ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
+    }
+
+    public void StartWorld() {
+        ServerAddSyncAction(new SyncStartWorld());
+    }
+
+    public void FireProjectile(Projectile projectile) {
+        SyncProjectileInfo syncInfo = SyncProjectileInfo.Create(projectile);
+        ServerAddSyncAction(new SyncFireProjectile(syncInfo));
+    }
+
+
+
+
+
+    // =======================================================
 
     [Command]
     void CmdAddPlayer(PlayerInfo playerInfo) {
         // 服务器补全信息
         playerInfo.id = Utils.IdGenerator.nextId;
-        playerInfo.force = GameController.instance.ServerAddNewForce();
+        playerInfo.force = GameController.ServerAddNewForce();
 
         // 下发到所有客户端
         RpcAddPlayer(playerInfo);
@@ -116,15 +194,15 @@ public class GamePlayerController : NetworkBehaviour {
     void RpcAddPlayer(PlayerInfo playerInfo) {
         // 客户端接收到服务器的同步信息
         m_playerInfo = playerInfo;
-        ClientAddPlayer();
+        ClientAddPlayerToSlot();
         if (localClient == this) {
             Debug.LogFormat("LocalPlayer, Id({0}).", m_playerInfo.id);
         }
         Debug.LogFormat("Rpc AddPlayer, Id({0}).", m_playerInfo.id);
     }
 
-    void ClientAddPlayer() {
-        GameController.instance.ClientAddPlayer(m_playerInfo.id, gameObject);
+    void ClientAddPlayerToSlot() {
+        GameController.ClientAddPlayer(m_playerInfo.id, gameObject);
 
         var canvas = GameObject.Find("Canvas");
         var ui = canvas.GetComponent<RoomUI>();
@@ -138,27 +216,37 @@ public class GamePlayerController : NetworkBehaviour {
         name.text = m_playerInfo.name;
     }
 
-    [ClientRpc]
-    public void RpcStart() {
-        SceneManager.LoadScene("TestStage");
-        localClient.CmdPlayerReady();
+    [Command]
+    public void CmdPlayerReady() {
+        RpcPlayerReady();
     }
 
-    [Command]
-    void CmdPlayerReady() {
-        bool allReady = GameController.instance.ServerPlayerReady(m_playerInfo.id);
-        RpcPlayerReady(allReady);
+    [ClientRpc]
+    void RpcPlayerReady() {
+        GameController.PlayerReady(m_playerInfo.id);
+        Debug.LogFormat("Player({0}) is Ready.", m_playerInfo.id);
+        bool allReady = GameController.AllPlayersReady();
         if (allReady) {
-            // 服务器创建单位
-            Invoke("ServerCreateUnits", 1.0f);
+            Debug.LogFormat("All Players are Ready.");
         }
     }
 
     [ClientRpc]
-    void RpcPlayerReady(bool allReady) {
-        Debug.LogFormat("Player({0}) is Ready.", m_playerInfo.id);
+    public void RpcStart() {
+        GameController.ResetPlayersReady();
+        SceneManager.LoadScene("TestStage");
+        localClient.CmdClientLoadSceneFinished();
+    }
+
+    [Command]
+    void CmdClientLoadSceneFinished() {
+        GameController.PlayerReady(m_playerInfo.id);
+        Debug.LogFormat("Player({0}) LoadScene Finished.", m_playerInfo.id);
+        bool allReady = GameController.AllPlayersReady();
         if (allReady) {
-            Debug.LogFormat("All Players are Ready.", m_playerInfo.id);
+            Debug.LogFormat("All Players LoadScene Finished.");
+            // 服务器创建单位
+            Invoke("ServerCreateUnits", 1.0f);
         }
     }
 
@@ -167,7 +255,7 @@ public class GamePlayerController : NetworkBehaviour {
     public void ServerCreateUnits() {
         Vector2 sz = Utils.halfCameraSize;
         // 创建玩家单位
-        foreach (GamePlayerController ctrl in GameController.instance.allPlayers.Values) {
+        foreach (GamePlayerController ctrl in GameController.AllPlayers.Values) {
             PlayerInfo playerInfo = ctrl.playerInfo;
             string path = string.Format("UnitsData/[Player{0}]", ctrl.playerId);
             SyncUnitInfo syncInfo = new SyncUnitInfo();
@@ -178,18 +266,18 @@ public class GamePlayerController : NetworkBehaviour {
             Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
             syncInfo.positionX = position.x;
             syncInfo.positionY = position.y;
-            GameController.instance.CreateUnit(syncInfo, ctrl.playerId);
+            localClient.CreateUnit(syncInfo, ctrl.playerId);
         }
 
         // 随即创建单位
-        if (GameController.instance.allPlayers.Count <= m_testPlayerCount) {
+        if (GameController.AllPlayers.Count <= m_testPlayerCount) {
             InvokeRepeating("CreateTestUnit", 0.0f, m_testCreateRate);
         }
 
         //CreateOneTestUnit();
 
         // 世界开始运转
-        GameController.instance.StartWorld();
+        localClient.StartWorld();
     }
 
     void CreateOneTestUnit() {
@@ -202,7 +290,7 @@ public class GamePlayerController : NetworkBehaviour {
         syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        GameController.instance.CreateUnit(syncInfo);
+        localClient.CreateUnit(syncInfo);
     }
 
     void CreateTestUnit() {
@@ -216,7 +304,7 @@ public class GamePlayerController : NetworkBehaviour {
         syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        GameController.instance.CreateUnit(syncInfo);
+        localClient.CreateUnit(syncInfo);
         ++m_testCount;
         if (m_testCount > m_testMax) {
             CancelInvoke("CreateTestUnit");
@@ -340,8 +428,10 @@ public class GamePlayerController : NetworkBehaviour {
             m_syncActionReceive.Position = 0;
             m_syncActionReceive.Read(buf, 0, (int)size);
             m_syncActionReceive.Position = 0;
-            SyncGameAction[] sync = (SyncGameAction[])Utils.Deserialize(buf);
-            GameController.instance.ClientPlayActions(sync);
+            SyncGameAction[] syncs = (SyncGameAction[])Utils.Deserialize(buf);
+            for (int i = 0; i < syncs.Length; ++i) {
+                syncs[i].Play();
+            }
         }
     }
 }

@@ -3,152 +3,122 @@ using UnityEngine.Networking;
 using System.Collections.Generic;
 
 
+/// <summary>
+/// 全局唯一数据在这里
+/// </summary>
 public class GameController {
-    static GameController s_inst;
-    public static GameController instance {
+    static bool m_isServer;
+    public static bool isServer {
         get {
-            return s_inst ?? (s_inst = new GameController());
+            return m_isServer;
         }
     }
 
-    public bool isServer;
+    public static void Init(bool asHost) {
+        m_isServer = asHost;
 
-    int m_forceIndex;
-    Dictionary<int, GamePlayerController> m_allPlayers = new Dictionary<int, GamePlayerController>();
-    public Dictionary<int, GamePlayerController> allPlayers {
+        m_allPlayers = new Dictionary<int, GamePlayerController>();
+        m_playersReady = new Dictionary<int, bool>();
+
+        if (m_isServer) {
+            // Server专用数据
+            m_syncActionsSend = new List<SyncGameAction>();
+            m_forceIndex = 0;
+        }
+    }
+
+
+    // ===== 全局Server专用数据 =====
+    static List<SyncGameAction> m_syncActionsSend;
+    static int m_forceIndex;
+    // ===== 全局Server专用数据 结束 =====
+
+
+    // ===== 全局玩家数据 =====
+    static Dictionary<int, GamePlayerController> m_allPlayers;  // 所有玩家
+    public static Dictionary<int, GamePlayerController> AllPlayers {
         get {
             return m_allPlayers;
         }
     }
+    static Dictionary<int, bool> m_playersReady;  // 玩家准备状态，点击准备按钮和加载资源完成的时候会设置这个状态
+    // ===== 全局玩家数据 结束 =====
 
-    public void Reset() {
-        GamePlayerController.s_localClient = null;
-        m_forceIndex = 0;
+    
+    /// <summary>
+    /// 重置数据
+    /// </summary>
+    public static void Reset() {
+        if (m_isServer) {
+            m_syncActionsSend.Clear();
+            m_forceIndex = 0;
+        }
         m_allPlayers.Clear();
+        m_playersReady.Clear();
     }
 
-    public int ServerAddNewForce() {
+    /// <summary>
+    /// 向同步队列中追加一个待同步的动作
+    /// </summary>
+    /// <param name="sync"></param>
+    public static void ServerAddSyncAction(SyncGameAction sync) {
+        m_syncActionsSend.Add(sync);
+    }
+
+    /// <summary>
+    /// 将同步动作队列中的数据串行化，返回分片数据
+    /// </summary>
+    /// <returns></returns>
+    public static byte[][] ServerSerializeSyncActions() {
+        byte[][] data = null;
+        if (m_syncActionsSend.Count > 0) {
+            var arr = m_syncActionsSend.ToArray();
+            int total;
+            data = Utils.Serialize(arr, out total);
+            m_syncActionsSend.Clear();
+        }
+        return data;
+    }
+
+    /// <summary>
+    /// 分配一个新的势力ID
+    /// </summary>
+    /// <returns></returns>
+    public static int ServerAddNewForce() {
         ++m_forceIndex;
         return m_forceIndex;
     }
 
-    [Client]
-    public void ClientAddPlayer(int playerId, GameObject gameObject) {
+    /// <summary>
+    /// 将一个玩家ID与一个GamePlayerController绑定
+    /// </summary>
+    /// <param name="playerId"></param>
+    /// <param name="gameObject"></param>
+    public static void ClientAddPlayer(int playerId, GameObject gameObject) {
         m_allPlayers.Add(playerId, gameObject.GetComponent<GamePlayerController>());
     }
 
-    Dictionary<int, bool> m_playerReady = new Dictionary<int, bool>();
-    [Server]
-    public void ServerResetPlayersReady() {
-        m_playerReady.Clear();
+    /// <summary>
+    /// 把所有玩家准备状态设为“未准备”状态
+    /// </summary>
+    public static void ResetPlayersReady() {
+        m_playersReady.Clear();
         foreach (var playerId in m_allPlayers.Keys) {
-            m_playerReady[playerId] = false;
+            m_playersReady[playerId] = false;
         }
     }
 
     /// <summary>
-    /// 如果全部客户端准备好则返回true
+    /// 设置某玩家为“准备”状态；如果全部玩家准备就绪返回true
     /// </summary>
     /// <param name="playerId"></param>
     /// <returns></returns>
-    [Server]
-    public bool ServerPlayerReady(int playerId) {
-        m_playerReady[playerId] = true;
-        return !m_playerReady.ContainsValue(false);
+    public static bool PlayerReady(int playerId) {
+        m_playersReady[playerId] = true;
+        return AllPlayersReady();
     }
 
-    // Sync Actions
-
-    // 只有服务端调用时才会加入到队列
-    [Server]
-    public void ServerAddSyncAction(SyncGameAction sync) {
-        if (!sync.valid) {
-            // sync不合法
-            return;
-        }
-        m_syncActionsSend.Add(sync);
-    }
-
-    [Server]
-    public void ServerSyncActions() {
-        Debug.Assert(GamePlayerController.localClient.isServer);
-        if (m_syncActionsSend.Count > 0) {
-            var arr = m_syncActionsSend.ToArray();
-            int total;
-            byte[][] data = Utils.Serialize(arr, out total);
-            //Debug.LogFormat("ServerSyncActions|Send: {0}B", total);
-            for (int i = 0; i < data.Length; ++i) {
-                GamePlayerController.localClient.RpcSyncActions(data[i], i + 1 == data.Length);
-            }
-            m_syncActionsSend.Clear();
-        }
-    }
-
-    [Client]
-    public void ClientPlayActions(SyncGameAction[] syncActions) {
-        m_cacheUnit = null;
-        for (int i = 0; i < syncActions.Length; ++i) {
-            syncActions[i].Play();
-        }
-    }
-
-    public Unit GetUnit(int id) {
-        if (id == 0) {
-            return null;
-        }
-        if (m_cacheUnit != null && m_cacheUnit.Id == id) {
-            return m_cacheUnit;
-        }
-        return WorldController.instance.world.GetUnit(id);
-    }
-
-    Unit m_cacheUnit;
-    List<SyncGameAction> m_syncActionsSend = new List<SyncGameAction>();
-
-    // ============== Game Actions ==============
-
-    /// <summary>
-    /// playerId 不为0时，为玩家单位
-    /// </summary>
-    /// <param name="syncInfo"></param>
-    /// <param name="playerId"></param>
-    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
-        ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
-
-        GamePlayerController client;
-        if (allPlayers.TryGetValue(playerId, out client)) {
-            UnitController unitCtrl = UnitController.Create(syncInfo, client);
-            client.unitCtrl = unitCtrl;
-            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
-            if (client == GamePlayerController.localClient) {
-                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
-            }
-
-            // TEST !!!!
-            unitCtrl.unit.MaxHpBase = 100000;  // test
-            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
-            unitCtrl.unit.AttackSkill.coolDownBase = 0;
-            unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 20;
-            unitCtrl.unit.CriticalRateBase = 0.2f;
-            unitCtrl.unit.CriticalDamageBase = 10.0f;
-
-            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
-            unitCtrl.unit.AddPassiveSkill(splash);
-        } else {
-            UnitController.Create(syncInfo, null);
-        }
-    }
-
-    public void RemoveUnit(Unit unit, bool revivalbe) {
-        ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
-    }
-
-    public void StartWorld() {
-        ServerAddSyncAction(new SyncStartWorld());
-    }
-
-    public void FireProjectile(Projectile projectile) {
-        SyncProjectileInfo syncInfo = SyncProjectileInfo.Create(projectile);
-        ServerAddSyncAction(new SyncFireProjectile(syncInfo));
+    public static bool AllPlayersReady() {
+        return !m_playersReady.ContainsValue(false);
     }
 }

@@ -80,17 +80,18 @@ public class Utils {
         return data;
     }
 #endif
-    public static byte[][] Serialize(object obj, out int total) {
+    public static byte[][] Serialize(object obj, out int total, int seg = 1024) {
+        Debug.Assert(seg > 1);
         IFormatter fmt = new BinaryFormatter();
         MemoryStream stream = new MemoryStream();
         fmt.Serialize(stream, obj);
         stream.Position = 0;
         total = (int)stream.Length;
-        Debug.LogFormat("ToSend: {0}B", total);
-        byte[][] data = new byte[(total + 1023) / 1024][];
+        //Debug.LogFormat("ToSend: {0}B", total);
+        byte[][] data = new byte[(total + (seg - 1)) / seg][];
         int index = 0;
         while (total > 0) {
-            int size = total > 1024 ? 1024 : total;
+            int size = total > seg ? seg : total;
             data[index] = new byte[size];
             stream.Read(data[index], 0, size);
             total -= size;

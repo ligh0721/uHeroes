@@ -24,7 +24,7 @@ static class STest
 public class TEST : MonoBehaviour {
 	void Awake () {
 		Debug.Log ("===== TEST START =====");
-		string json = "{\"b\": 3, \"pos\":{\"x\":1,\"y\":2}}";
+		//string json = "{\"b\": 3, \"pos\":{\"x\":1,\"y\":2}}";
 		Test a = new Test();
 		a.a = 1;
 		a.b = 2;

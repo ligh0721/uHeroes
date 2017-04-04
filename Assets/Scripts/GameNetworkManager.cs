@@ -30,7 +30,7 @@ public class GameNetworkManager : NetworkManager
         {
             WorldController.instance.StopWorld();
         }
-        GameController.instance.Reset();
+        GameController.Reset();
     }
 
     public override void OnClientDisconnect(NetworkConnection conn)
@@ -42,7 +42,7 @@ public class GameNetworkManager : NetworkManager
             WorldController.instance.StopWorld();
         }
 
-        GameController.instance.Reset();
+        GameController.Reset();
     }
 
     public override void OnServerRemovePlayer(NetworkConnection conn, PlayerController player)

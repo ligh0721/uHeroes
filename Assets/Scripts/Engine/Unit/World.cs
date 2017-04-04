@@ -56,7 +56,7 @@ public class World
 
     public void RemoveUnit(Unit unit, bool revivalbe = false)
     {
-        GameController.instance.RemoveUnit(unit, revivalbe);
+        GamePlayerController.localClient.RemoveUnit(unit, revivalbe);
         if (!m_units.ContainsKey(unit))
         {
             return;

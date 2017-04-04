@@ -15,7 +15,7 @@ public class SyncGameAction
     {
         get
         {
-            Unit u = GameController.instance.GetUnit(unitId);
+            Unit u = WorldController.instance.world.GetUnit(unitId);
             return u;
         }
     }
@@ -210,7 +210,7 @@ public class SyncCreateUnit : SyncGameAction
     public override void Play()
     {
         Debug.Log("SyncCreateUnit");
-        GameController.instance.CreateUnit(syncInfo, playerId);
+        GamePlayerController.localClient.CreateUnit(syncInfo, playerId);
     }
 
     SyncUnitInfo syncInfo;
