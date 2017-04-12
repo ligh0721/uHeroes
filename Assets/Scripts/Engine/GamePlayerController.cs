@@ -4,8 +4,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using LitJson;
-using System;
-using System.IO;
+
 
 public struct PlayerInfo {
     public bool initialized {
@@ -105,13 +104,13 @@ public class GamePlayerController : NetworkBehaviour {
     /// 添加同步动作
     /// </summary>
     /// <param name="sync"></param>
-    [Server]
+    //[Server]  // 防止warning，注释掉此处attr
     public void ServerAddSyncAction(SyncGameAction sync) {
-        if (!sync.valid) {
+        if (!isServer || !sync.valid) {
             // sync不合法
             return;
         }
-        GameController.ServerAddSyncAction(sync);
+        GameController.syncActionSender.Add(sync);
     }
 
     /// <summary>
@@ -119,7 +118,7 @@ public class GamePlayerController : NetworkBehaviour {
     /// </summary>
     [Server]
     public void ServerSyncActions() {
-        var data = GameController.ServerSerializeSyncActions();
+        var data = GameController.syncActionSender.Serialize();
         if (data != null) {
             for (int i = 0; i < data.Length; ++i) {
                 localClient.RpcSyncActions(data[i], i + 1 == data.Length);
@@ -127,51 +126,19 @@ public class GamePlayerController : NetworkBehaviour {
         }
     }
 
-    // ============== Game Actions ==============
-
-    /// <summary>
-    /// playerId 不为0时，为玩家单位
-    /// </summary>
-    /// <param name="syncInfo"></param>
-    /// <param name="playerId"></param>
-    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
-        ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
-
-        GamePlayerController client;
-        if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
-            UnitController unitCtrl = UnitController.Create(syncInfo, client);
-            client.unitCtrl = unitCtrl;
-            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
-            if (client == localClient) {
-                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
-            }
-
-            // TEST !!!!
-            unitCtrl.unit.MaxHpBase = 100000;  // test
-            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
-            unitCtrl.unit.AttackSkill.coolDownBase = 0;
-            unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 2;
-            unitCtrl.unit.CriticalRateBase = 0.2f;
-            unitCtrl.unit.CriticalDamageBase = 20.0f;
-
-            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
-            unitCtrl.unit.AddPassiveSkill(splash);
-        } else {
-            UnitController.Create(syncInfo, null);
+    [ClientRpc]
+    public void RpcSyncActions(byte[] data, bool end) {
+        if (isServer) {
+            return;
         }
-    }
 
-    public void RemoveUnit(Unit unit, bool revivalbe) {
-        ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
-    }
-
-    public void StartWorld() {
-        ServerAddSyncAction(new SyncStartWorld());
-    }
-
-    public void FireProjectile(Projectile projectile) {
-        SyncProjectileInfo syncInfo = SyncProjectileInfo.Create(projectile);
-        ServerAddSyncAction(new SyncFireProjectile(syncInfo));
+        //Debug.LogFormat("ServerSyncActions|Recv: {0}", data.Length);
+        SyncGameAction[] syncs = GameController.syncActionReceiver.Deserialize(data, end);
+        if (syncs != null) {
+            for (int i = 0; i < syncs.Length; ++i) {
+                syncs[i].Play();
+            }
+        }
     }
 
 
@@ -249,6 +216,70 @@ public class GamePlayerController : NetworkBehaviour {
             Invoke("ServerCreateUnits", 1.0f);
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ============== Unit Game Actions ==============
+
+    /// <summary>
+    /// playerId 不为0时，为玩家单位
+    /// </summary>
+    /// <param name="syncInfo"></param>
+    /// <param name="playerId"></param>
+    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
+        ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
+
+        GamePlayerController client;
+        if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
+            UnitController unitCtrl = UnitController.Create(syncInfo, client);
+            client.unitCtrl = unitCtrl;
+            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
+            if (client == localClient) {
+                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
+            }
+
+            // TEST !!!!
+            unitCtrl.unit.MaxHpBase = 100000;  // test
+            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
+            unitCtrl.unit.AttackSkill.coolDownBase = 0;
+            unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 2;
+            unitCtrl.unit.CriticalRateBase = 0.2f;
+            unitCtrl.unit.CriticalDamageBase = 20.0f;
+
+            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
+            unitCtrl.unit.AddPassiveSkill(splash);
+        } else {
+            UnitController.Create(syncInfo, null);
+        }
+    }
+
+    public void RemoveUnit(Unit unit, bool revivalbe) {
+        ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
+    }
+
+    public void StartWorld() {
+        ServerAddSyncAction(new SyncStartWorld());
+    }
+
+    public void FireProjectile(Projectile projectile) {
+        SyncProjectileInfo syncInfo = SyncProjectileInfo.Create(projectile);
+        ServerAddSyncAction(new SyncFireProjectile(syncInfo));
+    }
+
 
     // ======== 创建单位 ========
     [Server]
@@ -412,26 +443,5 @@ public class GamePlayerController : NetworkBehaviour {
         projectile.Fire();
     }
 #endif
-    MemoryStream m_syncActionReceive = new MemoryStream(102400);
-    [ClientRpc]
-    public void RpcSyncActions(byte[] data, bool end) {
-        if (isServer) {
-            return;
-        }
-
-        //Debug.LogFormat("ServerSyncActions|Recv: {0}", data.Length);
-        m_syncActionReceive.Write(data, 0, data.Length);
-
-        if (end) {
-            long size = m_syncActionReceive.Position;
-            byte[] buf = new byte[size];
-            m_syncActionReceive.Position = 0;
-            m_syncActionReceive.Read(buf, 0, (int)size);
-            m_syncActionReceive.Position = 0;
-            SyncGameAction[] syncs = (SyncGameAction[])Utils.Deserialize(buf);
-            for (int i = 0; i < syncs.Length; ++i) {
-                syncs[i].Play();
-            }
-        }
-    }
+    
 }
