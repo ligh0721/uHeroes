@@ -245,6 +245,7 @@ public class GamePlayerController : NetworkBehaviour {
 
         GamePlayerController client;
         if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
+            // 玩家单位
             UnitController unitCtrl = UnitController.Create(syncInfo, client);
             client.unitCtrl = unitCtrl;
             Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
@@ -263,6 +264,7 @@ public class GamePlayerController : NetworkBehaviour {
             SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
             unitCtrl.unit.AddPassiveSkill(splash);
         } else {
+            // 普通单位
             UnitController.Create(syncInfo, null);
         }
     }

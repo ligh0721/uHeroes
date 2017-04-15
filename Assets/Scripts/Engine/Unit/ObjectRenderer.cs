@@ -26,6 +26,11 @@ public class ObjectRenderer
     {
     }
 
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="prefab">对象池根据prefab来确定具体子池</param>
+    /// <param name="gameObject"></param>
     public ObjectRenderer(GameObject prefab, GameObject gameObject)
     {
         Init(prefab, gameObject);

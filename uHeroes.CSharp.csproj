@@ -116,6 +116,10 @@
     <Compile Include="Assets\Scripts\RoomUI.cs" />
     <Compile Include="Assets\Scripts\StartUI.cs" />
     <Compile Include="Assets\Scripts\TEST.cs" />
+    <Compile Include="Assets\Scripts\Tank\Tank.cs" />
+    <Compile Include="Assets\Scripts\Tank\TankController.cs" />
+    <Compile Include="Assets\Scripts\Tank\TankRenderer.cs" />
+    <Compile Include="Assets\Scripts\Tank\TankWorldController.cs" />
     <Compile Include="Assets\Scripts\cca\Action.cs" />
     <Compile Include="Assets\Scripts\cca\ActionEase.cs" />
     <Compile Include="Assets\Scripts\cca\ActionInstant.cs" />

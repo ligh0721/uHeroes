@@ -46,6 +46,9 @@ public class ActiveSkill : Skill {
     public virtual void OnUnitCastSkill() {
     }
 
+    /// <summary>
+    /// 当技能起效时，单位会调用该函数
+    /// </summary>
     public void Effect() {
         Unit o = m_owner;
         UnitRenderer d = o.Renderer;

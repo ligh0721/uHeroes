@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System;
+
 
 public class Unit : UnitForce, INetworkable<GamePlayerController> {
     public Unit(UnitRenderer renderer) {
@@ -54,6 +54,32 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     public string Root {
         get {
             return m_root;
+        }
+    }
+
+    protected UnitRenderer m_renderer;
+    protected World m_world;
+    protected string m_name;
+    protected internal int m_id;
+    protected internal string m_root;
+
+    // Networkable
+    protected internal GamePlayerController m_client;
+    public GamePlayerController client {
+        get {
+            return m_client;
+        }
+    }
+
+    public GamePlayerController localClient {
+        get {
+            return GamePlayerController.localClient;
+        }
+    }
+
+    public bool isServer {
+        get {
+            return localClient.isServer;
         }
     }
 
@@ -1676,6 +1702,9 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         }
     }
 
+    /// <summary>
+    /// 释放技能后，技能动画播放到起效点时。如法杖举到最高点；若没有施法动作，则立即开始奏效
+    /// </summary>
     protected internal void OnCastEffect() {
         ActiveSkill skill = m_castActiveSkill;
         if (skill == null) {
@@ -1689,6 +1718,9 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         skill.Effect();
     }
 
+    /// <summary>
+    /// 技能动画播放完毕后。
+    /// </summary>
     protected internal void OnCastFinished() {
         ActiveSkill skill = m_castActiveSkill;
         if (skill == null) {
@@ -1953,32 +1985,6 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
 
         set {
             m_critDmg.coeff = value;
-        }
-    }
-
-    protected UnitRenderer m_renderer;
-    protected World m_world;
-    protected string m_name;
-    protected internal int m_id;
-    protected internal string m_root;
-
-    // Networkable
-    protected internal GamePlayerController m_client;
-    public GamePlayerController client {
-        get {
-            return m_client;
-        }
-    }
-
-    public GamePlayerController localClient {
-        get {
-            return GamePlayerController.localClient;
-        }
-    }
-
-    public bool isServer {
-        get {
-            return localClient.isServer;
         }
     }
 }

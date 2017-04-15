@@ -4,17 +4,14 @@ using UnityEngine.EventSystems;
 
 
 [Serializable]
-public class SyncUnitInfo
-{
-    public static SyncUnitInfo Create(Unit unit)
-    {
+public class SyncUnitInfo {
+    public static SyncUnitInfo Create(Unit unit) {
         SyncUnitInfo syncInfo = new SyncUnitInfo();
         syncInfo.baseInfo.root = unit.Root;
         syncInfo.baseInfo.name = unit.Name;
         syncInfo.baseInfo.maxHp = unit.MaxHpBase;
         AttackAct attack = unit.AttackSkill as AttackAct;
-        if (attack != null)
-        {
+        if (attack != null) {
             syncInfo.baseInfo.attackSkill = new AttackInfo();
             syncInfo.baseInfo.attackSkill.cd = attack.coolDownBase;
             syncInfo.baseInfo.attackSkill.type = AttackValue.TypeToName(attack.AttackType);
@@ -23,8 +20,7 @@ public class SyncUnitInfo
             syncInfo.baseInfo.attackSkill.horizontal = attack.CastHorizontal;
             var castAnimations = attack.castAnimations;
             syncInfo.baseInfo.attackSkill.animations = new string[castAnimations.Count];
-            for (int i = 0; i < castAnimations.Count; ++i)
-            {
+            for (int i = 0; i < castAnimations.Count; ++i) {
                 syncInfo.baseInfo.attackSkill.animations[i] = ObjectRenderer.IdToName(castAnimations[i]);
             }
             syncInfo.baseInfo.attackSkill.projectile = attack.ProjectileTemplate.Root;
@@ -53,23 +49,19 @@ public class SyncUnitInfo
 }
 
 
-public class UnitController : MonoBehaviour, INetworkable<GamePlayerController>
-{
+public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> {
     public Texture2D m_texHpBorder;
     public Texture2D m_texHpFill;
 
-    Unit m_unit;
+    protected Unit m_unit;
 
-    public Unit unit
-    {
-        get
-        {
+    public Unit unit {
+        get {
             return m_unit;
         }
     }
 
-    public static UnitController Create(SyncUnitInfo syncInfo, GamePlayerController client)
-    {
+    public static UnitController Create(SyncUnitInfo syncInfo, GamePlayerController client) {
         Debug.Log("CreateUnit");
         GameObject gameObject = GameObjectPool.instance.Instantiate(WorldController.instance.unitPrefab);
         UnitController unitCtrl = gameObject.GetComponent<UnitController>();
@@ -83,20 +75,17 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController>
         unit.m_id = syncInfo.id;
         unit.m_client = client;
         unit.m_root = syncInfo.baseInfo.root;
-        if (unitCtrl.isServer)
-        {
+        if (unitCtrl.isServer) {
             unit.AI = UnitAI.instance;
         }
 
         unit.Name = syncInfo.baseInfo.name;
         unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
-        if (syncInfo.baseInfo.attackSkill.valid)
-        {
+        if (syncInfo.baseInfo.attackSkill.valid) {
             AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
             atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
             atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
-            foreach (var ani in syncInfo.baseInfo.attackSkill.animations)
-            {
+            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
                 atk.AddCastAnimation(ObjectRenderer.NameToId(ani));
             }
             atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
@@ -116,10 +105,8 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController>
         return unitCtrl;
     }
 
-    void OnGUI()
-    {
-        if (m_unit != null && !m_unit.Dead)
-        {
+    void OnGUI() {
+        if (m_unit != null && !m_unit.Dead) {
             Vector3 barSize = new Vector3(m_unit.Renderer.HalfOfWidth * 2 + 0.1f, 0.15f, 0);
             Vector2 uPos = m_unit.Renderer.Node.worldPosition;
             Vector3 pos = new Vector3(uPos.x - barSize.x * 0.5f, uPos.y + m_unit.Renderer.HalfOfHeight * 2.5f + 0.2f, 0);
@@ -138,99 +125,80 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController>
 
     MouseStatus m_mouse = new MouseStatus();
     CameraFollowPlayer m_cameraFollow;
-    CameraFollowPlayer Follow
-    {
-        get
-        {
+    CameraFollowPlayer Follow {
+        get {
             return m_cameraFollow ?? (m_cameraFollow = Camera.main.GetComponent<CameraFollowPlayer>());
         }
     }
     bool m_recoverTimer = false;
     Vector3 m_cameraOrg;
 
-    void LateUpdate()
-    {
-        if (client == null || !client.isLocalPlayer)
-        {
+    void LateUpdate() {
+        if (client == null || !client.isLocalPlayer) {
             // exit from update if this is not the local player
             return;
         }
 
         m_mouse.update();
 
-        switch (m_mouse.status)
-        {
-            case MouseStatus.Status.kDown:
-                break;
-            case MouseStatus.Status.kStartMove:
-                if (Follow.follow)
-                {
-                    Follow.follow = false;
-                }
-                m_cameraOrg = Camera.main.transform.position;
-                if (m_recoverTimer)
-                {
+        switch (m_mouse.status) {
+        case MouseStatus.Status.kDown:
+            break;
+        case MouseStatus.Status.kStartMove:
+            if (Follow.follow) {
+                Follow.follow = false;
+            }
+            m_cameraOrg = Camera.main.transform.position;
+            if (m_recoverTimer) {
+                CancelInvoke("RecoveryCameraFollow");
+                m_recoverTimer = false;
+            }
+            break;
+        case MouseStatus.Status.kMove:
+            Camera.main.transform.position = Camera.main.ScreenToWorldPoint(m_mouse.startMove) - m_mouse.nowWorld + m_cameraOrg;
+            break;
+        case MouseStatus.Status.kUp:
+            if (m_mouse.moved) {
+                if (m_recoverTimer) {
                     CancelInvoke("RecoveryCameraFollow");
-                    m_recoverTimer = false;
                 }
-                break;
-            case MouseStatus.Status.kMove:
-                Camera.main.transform.position = Camera.main.ScreenToWorldPoint(m_mouse.startMove) - m_mouse.nowWorld + m_cameraOrg;
-                break;
-            case MouseStatus.Status.kUp:
-                if (m_mouse.moved)
-                {
-                    if (m_recoverTimer)
-                    {
-                        CancelInvoke("RecoveryCameraFollow");
-                    }
-                    Invoke("RecoveryCameraFollow", 2.0f);
-                    m_recoverTimer = true;
-                }
-                else
-                {
-                    //Follow.enabled = true;
-                    bool touchUI = (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) || EventSystem.current.IsPointerOverGameObject();
+                Invoke("RecoveryCameraFollow", 2.0f);
+                m_recoverTimer = true;
+            } else {
+                //Follow.enabled = true;
+                bool touchUI = (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) || EventSystem.current.IsPointerOverGameObject();
 
-                    if (!touchUI)
-                    {
-                        localClient.CmdMove(m_mouse.nowWorld, true);
-                    }
+                if (!touchUI) {
+                    localClient.CmdMove(m_mouse.nowWorld, true);
                 }
-                break;
-            default:
-                break;
+            }
+            break;
+        default:
+            break;
         }
     }
 
-    void RecoveryCameraFollow()
-    {
+    void RecoveryCameraFollow() {
         Follow.follow = true;
         m_recoverTimer = false;
     }
 
     // Networkable
-    GamePlayerController m_client;
-    public GamePlayerController client
-    {
-        get
-        {
+    protected GamePlayerController m_client;
+    public GamePlayerController client {
+        get {
             return m_client;
         }
     }
 
-    public GamePlayerController localClient
-    {
-        get
-        {
+    public GamePlayerController localClient {
+        get {
             return GamePlayerController.localClient;
         }
     }
 
-    public bool isServer
-    {
-        get
-        {
+    public bool isServer {
+        get {
             return localClient.isServer;
         }
     }
