@@ -1,10 +1,38 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
+
+[Serializable]
+public class SyncTankInfo {
+    public static SyncTankInfo Create(Unit unit) {
+        SyncTankInfo syncInfo = new SyncTankInfo();
+        syncInfo.baseInfo.root = unit.Root;
+        syncInfo.baseInfo.name = unit.Name;
+        syncInfo.baseInfo.maxHp = unit.MaxHpBase;
+        
+        Vector2 position = unit.Renderer.Node.position;
+        syncInfo.positionX = position.x;
+        syncInfo.positionY = position.y;
+        syncInfo.hp = unit.Hp;
+        syncInfo.force = unit.Force;
+        syncInfo.baseInfo.move = unit.MoveSpeedBase;
+        syncInfo.baseInfo.revivable = unit.Revivable;
+        syncInfo.baseInfo.isfixed = unit.Fixed;
+
+        return syncInfo;
+    }
+
+    public int id;
+    public TankInfo baseInfo = new TankInfo();
+    public float positionX;
+    public float positionY;
+    public float hp;
+    public int force;
+}
 
 public class TankController : UnitController {
-    public static new TankController Create(SyncUnitInfo syncInfo, GamePlayerController client) {
+    public static TankController Create(SyncTankInfo syncInfo, GamePlayerController client) {
         Debug.Log("CreateTank");
         GameObject gameObject = GameObjectPool.instance.Instantiate(WorldController.instance.unitPrefab);
         TankController unitCtrl = gameObject.GetComponent<TankController>();
@@ -27,18 +55,7 @@ public class TankController : UnitController {
 
         unit.Name = syncInfo.baseInfo.name;
         unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
-        if (syncInfo.baseInfo.attackSkill.valid) {
-            AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
-            atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
-            atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
-            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
-                atk.AddCastAnimation(ObjectRenderer.NameToId(ani));
-            }
-            atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
-            unit.AddActiveSkill(atk);
-        }
         unit.Renderer.Node.position = new Vector2(syncInfo.positionX, syncInfo.positionY);
-        //unit.Renderer.SetFlippedX(syncInfo.flippedX);
         unit.Hp = syncInfo.hp;
         unit.Force = syncInfo.force;
         unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
@@ -49,5 +66,51 @@ public class TankController : UnitController {
         WorldController.instance.world.AddUnit(unit);
 
         return unitCtrl;
+    }
+
+    void LateUpdate() {
+        if (client == null || !client.isLocalPlayer) {
+            // exit from update if this is not the local player
+            return;
+        }
+
+        m_mouse.update();
+
+        switch (m_mouse.status) {
+        case MouseStatus.Status.kDown:
+            break;
+        case MouseStatus.Status.kStartMove:
+            if (Follow.follow) {
+                Follow.follow = false;
+            }
+            m_cameraOrg = Camera.main.transform.position;
+            if (m_recoverTimer) {
+                CancelInvoke("RecoveryCameraFollow");
+                m_recoverTimer = false;
+            }
+            break;
+        case MouseStatus.Status.kMove:
+            Camera.main.transform.position = Camera.main.ScreenToWorldPoint(m_mouse.startMove) - m_mouse.nowWorld + m_cameraOrg;
+            break;
+        case MouseStatus.Status.kUp:
+            if (m_mouse.moved) {
+                if (m_recoverTimer) {
+                    CancelInvoke("RecoveryCameraFollow");
+                }
+                Invoke("RecoveryCameraFollow", 2.0f);
+                m_recoverTimer = true;
+            } else {
+                //Follow.enabled = true;
+                bool touchUI = (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) || EventSystem.current.IsPointerOverGameObject();
+
+                if (!touchUI) {
+                    //localClient.CmdMove(m_mouse.nowWorld, true);
+                    //localClient.CmdMoveTank(m_mouse.nowWorld, true);
+                }
+            }
+            break;
+        default:
+            break;
+        }
     }
 }

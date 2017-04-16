@@ -1745,7 +1745,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     }
 
     // Move
-    public void CommandMove(Vector2 pos, bool obstinate = true, cca.Function onFinished = null) {
+    public virtual void CommandMove(Vector2 pos, bool obstinate = true, cca.Function onFinished = null) {
         if (Dead || Suspended || Fixed) {
             return;
         }
@@ -1806,7 +1806,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             m_renderer.DoMoveTo(pos, duration, OnMoveToFinished, speed);
             m_moveToActionId = ObjectRenderer.kActionMoveTo;
         }
-    }
+    }        
 
     protected internal void OnMoveToFinished() {
         EndDoing(kDoingObstinate);  // 移动自行停止后，需要去除固执状态

@@ -123,15 +123,15 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
         }
     }
 
-    MouseStatus m_mouse = new MouseStatus();
+    protected MouseStatus m_mouse = new MouseStatus();
     CameraFollowPlayer m_cameraFollow;
-    CameraFollowPlayer Follow {
+    protected CameraFollowPlayer Follow {
         get {
             return m_cameraFollow ?? (m_cameraFollow = Camera.main.GetComponent<CameraFollowPlayer>());
         }
     }
-    bool m_recoverTimer = false;
-    Vector3 m_cameraOrg;
+    protected bool m_recoverTimer = false;
+    protected Vector3 m_cameraOrg;
 
     void LateUpdate() {
         if (client == null || !client.isLocalPlayer) {
@@ -178,7 +178,7 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
         }
     }
 
-    void RecoveryCameraFollow() {
+    protected void RecoveryCameraFollow() {
         Follow.follow = true;
         m_recoverTimer = false;
     }

@@ -345,46 +345,6 @@ public class GamePlayerController : NetworkBehaviour {
         }
     }
 
-
-#if false
-    [ClientRpc]
-    public void RpcCreateUnit(SyncUnitInfo syncInfo, int playerId)
-    {
-        GamePlayerController client;
-        if (GameController.instance.allPlayers.TryGetValue(playerId, out client))
-        {
-            UnitController unitCtrl = UnitController.Create(syncInfo, client);
-            client.m_unitCtrl = unitCtrl;
-            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
-            if (client == localClient)
-            {
-                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
-            }
-
-            // TEST !!!!
-            unitCtrl.unit.MaxHpBase = 100000;  // test
-            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
-            unitCtrl.unit.AttackSkill.CoolDownBase = 0;
-            unitCtrl.unit.AttackSkill.CoolDownSpeedCoeff = 20;
-
-            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
-            unitCtrl.unit.AddPassiveSkill(splash);
-        }
-        else
-        {
-            UnitController.Create(syncInfo, null);
-        }
-    }
-
-    [ClientRpc]
-    void RpcStartWorld()
-    {
-        WorldController.instance.StartWorld();
-    }
-#endif
-    ////////////////////////////////////////////////////
-    // UnitCtrl
-
     [Command]
     public void CmdMove(Vector2 pos, bool obstinate) {
         //RpcMove(transform.localPosition, pos, obstinate);
@@ -445,5 +405,66 @@ public class GamePlayerController : NetworkBehaviour {
         projectile.Fire();
     }
 #endif
-    
+
+    // 创建坦克单位
+    [Server]
+    public void ServerCreateTanks() {
+        Vector2 sz = Utils.halfCameraSize;
+        // 创建玩家单位
+        foreach (GamePlayerController ctrl in GameController.AllPlayers.Values) {
+            PlayerInfo playerInfo = ctrl.playerInfo;
+            string path = string.Format("UnitsData/[Player{0}]", ctrl.playerId);
+            SyncUnitInfo syncInfo = new SyncUnitInfo();
+            syncInfo.baseInfo = ResourceManager.instance.LoadUnit(path, playerInfo.heroData);
+            syncInfo.id = Utils.IdGenerator.nextId;
+            syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
+            syncInfo.force = playerInfo.force;
+            Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
+            syncInfo.positionX = position.x;
+            syncInfo.positionY = position.y;
+            localClient.CreateUnit(syncInfo, ctrl.playerId);
+        }
+
+        // 随即创建单位
+        if (GameController.AllPlayers.Count <= m_testPlayerCount) {
+            InvokeRepeating("CreateTestUnit", 0.0f, m_testCreateRate);
+        }
+
+        //CreateOneTestUnit();
+
+        // 世界开始运转
+        localClient.StartWorld();
+    }
+
+    void CreateOneTestUnit() {
+        Vector2 sz = Utils.halfCameraSize;
+        SyncUnitInfo syncInfo = new SyncUnitInfo();
+        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("UnitsData/Arcane");
+        Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
+        syncInfo.positionX = position.x;
+        syncInfo.positionY = position.y;
+        syncInfo.id = Utils.IdGenerator.nextId;
+        syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
+        syncInfo.force = Utils.Random.Next(8);
+        localClient.CreateUnit(syncInfo);
+    }
+
+    void CreateTestUnit() {
+        Vector2 sz = Utils.halfCameraSize;
+        // 创建普通单位
+        SyncUnitInfo syncInfo = new SyncUnitInfo();
+        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("", m_testUnits[Utils.Random.Next(m_testUnits.Count)].text);
+        Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
+        syncInfo.positionX = position.x;
+        syncInfo.positionY = position.y;
+        syncInfo.id = Utils.IdGenerator.nextId;
+        syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
+        syncInfo.force = Utils.Random.Next(8);
+        localClient.CreateUnit(syncInfo);
+        ++m_testCount;
+        if (m_testCount > m_testMax) {
+            CancelInvoke("CreateTestUnit");
+            m_testCount = 0;
+        }
+    }
 }

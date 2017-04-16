@@ -100,6 +100,16 @@ public class ProjectileInfo
     public int effect = 1;
 }
 
+[Serializable]
+public class TankInfo {
+    public string root;
+    public string name;
+    public double maxHp;
+    public double move = 0.2;
+    public bool revivable;
+    public bool isfixed = false;
+}
+
 public class ResourceManager
 {
     public static ResourceManager instance
