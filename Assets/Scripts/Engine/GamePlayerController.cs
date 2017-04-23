@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿//#define _UHEROES_
+
+using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 using System.Collections.Generic;
@@ -66,10 +68,11 @@ public class GamePlayerController : NetworkBehaviour {
         }
     }
 
-    
-
-    
-
+    public World world {
+        get {
+            return WorldController.instance.world;
+        }
+    }
 
     void Start() {
         DontDestroyOnLoad(gameObject);
@@ -201,7 +204,11 @@ public class GamePlayerController : NetworkBehaviour {
     [ClientRpc]
     public void RpcStart() {
         GameController.ResetPlayersReady();
+#if _UHEROES_
         SceneManager.LoadScene("TestStage");
+#else
+        SceneManager.LoadScene("TestTankStage");
+#endif
         localClient.CmdClientLoadSceneFinished();
     }
 
@@ -213,7 +220,11 @@ public class GamePlayerController : NetworkBehaviour {
         if (allReady) {
             Debug.LogFormat("All Players LoadScene Finished.");
             // 服务器创建单位
+#if _UHEROES_
             Invoke("ServerCreateUnits", 1.0f);
+#else
+            Invoke("ServerCreateTanks", 1.0f);
+#endif
         }
     }
 
@@ -235,53 +246,6 @@ public class GamePlayerController : NetworkBehaviour {
 
     // ============== Unit Game Actions ==============
 
-    /// <summary>
-    /// playerId 不为0时，为玩家单位
-    /// </summary>
-    /// <param name="syncInfo"></param>
-    /// <param name="playerId"></param>
-    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
-        ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
-
-        GamePlayerController client;
-        if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
-            // 玩家单位
-            UnitController unitCtrl = UnitController.Create(syncInfo, client);
-            client.unitCtrl = unitCtrl;
-            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
-            if (client == localClient) {
-                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
-            }
-
-            // TEST !!!!
-            unitCtrl.unit.MaxHpBase = 100000;  // test
-            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
-            unitCtrl.unit.AttackSkill.coolDownBase = 0;
-            unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 2;
-            unitCtrl.unit.CriticalRateBase = 0.2f;
-            unitCtrl.unit.CriticalDamageBase = 20.0f;
-
-            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
-            unitCtrl.unit.AddPassiveSkill(splash);
-        } else {
-            // 普通单位
-            UnitController.Create(syncInfo, null);
-        }
-    }
-
-    public void RemoveUnit(Unit unit, bool revivalbe) {
-        ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
-    }
-
-    public void StartWorld() {
-        ServerAddSyncAction(new SyncStartWorld());
-    }
-
-    public void FireProjectile(Projectile projectile) {
-        SyncProjectileInfo syncInfo = SyncProjectileInfo.Create(projectile);
-        ServerAddSyncAction(new SyncFireProjectile(syncInfo));
-    }
-
 
     // ======== 创建单位 ========
     [Server]
@@ -296,10 +260,8 @@ public class GamePlayerController : NetworkBehaviour {
             syncInfo.id = Utils.IdGenerator.nextId;
             syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
             syncInfo.force = playerInfo.force;
-            Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-            syncInfo.positionX = position.x;
-            syncInfo.positionY = position.y;
-            localClient.CreateUnit(syncInfo, ctrl.playerId);
+            syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
+            world.CreateUnit(syncInfo, ctrl.playerId);
         }
 
         // 随即创建单位
@@ -310,20 +272,18 @@ public class GamePlayerController : NetworkBehaviour {
         //CreateOneTestUnit();
 
         // 世界开始运转
-        localClient.StartWorld();
+        world.Start();
     }
 
     void CreateOneTestUnit() {
         Vector2 sz = Utils.halfCameraSize;
         SyncUnitInfo syncInfo = new SyncUnitInfo();
         syncInfo.baseInfo = ResourceManager.instance.LoadUnit("UnitsData/Arcane");
-        Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-        syncInfo.positionX = position.x;
-        syncInfo.positionY = position.y;
+        syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
         syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        localClient.CreateUnit(syncInfo);
+        world.CreateUnit(syncInfo);
     }
 
     void CreateTestUnit() {
@@ -331,13 +291,11 @@ public class GamePlayerController : NetworkBehaviour {
         // 创建普通单位
         SyncUnitInfo syncInfo = new SyncUnitInfo();
         syncInfo.baseInfo = ResourceManager.instance.LoadUnit("", m_testUnits[Utils.Random.Next(m_testUnits.Count)].text);
-        Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-        syncInfo.positionX = position.x;
-        syncInfo.positionY = position.y;
+        syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
         syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        localClient.CreateUnit(syncInfo);
+        world.CreateUnit(syncInfo);
         ++m_testCount;
         if (m_testCount > m_testMax) {
             CancelInvoke("CreateTestUnit");
@@ -406,6 +364,44 @@ public class GamePlayerController : NetworkBehaviour {
     }
 #endif
 
+
+
+    // =============== Tanks ==================
+    /// <summary>
+    /// playerId 不为0时，为玩家单位
+    /// server发起，最后广播到所有
+    /// </summary>
+    /// <param name="syncInfo"></param>
+    /// <param name="playerId"></param>
+    public void CreateTank(SyncTankInfo syncInfo, int playerId = 0) {
+        ServerAddSyncAction(new SyncCreateTank(syncInfo, playerId));
+
+        GamePlayerController client;
+        if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
+            // 玩家单位
+            TankController unitCtrl = TankController.Create(syncInfo, client);
+            client.unitCtrl = unitCtrl;
+            Debug.LogFormat("CreateTank, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
+            if (client == localClient) {
+                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
+            }
+
+            // TEST !!!!
+            unitCtrl.unit.MaxHpBase = 100000;  // test
+            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
+            //unitCtrl.unit.AttackSkill.coolDownBase = 0;
+            //unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 2;
+            unitCtrl.unit.CriticalRateBase = 0.2f;
+            unitCtrl.unit.CriticalDamageBase = 20.0f;
+
+            //SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
+            //unitCtrl.unit.AddPassiveSkill(splash);
+        } else {
+            // 普通单位
+            TankController.Create(syncInfo, null);
+        }
+    }
+
     // 创建坦克单位
     [Server]
     public void ServerCreateTanks() {
@@ -413,57 +409,64 @@ public class GamePlayerController : NetworkBehaviour {
         // 创建玩家单位
         foreach (GamePlayerController ctrl in GameController.AllPlayers.Values) {
             PlayerInfo playerInfo = ctrl.playerInfo;
-            string path = string.Format("UnitsData/[Player{0}]", ctrl.playerId);
-            SyncUnitInfo syncInfo = new SyncUnitInfo();
-            syncInfo.baseInfo = ResourceManager.instance.LoadUnit(path, playerInfo.heroData);
+            //string path = string.Format("UnitsData/[Player{0}]", ctrl.playerId);
+            SyncTankInfo syncInfo = new SyncTankInfo();
+            //syncInfo.baseInfo = ResourceManager.instance.LoadTank(path, playerInfo.heroData);
+            syncInfo.baseInfo.root = "Player";
+            syncInfo.baseInfo.maxHp = 2000;
+            syncInfo.baseInfo.isfixed = false;
+            syncInfo.baseInfo.name = "PlayerTank";
+            syncInfo.baseInfo.revivable = true;
+            syncInfo.baseInfo.move = 2;
             syncInfo.id = Utils.IdGenerator.nextId;
             syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
             syncInfo.force = playerInfo.force;
-            Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-            syncInfo.positionX = position.x;
-            syncInfo.positionY = position.y;
-            localClient.CreateUnit(syncInfo, ctrl.playerId);
+           
+            syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
+            syncInfo.rotation = (float)Utils.Random.NextDouble() * 360.0f;
+            SyncTankGunInfo gunInfo = new SyncTankGunInfo();
+            gunInfo.position = new Vector3Serializable(0.0f, 0.0f, 0.0f);
+            gunInfo.rotation = 0.0f;
+            syncInfo.guns.Add(gunInfo);
+            localClient.CreateTank(syncInfo, ctrl.playerId);
         }
 
         // 随即创建单位
         if (GameController.AllPlayers.Count <= m_testPlayerCount) {
-            InvokeRepeating("CreateTestUnit", 0.0f, m_testCreateRate);
+            InvokeRepeating("CreateTestTank", 0.0f, m_testCreateRate);
         }
 
         //CreateOneTestUnit();
 
         // 世界开始运转
-        localClient.StartWorld();
+        world.Start();
     }
 
-    void CreateOneTestUnit() {
-        Vector2 sz = Utils.halfCameraSize;
-        SyncUnitInfo syncInfo = new SyncUnitInfo();
-        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("UnitsData/Arcane");
-        Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-        syncInfo.positionX = position.x;
-        syncInfo.positionY = position.y;
-        syncInfo.id = Utils.IdGenerator.nextId;
-        syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
-        syncInfo.force = Utils.Random.Next(8);
-        localClient.CreateUnit(syncInfo);
-    }
-
-    void CreateTestUnit() {
+    void CreateTestTank() {
         Vector2 sz = Utils.halfCameraSize;
         // 创建普通单位
-        SyncUnitInfo syncInfo = new SyncUnitInfo();
-        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("", m_testUnits[Utils.Random.Next(m_testUnits.Count)].text);
-        Vector2 position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-        syncInfo.positionX = position.x;
-        syncInfo.positionY = position.y;
+        SyncTankInfo syncInfo = new SyncTankInfo();
+        //syncInfo.baseInfo = ResourceManager.instance.LoadUnit("", m_testUnits[Utils.Random.Next(m_testUnits.Count)].text);
+        syncInfo.baseInfo.root = "Test";
+        syncInfo.baseInfo.maxHp = 500;
+        syncInfo.baseInfo.isfixed = false;
+        syncInfo.baseInfo.name = "TestTank";
+        syncInfo.baseInfo.revivable = true;
+        syncInfo.baseInfo.move = 2;
+        syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
+        syncInfo.rotation = (float)Utils.Random.NextDouble() * 360.0f;
         syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        localClient.CreateUnit(syncInfo);
+        SyncTankGunInfo gunInfo = new SyncTankGunInfo();
+        gunInfo.position = new Vector3(0.0f, 0.0f, 0.0f);
+        gunInfo.rotation = 0.0f;
+        syncInfo.guns.Add(gunInfo);
+
+        localClient.CreateTank(syncInfo);
         ++m_testCount;
         if (m_testCount > m_testMax) {
-            CancelInvoke("CreateTestUnit");
+            CancelInvoke("CreateTestTank");
             m_testCount = 0;
         }
     }

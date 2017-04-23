@@ -1,7 +1,13 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+[Serializable]
+public class SyncTankGunInfo {
+    public Vector3Serializable position;
+    public float rotation;
+}
 
 [Serializable]
 public class SyncTankInfo {
@@ -11,9 +17,9 @@ public class SyncTankInfo {
         syncInfo.baseInfo.name = unit.Name;
         syncInfo.baseInfo.maxHp = unit.MaxHpBase;
         
-        Vector2 position = unit.Renderer.Node.position;
-        syncInfo.positionX = position.x;
-        syncInfo.positionY = position.y;
+        syncInfo.position = unit.Renderer.Node.position;
+        syncInfo.rotation = unit.Renderer.Node.rotation;
+
         syncInfo.hp = unit.Hp;
         syncInfo.force = unit.Force;
         syncInfo.baseInfo.move = unit.MoveSpeedBase;
@@ -25,10 +31,11 @@ public class SyncTankInfo {
 
     public int id;
     public TankInfo baseInfo = new TankInfo();
-    public float positionX;
-    public float positionY;
+    public Vector2Serializable position;
+    public float rotation;
     public float hp;
     public int force;
+    public List<SyncTankGunInfo> guns = new List<SyncTankGunInfo>();
 }
 
 public class TankController : UnitController {
@@ -55,12 +62,19 @@ public class TankController : UnitController {
 
         unit.Name = syncInfo.baseInfo.name;
         unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
-        unit.Renderer.Node.position = new Vector2(syncInfo.positionX, syncInfo.positionY);
+        unit.Renderer.Node.position = syncInfo.position;
+        unit.Renderer.Node.rotation = syncInfo.rotation;
         unit.Hp = syncInfo.hp;
         unit.Force = syncInfo.force;
         unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
         unit.Revivable = syncInfo.baseInfo.revivable;
         unit.Fixed = syncInfo.baseInfo.isfixed;
+
+        for (int i = 0; i < syncInfo.guns.Count; ++i){
+            unit.AddGun(i);
+            unit.SetGunPosition(i, syncInfo.guns[i].position);
+            unit.SetGunRotation(i, syncInfo.guns[i].rotation);
+        }
 
         unitCtrl.m_unit = unit;
         WorldController.instance.world.AddUnit(unit);
@@ -104,7 +118,7 @@ public class TankController : UnitController {
                 bool touchUI = (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) || EventSystem.current.IsPointerOverGameObject();
 
                 if (!touchUI) {
-                    //localClient.CmdMove(m_mouse.nowWorld, true);
+                    localClient.CmdMove(m_mouse.nowWorld, true);
                     //localClient.CmdMoveTank(m_mouse.nowWorld, true);
                 }
             }

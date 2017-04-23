@@ -4,65 +4,51 @@ using System;
 
 
 [Serializable]
-public class SyncGameAction
-{
-    public SyncGameAction(int unit)
-    {
+public class SyncGameAction {
+    public SyncGameAction(int unit) {
         unitId = unit;
     }
 
-    public Unit unit
-    {
-        get
-        {
+    public Unit unit {
+        get {
             Unit u = WorldController.instance.world.GetUnit(unitId);
             return u;
         }
     }
 
-    public UnitRenderer renderer
-    {
-        get
-        {
+    public UnitRenderer renderer {
+        get {
             Unit u = unit;
             return u != null ? u.Renderer : null;
         }
     }
 
-    public World world
-    {
-        get
-        {
+    public World world {
+        get {
             return WorldController.instance.world;
         }
     }
 
-    public bool valid
-    {
-        get
-        {
+    public bool valid {
+        get {
             return unitId != 0;
         }
     }
 
-    public virtual void Play()
-    {
+    public virtual void Play() {
     }
 
     int unitId;
 }
 
 [Serializable]
-public class SyncStopAction : SyncGameAction
-{
+public class SyncStopAction : SyncGameAction {
     public SyncStopAction(int unit, int tag)
-        : base(unit)
-    {
+        : base(unit) {
         this.tag = tag;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         renderer.StopAction(tag);
     }
 
@@ -70,31 +56,25 @@ public class SyncStopAction : SyncGameAction
 }
 
 [Serializable]
-public class SyncStopAllActions : SyncGameAction
-{
+public class SyncStopAllActions : SyncGameAction {
     public SyncStopAllActions(int unit)
-        : base(unit)
-    {
+        : base(unit) {
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         renderer.StopAllActions();
     }
 }
 
 [Serializable]
-public class SyncSetActionSpeed : SyncGameAction
-{
+public class SyncSetActionSpeed : SyncGameAction {
     public SyncSetActionSpeed(int unit, int tag, float speed)
-        : base(unit)
-    {
+        : base(unit) {
         this.tag = tag;
         this.speed = speed;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         renderer.SetActionSpeed(tag, speed);
     }
 
@@ -103,16 +83,13 @@ public class SyncSetActionSpeed : SyncGameAction
 }
 
 [Serializable]
-public class SyncSetFrame : SyncGameAction
-{
+public class SyncSetFrame : SyncGameAction {
     public SyncSetFrame(int unit, int id)
-        : base(unit)
-    {
+        : base(unit) {
         this.id = id;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         renderer.SetFrame(id);
     }
 
@@ -120,16 +97,13 @@ public class SyncSetFrame : SyncGameAction
 }
 
 [Serializable]
-public class SyncSetFlippedX : SyncGameAction
-{
+public class SyncSetFlippedX : SyncGameAction {
     public SyncSetFlippedX(int unit, bool flippedX)
-        : base(unit)
-    {
+        : base(unit) {
         this.flippedX = flippedX;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         renderer.SetFlippedX(flippedX);
     }
 
@@ -137,19 +111,16 @@ public class SyncSetFlippedX : SyncGameAction
 }
 
 [Serializable]
-public class SyncDoMoveTo : SyncGameAction
-{
+public class SyncDoMoveTo : SyncGameAction {
     public SyncDoMoveTo(int unit, Vector2 pos, float duration, float speed)
-        : base(unit)
-    {
+        : base(unit) {
         posX = pos.x;
         posY = pos.y;
         this.duration = duration;
         this.speed = speed;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         renderer.DoMoveTo(new Vector2(posX, posY), duration, null, speed);
     }
 
@@ -160,18 +131,15 @@ public class SyncDoMoveTo : SyncGameAction
 }
 
 [Serializable]
-public class SyncDoAnimate : SyncGameAction
-{
+public class SyncDoAnimate : SyncGameAction {
     public SyncDoAnimate(int unit, int id, int loop, float speed)
-        : base(unit)
-    {
+        : base(unit) {
         this.id = id;
         this.loop = loop;
         this.speed = speed;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         renderer.DoAnimate(id, null, loop, null, speed);
     }
 
@@ -181,16 +149,13 @@ public class SyncDoAnimate : SyncGameAction
 }
 
 [Serializable]
-public class SyncSetHp : SyncGameAction
-{
+public class SyncSetHp : SyncGameAction {
     public SyncSetHp(int unit, float hp)
-        : base(unit)
-    {
+        : base(unit) {
         this.hp = hp;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         unit.Hp = hp;
     }
 
@@ -198,19 +163,16 @@ public class SyncSetHp : SyncGameAction
 }
 
 [Serializable]
-public class SyncCreateUnit : SyncGameAction
-{
+public class SyncCreateUnit : SyncGameAction {
     public SyncCreateUnit(SyncUnitInfo syncInfo, int playerId)
-        : base(-1)
-    {
+        : base(-1) {
         this.syncInfo = syncInfo;
         this.playerId = playerId;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         Debug.Log("SyncCreateUnit");
-        GamePlayerController.localClient.CreateUnit(syncInfo, playerId);
+        WorldController.instance.world.CreateUnit(syncInfo, playerId);
     }
 
     SyncUnitInfo syncInfo;
@@ -218,30 +180,24 @@ public class SyncCreateUnit : SyncGameAction
 }
 
 [Serializable]
-public class SyncStartWorld : SyncGameAction
-{
+public class SyncStartWorld : SyncGameAction {
     public SyncStartWorld()
-        : base(-1)
-    {
+        : base(-1) {
     }
 
-    public override void Play()
-    {
-        WorldController.instance.StartWorld();
+    public override void Play() {
+        world.Start();
     }
 }
 
 [Serializable]
-public class SyncRemoveUnit : SyncGameAction
-{
+public class SyncRemoveUnit : SyncGameAction {
     public SyncRemoveUnit(int unit, bool revivalbe)
-        : base(unit)
-    {
+        : base(unit) {
         this.revivalbe = revivalbe;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         world.RemoveUnit(unit, revivalbe);
     }
 
@@ -249,20 +205,43 @@ public class SyncRemoveUnit : SyncGameAction
 }
 
 [Serializable]
-public class SyncFireProjectile : SyncGameAction
-{
+public class SyncFireProjectile : SyncGameAction {
     public SyncFireProjectile(SyncProjectileInfo syncInfo)
-        : base(-1)
-    {
+        : base(-1) {
         this.syncInfo = syncInfo;
     }
 
-    public override void Play()
-    {
+    public override void Play() {
         ProjectileController projCtrl = ProjectileController.Create(syncInfo);
         Projectile projectile = projCtrl.projectile;
         projectile.Fire();
     }
 
     SyncProjectileInfo syncInfo;
+}
+
+
+
+
+
+
+
+
+
+// ============ Tanks =============
+[Serializable]
+public class SyncCreateTank : SyncGameAction {
+    public SyncCreateTank(SyncTankInfo syncInfo, int playerId)
+        : base(-1) {
+        this.syncInfo = syncInfo;
+        this.playerId = playerId;
+    }
+
+    public override void Play() {
+        Debug.Log("SyncCreateTank");
+        GamePlayerController.localClient.CreateTank(syncInfo, playerId);
+    }
+
+    SyncTankInfo syncInfo;
+    int playerId;
 }

@@ -26,9 +26,7 @@ public class SyncUnitInfo {
             syncInfo.baseInfo.attackSkill.projectile = attack.ProjectileTemplate.Root;
         }
 
-        Vector2 position = unit.Renderer.Node.position;
-        syncInfo.positionX = position.x;
-        syncInfo.positionY = position.y;
+        syncInfo.position = unit.Renderer.Node.position;
         syncInfo.flippedX = unit.Renderer.Node.flippedX;
         syncInfo.hp = unit.Hp;
         syncInfo.force = unit.Force;
@@ -41,8 +39,7 @@ public class SyncUnitInfo {
 
     public int id;
     public UnitInfo baseInfo = new UnitInfo();
-    public float positionX;
-    public float positionY;
+    public Vector2Serializable position;
     public bool flippedX;
     public float hp;
     public int force;
@@ -91,7 +88,7 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
             atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
             unit.AddActiveSkill(atk);
         }
-        unit.Renderer.Node.position = new Vector2(syncInfo.positionX, syncInfo.positionY);
+        unit.Renderer.Node.position = syncInfo.position;
         unit.Renderer.SetFlippedX(syncInfo.flippedX);
         unit.Hp = syncInfo.hp;
         unit.Force = syncInfo.force;

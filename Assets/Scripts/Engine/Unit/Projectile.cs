@@ -209,7 +209,7 @@ public class Projectile : INetworkable<GamePlayerController> {
     // fire
     // you need to set m_fireType, m_fromToType, m_toUnit or m_toPos, m_fromUnit or m_fromPos before call me
     public void Fire() {
-        GamePlayerController.localClient.FireProjectile(this);
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncFireProjectile(SyncProjectileInfo.Create(this)));
 
         PlayFireSound();
 

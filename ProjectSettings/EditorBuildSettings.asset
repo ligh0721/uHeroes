@@ -11,3 +11,5 @@ EditorBuildSettings:
     path: Assets/Scenes/Room.unity
   - enabled: 1
     path: Assets/Scenes/TestStage.unity
+  - enabled: 1
+    path: Assets/Scenes/TestTankStage.unity

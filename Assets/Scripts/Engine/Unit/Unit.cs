@@ -1745,7 +1745,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     }
 
     // Move
-    public virtual void CommandMove(Vector2 pos, bool obstinate = true, cca.Function onFinished = null) {
+    public void CommandMove(Vector2 pos, bool obstinate = true, cca.Function onFinished = null) {
         if (Dead || Suspended || Fixed) {
             return;
         }

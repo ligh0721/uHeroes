@@ -5,6 +5,46 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
 
+[Serializable]
+public struct Vector3Serializable {
+    public Vector3Serializable(float x, float y, float z) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+    }
+    public float x;
+    public float y;
+    public float z;
+    public static implicit operator Vector3(Vector3Serializable v) {
+        return new Vector3(v.x, v.y, v.z);
+    }
+    public static implicit operator Vector2(Vector3Serializable v) {
+        return new Vector2(v.x, v.y);
+    }
+    public static implicit operator Vector3Serializable(Vector3 v) {
+        return new Vector3Serializable(v.x, v.y, v.z);
+    }
+}
+
+[Serializable]
+public struct Vector2Serializable {
+    public Vector2Serializable(float x, float y) {
+        this.x = x;
+        this.y = y;
+    }
+    public float x;
+    public float y;
+    public static implicit operator Vector2(Vector2Serializable v) {
+        return new Vector2(v.x, v.y);
+    }
+    public static implicit operator Vector3(Vector2Serializable v) {
+        return new Vector3(v.x, v.y, 0.0f);
+    }
+    public static implicit operator Vector2Serializable(Vector2 v) {
+        return new Vector2Serializable(v.x, v.y);
+    }
+}
+
 public class Utils {
     public class IdGenerator {
         public static int nextId {

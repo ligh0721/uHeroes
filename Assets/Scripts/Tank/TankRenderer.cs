@@ -17,7 +17,12 @@ public class TankGunRenderer : UnitRenderer {
             Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
             m_frames.Add(kFrameDefault, sprite);
         }
-        base.SetFrame(id);
+
+        Sprite frame;
+        if (!m_frames.TryGetValue(id, out frame)) {
+            return;
+        }
+        m_node.frame = frame;
     }
 }
 
@@ -37,5 +42,24 @@ public class TankRenderer : UnitRenderer {
             m_frames.Add(kFrameDefault, sprite);
         }
         base.SetFrame(id);
+    }
+
+    public override void DoMoveTo(Vector2 pos, float duration, Function onFinished, float speed = 1.0f) {
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoMoveTo(m_unit.Id, pos, duration, speed));
+
+        float angle = Utils.GetAngle(pos - Node.position);
+        Debug.Log(Node.rotation);
+        float rotation;
+        if (Node.rotation > 180.0f) {
+            rotation = Node.rotation - 360.0f;
+        } else {
+            rotation = Node.rotation;
+        }
+        float delta = angle - rotation;
+        Debug.Log(rotation);
+        Debug.Log(angle);
+        var action = new Speed(new Sequence(new RotateBy(Mathf.Abs(delta / 360.0f), delta), new MoveTo(duration, pos), new CallFunc(onFinished)), speed);
+        action.tag = kActionMoveTo;
+        m_node.runAction(action);
     }
 }
