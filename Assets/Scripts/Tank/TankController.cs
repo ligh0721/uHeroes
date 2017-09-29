@@ -7,11 +7,12 @@ using UnityEngine.EventSystems;
 public class SyncTankGunInfo {
     public Vector3Serializable position;
     public float rotation;
+    public float rotateSpeed;
 }
 
 [Serializable]
 public class SyncTankInfo {
-    public static SyncTankInfo Create(Unit unit) {
+    public static SyncTankInfo Create(Tank unit) {
         SyncTankInfo syncInfo = new SyncTankInfo();
         syncInfo.baseInfo.root = unit.Root;
         syncInfo.baseInfo.name = unit.Name;
@@ -57,11 +58,23 @@ public class TankController : UnitController {
         unit.m_client = client;
         unit.m_root = syncInfo.baseInfo.root;
         if (unitCtrl.isServer) {
-            //unit.AI = UnitAI.instance;
+            unit.AI = UnitAI.instance;
         }
 
         unit.Name = syncInfo.baseInfo.name;
         unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
+        if (syncInfo.baseInfo.attackSkill.valid) {
+            AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
+            atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
+            atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
+            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
+                atk.AddCastAnimation(ObjectRenderer.NameToId(ani));
+            }
+            atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
+            atk.ProjectileTemplate.TypeOfFire = Projectile.FireType.kStraight;
+            unit.AddActiveSkill(atk);
+        }
+
         unit.Renderer.Node.position = syncInfo.position;
         unit.Renderer.Node.rotation = syncInfo.rotation;
         unit.Hp = syncInfo.hp;
@@ -74,6 +87,7 @@ public class TankController : UnitController {
             unit.AddGun(i);
             unit.SetGunPosition(i, syncInfo.guns[i].position);
             unit.SetGunRotation(i, syncInfo.guns[i].rotation);
+            //syncInfo.guns[i].rotateSpeed;
         }
 
         unitCtrl.m_unit = unit;

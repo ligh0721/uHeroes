@@ -44,14 +44,14 @@ public class AttackInfo {
     public static AttackInfo invalid {
         get {
             AttackInfo attack = new AttackInfo();
-            attack.animations = new string[0];
+            attack.animations = null;
             return attack;
         }
     }
 
     public bool valid {
         get {
-            return animations.Length > 0;
+            return animations != null;
         }
     }
 
@@ -62,7 +62,7 @@ public class AttackInfo {
     public double vrange = 0.15;
     public double range;
     public bool horizontal = false;
-    public string[] animations;
+    public string[] animations = null;
     public string projectile;
 }
 
@@ -93,6 +93,7 @@ public class TankInfo {
     public double maxHp;
     public double move = 0.2;
     public bool revivable;
+    public AttackInfo attackSkill = AttackInfo.invalid;
     public bool isfixed = false;
 }
 

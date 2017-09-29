@@ -418,6 +418,16 @@ public class GamePlayerController : NetworkBehaviour {
             syncInfo.baseInfo.name = "PlayerTank";
             syncInfo.baseInfo.revivable = true;
             syncInfo.baseInfo.move = 2;
+            AttackInfo attackSkill = new AttackInfo();
+            attackSkill.cd = 1.75f;
+            attackSkill.type = "Physical";
+            attackSkill.value = 60;
+            attackSkill.vrange = 0.2f;
+            attackSkill.range = 2.5f;
+            attackSkill.horizontal = false;
+            attackSkill.animations = new string[0];
+            attackSkill.projectile = "ProjectilesData/MageBolt";
+            syncInfo.baseInfo.attackSkill = attackSkill;
             syncInfo.id = Utils.IdGenerator.nextId;
             syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
             syncInfo.force = playerInfo.force;
@@ -427,6 +437,7 @@ public class GamePlayerController : NetworkBehaviour {
             SyncTankGunInfo gunInfo = new SyncTankGunInfo();
             gunInfo.position = new Vector3Serializable(0.0f, 0.0f, 0.0f);
             gunInfo.rotation = 0.0f;
+            gunInfo.rotateSpeed = 1.0f;
             syncInfo.guns.Add(gunInfo);
             localClient.CreateTank(syncInfo, ctrl.playerId);
         }

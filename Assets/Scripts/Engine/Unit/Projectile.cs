@@ -265,7 +265,7 @@ public class Projectile : INetworkable<GamePlayerController> {
                     m_effectFlags = kEffectOnContact;
                 }
 
-                if (m_fromToType == FromToType.kUnitToPoint) {
+                if (m_fromToType == FromToType.kUnitToPoint || m_fromToType == FromToType.kUnitToUnit) {
                     Unit u = m_fromUnit;
                     UnitRenderer d = u.Renderer;
 
@@ -275,6 +275,10 @@ public class Projectile : INetworkable<GamePlayerController> {
                     m_fromPos = m_usingFirePoint ?
                             d.Node.position + new Vector2(d.Node.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
                             d.Node.position;
+                }
+
+                if (m_fromToType == FromToType.kUnitToUnit) {
+                    m_toPos = m_toUnit.Renderer.Node.position;
                 }
 
                 float fDis = Vector2.Distance(m_fromPos, m_toPos);

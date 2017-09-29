@@ -15,39 +15,30 @@ public class SyncProjectileInfo
         syncInfo.baseInfo.fire = Projectile.FireTypeToName(projectile.TypeOfFire);
         syncInfo.baseInfo.effect = (int)projectile.EffectFlags;
 
-        Vector2 position = projectile.Renderer.Node.position;
-        syncInfo.positionX = position.x;
-        syncInfo.positionY = position.y;
+        syncInfo.position = projectile.Renderer.Node.position;
         syncInfo.visible = projectile.Renderer.Node.visible;
         syncInfo.fromTo = projectile.TypeOfFromTo;
         syncInfo.useFireOffset = projectile.UseFireOffset;
         syncInfo.srcUnit = projectile.SourceUnit != null ? projectile.SourceUnit.Id : 0;
         syncInfo.fromUnit = projectile.FromUnit != null ? projectile.FromUnit.Id : 0;
         syncInfo.toUnit = projectile.ToUnit != null ? projectile.ToUnit.Id : 0;
-        Vector2 fromPos = projectile.FromPosition;
-        syncInfo.fromPosX = fromPos.x;
-        syncInfo.fromPosY = fromPos.y;
-        Vector2 toPos = projectile.ToPosition;
-        syncInfo.toPosX = toPos.x;
-        syncInfo.toPosY = toPos.y;
+        syncInfo.fromPos = projectile.FromPosition;
+        syncInfo.toPos = projectile.ToPosition;
 
         return syncInfo;
     }
 
     public int id;
     public ProjectileInfo baseInfo = new ProjectileInfo();
-    public float positionX;
-    public float positionY;
+    public Vector2Serializable position;
     public bool visible;
     public Projectile.FromToType fromTo;
     public bool useFireOffset;
     public int srcUnit;
     public int fromUnit;
     public int toUnit;
-    public float fromPosX;
-    public float fromPosY;
-    public float toPosX;
-    public float toPosY;
+    public Vector2Serializable fromPos;
+    public Vector2Serializable toPos;
 }
 
 
@@ -91,15 +82,15 @@ public class ProjectileController : MonoBehaviour
         Projectile projectile = projCtrl.projectile;
         SetProjectileFromBaseInfo(projectile, syncInfo.baseInfo);
 
-        projectile.Renderer.Node.position = new Vector2 (syncInfo.positionX, syncInfo.positionY);
+        projectile.Renderer.Node.position = syncInfo.position;
         projectile.Renderer.Node.visible = syncInfo.visible;
         projectile.TypeOfFromTo = syncInfo.fromTo;
         projectile.UseFireOffset = syncInfo.useFireOffset;
         projectile.SourceUnit = projectile.World.GetUnit(syncInfo.srcUnit);
         projectile.FromUnit = projectile.World.GetUnit(syncInfo.fromUnit);
         projectile.ToUnit = projectile.World.GetUnit(syncInfo.toUnit);
-        projectile.FromPosition = new Vector2(syncInfo.fromPosX, syncInfo.fromPosY);
-        projectile.ToPosition = new Vector2(syncInfo.toPosX, syncInfo.toPosY);
+        projectile.FromPosition = syncInfo.fromPos;
+        projectile.ToPosition = syncInfo.toPos;
 
         return projCtrl;
     }
