@@ -1,4 +1,4 @@
-﻿//#define _UHEROES_
+﻿#define _UHEROES_
 
 using UnityEngine;
 using UnityEngine.Networking;
