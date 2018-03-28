@@ -105,7 +105,8 @@ public class ResourceManager {
     }
 
     /// <summary>
-    /// 加载Unit或Projectile的动画和帧
+    /// 加载Units或Projectile模型资源(动画和帧)
+    /// 因为模型下info结构不同，所以需要用TYPE来区分(UnitResInfo或ProjectileResInfo)
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
@@ -191,6 +192,11 @@ public class ResourceManager {
     Dictionary<string, cca.Animation> m_animations = new Dictionary<string, cca.Animation>();
     Dictionary<string, Sprite> m_frames = new Dictionary<string, Sprite>();
 
+    /// <summary>
+    /// 加载预设UnitsData中的数据
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
     public UnitInfo LoadUnit(string path) {
         if (path == null) {
             return null;
@@ -215,6 +221,12 @@ public class ResourceManager {
         return baseInfo;
     }
 
+    /// <summary>
+    /// 加载预设UnitsData中的数据
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public UnitInfo LoadUnit(string path, string data) {
         if (path == null) {
             return null;
@@ -247,6 +259,11 @@ public class ResourceManager {
 
     Dictionary<string, UnitInfo> m_unitInfos = new Dictionary<string, UnitInfo>();
 
+    /// <summary>
+    /// 加载预设ProjectilesData中的数据
+    /// </summary>
+    /// <param name="path"></param>
+    /// <returns></returns>
     public ProjectileInfo LoadProjectile(string path) {
         if (path == null) {
             return null;
@@ -271,6 +288,12 @@ public class ResourceManager {
         return baseInfo;
     }
 
+    /// <summary>
+    /// 加载预设ProjectilesData中的数据
+    /// </summary>
+    /// <param name="path"></param>
+    /// <param name="data"></param>
+    /// <returns></returns>
     public ProjectileInfo LoadProjectile(string path, string data) {
         if (path == null) {
             return null;

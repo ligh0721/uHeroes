@@ -53,8 +53,8 @@ MonoBehaviour:
   - {fileID: 4900000, guid: 5b91749bfb3641445a7e51eceab49a41, type: 3}
   - {fileID: 4900000, guid: 990c3779fdeec8b48925126d70b8da84, type: 3}
   - {fileID: 4900000, guid: dd22b14a12267f4409ca62bf52899e8d, type: 3}
-  m_testPlayerCount: 2
-  m_testCreateRate: 0.5
+  m_testPlayerCount: 3
+  m_testCreateRate: 1
   m_testMax: 50
 --- !u!114 &11462970
 MonoBehaviour:

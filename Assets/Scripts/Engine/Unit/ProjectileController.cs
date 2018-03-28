@@ -60,7 +60,7 @@ public class ProjectileController : MonoBehaviour
 		GameObject gameObject = GameObjectPool.instance.Instantiate(WorldController.instance.projectilePrefab);
         ProjectileController projCtrl = gameObject.GetComponent<ProjectileController>();
 
-        ResourceManager.instance.Load<ProjectileResInfo>(path);
+        ResourceManager.instance.Load<ProjectileResInfo>(path);  // high time cost
         //ProjectileRenderer r = new ProjectileRenderer(WorldController.instance.projectilePrefab, gameObject);
         ProjectileRenderer r = ObjectPool<ProjectileRenderer>.instance.Instantiate(); r.Init(WorldController.instance.projectilePrefab, gameObject);
         ResourceManager.instance.PrepareProjectileResource(path, r);

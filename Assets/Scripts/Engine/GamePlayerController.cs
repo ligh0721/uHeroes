@@ -3,6 +3,7 @@
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using LitJson;
@@ -33,7 +34,6 @@ public class GamePlayerController : NetworkBehaviour {
     [Range(0.02f, 10.0f)]
     public float m_testCreateRate = 10.0f;
     public int m_testMax = 50;
-    int m_testCount = 0;
 
     internal static GamePlayerController s_localClient;
     public static GamePlayerController localClient {
@@ -101,6 +101,60 @@ public class GamePlayerController : NetworkBehaviour {
         if (playerInfo.heroData == "") {
             playerInfo.heroData = m_heroes[Utils.Random.Next(m_heroes.Count)].text;
         }
+    }
+
+    void LoadResources() {
+        Debug.Log("Loading Resources..");
+
+        // preload model resources
+        string[] projectiles = {
+            "Projectiles/ArcaneRay",
+            "Projectiles/ArcherArrow",
+            "Projectiles/Lightning",
+            "Projectiles/MageBolt",
+            "Projectiles/TeslaRay"
+        };
+        foreach (var projectile in projectiles) {
+            ResourceManager.instance.Load<ProjectileResInfo>(projectile);
+        }
+
+        string[] units = {
+            "Units/Arcane",
+            "Units/Archer",
+            "Units/Barracks",
+            "Units/Mage",
+            "Units/Malik",
+            "Units/Tesla"
+        };
+        foreach (var unit in units) {
+            ResourceManager.instance.Load<UnitResInfo>(unit);
+        }
+
+        // preload model infos
+        string[] projectilesDatas = {
+            "ProjectilesData/ArcaneRay",
+            "ProjectilesData/ArcherArrow",
+            "ProjectilesData/Lightning",
+            "ProjectilesData/MageBolt",
+            "ProjectilesData/TeslaRay"
+        };
+        foreach (var projectilesData in projectilesDatas) {
+            ResourceManager.instance.LoadProjectile(projectilesData);
+        }
+
+        string[] unitsDatas = {
+            "UnitsData/Arcane",
+            "UnitsData/Archer",
+            "UnitsData/Barracks",
+            "UnitsData/Mage",
+            "UnitsData/Malik",
+            "UnitsData/Tesla"
+        };
+        foreach (var unitsData in unitsDatas) {
+            ResourceManager.instance.LoadUnit(unitsData);
+        }
+
+        Debug.Log("Loading Resources Completed");
     }
 
     /// <summary>
@@ -205,6 +259,7 @@ public class GamePlayerController : NetworkBehaviour {
     public void RpcStart() {
         GameController.ResetPlayersReady();
 #if _UHEROES_
+        LoadResources();
         SceneManager.LoadScene("TestStage");
 #else
         SceneManager.LoadScene("TestTankStage");
@@ -265,14 +320,19 @@ public class GamePlayerController : NetworkBehaviour {
         }
 
         // 随即创建单位
-        if (GameController.AllPlayers.Count <= m_testPlayerCount) {
-            InvokeRepeating("CreateTestUnit", 0.0f, m_testCreateRate);
-        }
+        StartCoroutine(RepeatCreateUnit("CreateTestUnit"));
 
         //CreateOneTestUnit();
 
         // 世界开始运转
         world.Start();
+    }
+
+    IEnumerator RepeatCreateUnit(string name) {
+        for (int i = 0; GameController.AllPlayers.Count <= m_testPlayerCount && i < m_testMax; i++) {
+            yield return new WaitForSeconds(m_testCreateRate);
+            Invoke(name, 0.0f);
+        }
     }
 
     void CreateOneTestUnit() {
@@ -296,11 +356,6 @@ public class GamePlayerController : NetworkBehaviour {
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
         world.CreateUnit(syncInfo);
-        ++m_testCount;
-        if (m_testCount > m_testMax) {
-            CancelInvoke("CreateTestUnit");
-            m_testCount = 0;
-        }
     }
 
     [Command]
@@ -443,9 +498,7 @@ public class GamePlayerController : NetworkBehaviour {
         }
 
         // 随即创建单位
-        if (GameController.AllPlayers.Count <= m_testPlayerCount) {
-            InvokeRepeating("CreateTestTank", 0.0f, m_testCreateRate);
-        }
+        StartCoroutine(RepeatCreateUnit("CreateTestTank"));
 
         //CreateOneTestUnit();
 
@@ -475,10 +528,5 @@ public class GamePlayerController : NetworkBehaviour {
         syncInfo.guns.Add(gunInfo);
 
         localClient.CreateTank(syncInfo);
-        ++m_testCount;
-        if (m_testCount > m_testMax) {
-            CancelInvoke("CreateTestTank");
-            m_testCount = 0;
-        }
     }
 }

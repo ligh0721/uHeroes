@@ -48,21 +48,6 @@ public class WorldController : MonoBehaviour {
         ObjectPool<Projectile>.instance.Alloc(50);
         //MutiObjectPool.instance.Alloc<UnitRenderer>(50);
 
-        //ResourceManager.instance.Load<ResourceManager.UnitResInfo>("Units/Malik");
-        //ResourceManager.instance.Load<ResourceManager.ProjectileResInfo>("Projectiles/MageBolt");
-
-        ResourceManager.instance.LoadProjectile("ProjectilesData/ArcaneRay");
-        ResourceManager.instance.LoadProjectile("ProjectilesData/ArcherArrow");
-        ResourceManager.instance.LoadProjectile("ProjectilesData/Lightning");
-        ResourceManager.instance.LoadProjectile("ProjectilesData/MageBolt");
-        ResourceManager.instance.LoadProjectile("ProjectilesData/TeslaRay");
-
-        ResourceManager.instance.LoadUnit("UnitsData/Arcane");
-        ResourceManager.instance.LoadUnit("UnitsData/Archer");
-        ResourceManager.instance.LoadUnit("UnitsData/Barracks");
-        ResourceManager.instance.LoadUnit("UnitsData/Mage");
-        ResourceManager.instance.LoadUnit("UnitsData/Malik");
-        ResourceManager.instance.LoadUnit("UnitsData/Tesla");
     }
 
     // Update is called once per frame

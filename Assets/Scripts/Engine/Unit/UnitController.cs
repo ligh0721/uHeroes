@@ -64,7 +64,7 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
         UnitController unitCtrl = gameObject.GetComponent<UnitController>();
         unitCtrl.m_client = client;
 
-        ResourceManager.instance.Load<UnitResInfo>(syncInfo.baseInfo.root);
+        ResourceManager.instance.Load<UnitResInfo>(syncInfo.baseInfo.root);  // high time cost
         UnitRenderer r = new UnitRenderer(WorldController.instance.unitPrefab, gameObject);
         ResourceManager.instance.PrepareUnitResource(syncInfo.baseInfo.root, r);
 
