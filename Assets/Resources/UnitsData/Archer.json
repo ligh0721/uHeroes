@@ -1,5 +1,5 @@
 {
-  "root": "Units/Archer",
+  "model": "Units/Archer",
   "name": "Archer",
   "maxHp": 500,
   "move": 2.5,

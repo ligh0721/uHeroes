@@ -1,4 +1,4 @@
 {
-  "root": "Projectiles/Lightning",
+  "model": "Projectiles/Lightning",
   "fire": "Link"
 }

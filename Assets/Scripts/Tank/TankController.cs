@@ -14,7 +14,7 @@ public class SyncTankGunInfo {
 public class SyncTankInfo {
     public static SyncTankInfo Create(Tank unit) {
         SyncTankInfo syncInfo = new SyncTankInfo();
-        syncInfo.baseInfo.root = unit.Root;
+        syncInfo.baseInfo.model = unit.Model;
         syncInfo.baseInfo.name = unit.Name;
         syncInfo.baseInfo.maxHp = unit.MaxHpBase;
         
@@ -46,9 +46,9 @@ public class TankController : UnitController {
         TankController unitCtrl = gameObject.GetComponent<TankController>();
         unitCtrl.m_client = client;
 
-        //ResourceManager.instance.Load<UnitResInfo>(syncInfo.baseInfo.root);
+        //ResourceManager.instance.Load<UnitResInfo>(syncInfo.baseInfo.model);
         TankRenderer r = new TankRenderer(WorldController.instance.unitPrefab, gameObject);
-        //ResourceManager.instance.PrepareUnitResource(syncInfo.baseInfo.root, r);
+        //ResourceManager.instance.PrepareUnitResource(syncInfo.baseInfo.model, r);
 
         //Texture2D texture = Resources.Load<Texture2D>(string.Format("{0}/{1}", path, frame));
         //Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot);
@@ -56,7 +56,7 @@ public class TankController : UnitController {
         Tank unit = new Tank(r);
         unit.m_id = syncInfo.id;
         unit.m_client = client;
-        unit.m_root = syncInfo.baseInfo.root;
+        unit.m_model = syncInfo.baseInfo.model;
         if (unitCtrl.isServer) {
             unit.AI = UnitAI.instance;
         }

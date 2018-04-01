@@ -29,9 +29,9 @@ public class Projectile : INetworkable<GamePlayerController> {
         }
     }
 
-    public string Root {
+    public string Model {
         get {
-            return m_root;
+            return m_model;
         }
     }
 
@@ -46,7 +46,7 @@ public class Projectile : INetworkable<GamePlayerController> {
     }
 
     public virtual Projectile Clone() {
-        Projectile ret = ProjectileController.Create(m_root).projectile;
+        Projectile ret = ProjectileController.Create(m_model).projectile;
         CopyDataTo(ret);
         return ret;
     }
@@ -551,7 +551,7 @@ public class Projectile : INetworkable<GamePlayerController> {
     protected ProjectileRenderer m_renderer;
     protected World m_world;
     protected internal int m_id;
-    protected internal string m_root;
+    protected internal string m_model;
 
     // Networkable
     public GamePlayerController localClient {

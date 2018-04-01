@@ -8,6 +8,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Start.unity
   - enabled: 1
+    path: Assets/Scenes/Loading.unity
+  - enabled: 1
     path: Assets/Scenes/Room.unity
   - enabled: 1
     path: Assets/Scenes/TestStage.unity

@@ -1,5 +1,5 @@
 {
-  "root": "Units/Tesla",
+  "model": "Units/Tesla",
   "name": "Tesla Tower",
   "maxHp": 5000,
   "revivable": false,

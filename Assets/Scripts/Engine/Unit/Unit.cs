@@ -51,9 +51,9 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         }
     }
 
-    public string Root {
+    public string Model {
         get {
-            return m_root;
+            return m_model;
         }
     }
 
@@ -61,7 +61,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     protected World m_world;
     protected string m_name;
     protected internal int m_id;
-    protected internal string m_root;
+    protected internal string m_model;
 
     // Networkable
     protected internal GamePlayerController m_client;

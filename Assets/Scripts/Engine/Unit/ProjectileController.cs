@@ -9,7 +9,7 @@ public class SyncProjectileInfo
     {
         SyncProjectileInfo syncInfo = new SyncProjectileInfo();
 
-        syncInfo.baseInfo.root = projectile.Root;
+        syncInfo.baseInfo.model = projectile.Model;
         syncInfo.baseInfo.move = projectile.MoveSpeed;
         syncInfo.baseInfo.height = projectile.MaxHeightDelta;
         syncInfo.baseInfo.fire = Projectile.FireTypeToName(projectile.TypeOfFire);
@@ -60,14 +60,14 @@ public class ProjectileController : MonoBehaviour
 		GameObject gameObject = GameObjectPool.instance.Instantiate(WorldController.instance.projectilePrefab);
         ProjectileController projCtrl = gameObject.GetComponent<ProjectileController>();
 
-        ResourceManager.instance.Load<ProjectileResInfo>(path);  // high time cost
+        ResourceManager.instance.LoadProjectileModel(path);  // high time cost
         //ProjectileRenderer r = new ProjectileRenderer(WorldController.instance.projectilePrefab, gameObject);
         ProjectileRenderer r = ObjectPool<ProjectileRenderer>.instance.Instantiate(); r.Init(WorldController.instance.projectilePrefab, gameObject);
         ResourceManager.instance.PrepareProjectileResource(path, r);
 
         //Projectile projectile = new Projectile(r);
         Projectile projectile = ObjectPool<Projectile>.instance.Instantiate(); projectile.Init(r);
-        projectile.m_root = path;
+        projectile.m_model = path;
 
         projCtrl.m_projectile = projectile;
         WorldController.instance.world.AddProjectile(projectile);
@@ -78,7 +78,7 @@ public class ProjectileController : MonoBehaviour
     // 创建projectile
     public static ProjectileController Create(SyncProjectileInfo syncInfo)
     {
-        ProjectileController projCtrl = Create(syncInfo.baseInfo.root);
+        ProjectileController projCtrl = Create(syncInfo.baseInfo.model);
         Projectile projectile = projCtrl.projectile;
         SetProjectileFromBaseInfo(projectile, syncInfo.baseInfo);
 
@@ -107,13 +107,13 @@ public class ProjectileController : MonoBehaviour
         ProjectileRenderer r = ObjectPool<ProjectileRenderer>.instance.Instantiate();
         //Projectile projectile = new Projectile(r);
         Projectile projectile = ObjectPool<Projectile>.instance.Instantiate(); projectile.Init(r);
-        projectile.m_root = baseInfo.root;
+        projectile.m_model = baseInfo.model;
         SetProjectileFromBaseInfo(projectile, baseInfo);
 
         return projectile;
     }
 
-    // 从baseInfo中读取除root之外的信息
+    // 从baseInfo中读取除model之外的信息
 	static void SetProjectileFromBaseInfo(Projectile projectile, ProjectileInfo baseInfo)
     {
         projectile.MoveSpeed = (float)baseInfo.move;

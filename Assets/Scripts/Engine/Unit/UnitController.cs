@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 public class SyncUnitInfo {
     public static SyncUnitInfo Create(Unit unit) {
         SyncUnitInfo syncInfo = new SyncUnitInfo();
-        syncInfo.baseInfo.root = unit.Root;
+        syncInfo.baseInfo.model = unit.Model;
         syncInfo.baseInfo.name = unit.Name;
         syncInfo.baseInfo.maxHp = unit.MaxHpBase;
         AttackAct attack = unit.AttackSkill as AttackAct;
@@ -23,7 +23,7 @@ public class SyncUnitInfo {
             for (int i = 0; i < castAnimations.Count; ++i) {
                 syncInfo.baseInfo.attackSkill.animations[i] = ObjectRenderer.IdToName(castAnimations[i]);
             }
-            syncInfo.baseInfo.attackSkill.projectile = attack.ProjectileTemplate.Root;
+            syncInfo.baseInfo.attackSkill.projectile = attack.ProjectileTemplate.Model;
         }
 
         syncInfo.position = unit.Renderer.Node.position;
@@ -59,19 +59,19 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
     }
 
     public static UnitController Create(SyncUnitInfo syncInfo, GamePlayerController client) {
-        Debug.Log("CreateUnit");
+        //Debug.Log("CreateUnit");
         GameObject gameObject = GameObjectPool.instance.Instantiate(WorldController.instance.unitPrefab);
         UnitController unitCtrl = gameObject.GetComponent<UnitController>();
         unitCtrl.m_client = client;
 
-        ResourceManager.instance.Load<UnitResInfo>(syncInfo.baseInfo.root);  // high time cost
+        ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
         UnitRenderer r = new UnitRenderer(WorldController.instance.unitPrefab, gameObject);
-        ResourceManager.instance.PrepareUnitResource(syncInfo.baseInfo.root, r);
+        ResourceManager.instance.PrepareUnitResource(syncInfo.baseInfo.model, r);
 
         Unit unit = new Unit(r);
         unit.m_id = syncInfo.id;
         unit.m_client = client;
-        unit.m_root = syncInfo.baseInfo.root;
+        unit.m_model = syncInfo.baseInfo.model;
         if (unitCtrl.isServer) {
             unit.AI = UnitAI.instance;
         }

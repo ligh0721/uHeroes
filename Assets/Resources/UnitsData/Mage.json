@@ -1,5 +1,5 @@
 {
-  "root": "Units/Mage",
+  "model": "Units/Mage",
   "name": "Mage",
   "maxHp": 500,
   "move": 1.6,

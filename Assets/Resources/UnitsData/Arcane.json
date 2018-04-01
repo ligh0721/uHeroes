@@ -1,5 +1,5 @@
 {
-  "root": "Units/Arcane",
+  "model": "Units/Arcane",
   "name": "Arcane Tower",
   "maxHp": 5000,
   "revivable": false,

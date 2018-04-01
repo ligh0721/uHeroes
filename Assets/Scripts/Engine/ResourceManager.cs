@@ -1,9 +1,9 @@
 using UnityEngine;
+using System.Collections;
 using System.Collections.Generic;
-using cca;
+using UnityEngine.SceneManagement;
 using LitJson;
 using System;
-using System.Reflection;
 
 
 public class BaseResInfo {
@@ -68,7 +68,7 @@ public class AttackInfo {
 
 [Serializable]
 public class UnitInfo {
-    public string root;
+    public string model;
     public string name;
     public double maxHp;
     public double move = 0.2;
@@ -79,7 +79,7 @@ public class UnitInfo {
 
 [Serializable]
 public class ProjectileInfo {
-    public string root;
+    public string model;
     public double move;
     public double height;
     public string fire;
@@ -88,7 +88,7 @@ public class ProjectileInfo {
 
 [Serializable]
 public class TankInfo {
-    public string root;
+    public string model;
     public string name;
     public double maxHp;
     public double move = 0.2;
@@ -104,13 +104,21 @@ public class ResourceManager {
         }
     }
 
+    public UnitResInfo LoadUnitModel(string path) {
+        return Load<UnitResInfo>(path);
+    }
+
+    public ProjectileResInfo LoadProjectileModel(string path) {
+        return Load<ProjectileResInfo>(path);
+    }
+
     /// <summary>
     /// 加载Units或Projectile模型资源(动画和帧)
     /// 因为模型下info结构不同，所以需要用TYPE来区分(UnitResInfo或ProjectileResInfo)
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    public TYPE Load<TYPE>(string path)
+    TYPE Load<TYPE>(string path)
         where TYPE : BaseResInfo {
         BaseResInfo baseInfo;
         if (m_infos.TryGetValue(path, out baseInfo)) {
@@ -118,6 +126,7 @@ public class ResourceManager {
         }
 
         TextAsset res = Resources.Load<TextAsset>(string.Format("{0}/info", path));
+        Resources.UnloadAsset(res);
         TYPE resInfo = JsonMapper.ToObject<TYPE>(res.text);
         m_infos.Add(path, resInfo);
 
@@ -134,6 +143,8 @@ public class ResourceManager {
             for (int i = 0; i < aframes; ++i) {
                 Texture2D texture = Resources.Load<Texture2D>(string.Format("{0}/{1}/{2:00}", path, actName, i));
                 sprites[i] = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot);
+                Resources.UnloadAsset(texture);
+                //sprites[i] = Resources.Load<Sprite>(string.Format("{0}/{1}/{2:00}", path, actName, i));
             }
 
             cca.Animation animation = new cca.Animation(sprites, adelay);
@@ -204,6 +215,7 @@ public class ResourceManager {
 
         UnitInfo baseInfo;
         if (m_unitInfos.TryGetValue(path, out baseInfo)) {
+            LoadUnitModel(baseInfo.model);
             return baseInfo;
         }
 
@@ -218,6 +230,7 @@ public class ResourceManager {
         }
 
         m_unitInfos.Add(path, baseInfo);
+        LoadUnitModel(baseInfo.model);
         return baseInfo;
     }
 
@@ -232,16 +245,20 @@ public class ResourceManager {
             return null;
         }
 
+        // 如果该路径已经存在对应映射，直接返回
         UnitInfo baseInfo;
         if (path.Length > 0 && m_unitInfos.TryGetValue(path, out baseInfo)) {
+            LoadUnitModel(baseInfo.model);
             return baseInfo;
         }
 
+        // 从数据源获取对象
         baseInfo = JsonMapper.ToObject<UnitInfo>(data);
         if (baseInfo == null) {
             return null;
         }
 
+        // 建立对应映射
         if (path.Length > 0) {
             if (m_unitInfos.ContainsKey(path)) {
                 m_unitInfos[path] = baseInfo;
@@ -250,6 +267,7 @@ public class ResourceManager {
             }
         }
 
+        LoadUnitModel(baseInfo.model);
         return baseInfo;
     }
 
@@ -271,6 +289,7 @@ public class ResourceManager {
 
         ProjectileInfo baseInfo;
         if (m_projectileInfos.TryGetValue(path, out baseInfo)) {
+            LoadProjectileModel(baseInfo.model);
             return baseInfo;
         }
 
@@ -285,6 +304,7 @@ public class ResourceManager {
         }
 
         m_projectileInfos.Add(path, baseInfo);
+        LoadProjectileModel(baseInfo.model);
         return baseInfo;
     }
 
@@ -301,6 +321,7 @@ public class ResourceManager {
 
         ProjectileInfo baseInfo;
         if (path.Length > 0 && m_projectileInfos.TryGetValue(path, out baseInfo)) {
+            LoadProjectileModel(baseInfo.model);
             return baseInfo;
         }
 
@@ -317,6 +338,7 @@ public class ResourceManager {
             }
         }
 
+        LoadProjectileModel(baseInfo.model);
         return baseInfo;
     }
 
@@ -330,11 +352,8 @@ public class ResourceManager {
     // Skills
     public void LoadBaseSkills() {
         Skill skill;
-
         skill = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
         AddBaseSkill(skill);
-
-
     }
 
     void AddBaseSkill(Skill skill) {
@@ -371,4 +390,82 @@ public class ResourceManager {
     }
 
     Dictionary<string, Skill> m_skills = new Dictionary<string, Skill>();
+
+    public enum DataType {
+        UnitData,
+        ProjectileData
+    }
+
+    public struct ResInfo {
+        public ResInfo(DataType type, string path) {
+            this.type = type;
+            this.path = path;
+        }
+
+        public DataType type;
+        public string path;
+    }
+
+    Queue<ResInfo> m_loadingQueue = new Queue<ResInfo>();
+
+    /// <summary>
+    /// 将要加载的资源添加到加载队列中
+    /// </summary>
+    /// <param name="res"></param>
+    public void AddResourceToLoadingQueue(ResInfo res) {
+        m_loadingQueue.Enqueue(res);
+    }
+
+    public void AddUnitsToLoadingQueue(string[] units) {
+        foreach (var unit in units) {
+            AddResourceToLoadingQueue(new ResInfo(DataType.UnitData, unit));
+        }
+    }
+
+    public void AddProjectilesToLoadingQueue(string[] projectiles) {
+        foreach (var projectile in projectiles) {
+            AddResourceToLoadingQueue(new ResInfo(DataType.ProjectileData, projectile));
+        }
+    }
+
+    public delegate void OnUpdateProgress(int current, int total);
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="onUpdate"></param>
+    /// <returns></returns>
+    public IEnumerator LoadResourcesFromQueue(OnUpdateProgress onUpdate) {
+        int total = m_loadingQueue.Count;
+        int current = 0;
+        onUpdate(current, total);
+        yield return null;
+        while (m_loadingQueue.Count > 0) {
+            ResInfo res = m_loadingQueue.Dequeue();
+            switch (res.type) {
+            case DataType.UnitData:
+                LoadUnit(res.path);
+                break;
+            case DataType.ProjectileData:
+                LoadProjectile(res.path);
+                break;
+            }
+            ++current;
+            onUpdate(current, total);
+            yield return null;
+        }
+    }
+
+    string m_nextScene;
+
+    public void LoadingScene(string nextScene) {
+        m_nextScene = nextScene;
+        SceneManager.LoadScene("Loading");
+    }
+
+    public IEnumerator LoadResourcesFromQueueAndSwitchScene(OnUpdateProgress onUpdate) {
+        yield return LoadResourcesFromQueue(onUpdate);
+        SceneManager.LoadScene(m_nextScene);
+    }
 }
+

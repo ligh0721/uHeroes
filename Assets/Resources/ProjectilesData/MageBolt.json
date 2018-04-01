@@ -1,5 +1,5 @@
 {
-  "root": "Projectiles/MageBolt",
+  "model": "Projectiles/MageBolt",
   "move": 5,
   "height": 0.2
 }

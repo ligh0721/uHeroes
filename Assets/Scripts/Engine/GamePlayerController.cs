@@ -103,60 +103,6 @@ public class GamePlayerController : NetworkBehaviour {
         }
     }
 
-    void LoadResources() {
-        Debug.Log("Loading Resources..");
-
-        // preload model resources
-        string[] projectiles = {
-            "Projectiles/ArcaneRay",
-            "Projectiles/ArcherArrow",
-            "Projectiles/Lightning",
-            "Projectiles/MageBolt",
-            "Projectiles/TeslaRay"
-        };
-        foreach (var projectile in projectiles) {
-            ResourceManager.instance.Load<ProjectileResInfo>(projectile);
-        }
-
-        string[] units = {
-            "Units/Arcane",
-            "Units/Archer",
-            "Units/Barracks",
-            "Units/Mage",
-            "Units/Malik",
-            "Units/Tesla"
-        };
-        foreach (var unit in units) {
-            ResourceManager.instance.Load<UnitResInfo>(unit);
-        }
-
-        // preload model infos
-        string[] projectilesDatas = {
-            "ProjectilesData/ArcaneRay",
-            "ProjectilesData/ArcherArrow",
-            "ProjectilesData/Lightning",
-            "ProjectilesData/MageBolt",
-            "ProjectilesData/TeslaRay"
-        };
-        foreach (var projectilesData in projectilesDatas) {
-            ResourceManager.instance.LoadProjectile(projectilesData);
-        }
-
-        string[] unitsDatas = {
-            "UnitsData/Arcane",
-            "UnitsData/Archer",
-            "UnitsData/Barracks",
-            "UnitsData/Mage",
-            "UnitsData/Malik",
-            "UnitsData/Tesla"
-        };
-        foreach (var unitsData in unitsDatas) {
-            ResourceManager.instance.LoadUnit(unitsData);
-        }
-
-        Debug.Log("Loading Resources Completed");
-    }
-
     /// <summary>
     /// 添加同步动作
     /// </summary>
@@ -234,7 +180,7 @@ public class GamePlayerController : NetworkBehaviour {
 
         var portrait = slot.transform.Find("portrait").GetComponent<Image>();
         var baseInfo = JsonMapper.ToObject<UnitInfo>(m_playerInfo.heroData);
-        portrait.sprite = Resources.Load<Sprite>(string.Format("{0}/portrait_sel", baseInfo.root));
+        portrait.sprite = Resources.Load<Sprite>(string.Format("{0}/portrait_sel", baseInfo.model));
 
         var name = slot.transform.Find("name").GetComponent<Text>();
         name.text = m_playerInfo.name;
@@ -259,16 +205,31 @@ public class GamePlayerController : NetworkBehaviour {
     public void RpcStart() {
         GameController.ResetPlayersReady();
 #if _UHEROES_
-        LoadResources();
-        SceneManager.LoadScene("TestStage");
+        string[] projectilesDatas = {
+            "ProjectilesData/ArcaneRay",
+            "ProjectilesData/ArcherArrow",
+            "ProjectilesData/Lightning",
+            "ProjectilesData/MageBolt",
+            "ProjectilesData/TeslaRay"
+        };
+        ResourceManager.instance.AddProjectilesToLoadingQueue(projectilesDatas);
+        string[] unitsDatas = {
+            "UnitsData/Arcane",
+            "UnitsData/Archer",
+            "UnitsData/Barracks",
+            "UnitsData/Mage",
+            "UnitsData/Malik",
+            "UnitsData/Tesla"
+        };
+        ResourceManager.instance.AddUnitsToLoadingQueue(unitsDatas);
+        ResourceManager.instance.LoadingScene("TestStage");
 #else
-        SceneManager.LoadScene("TestTankStage");
+        ResourceManager.instance.LoadingScene("TestTankStage");
 #endif
-        localClient.CmdClientLoadSceneFinished();
     }
 
     [Command]
-    void CmdClientLoadSceneFinished() {
+    public void CmdClientLoadSceneFinished() {
         GameController.PlayerReady(m_playerInfo.id);
         Debug.LogFormat("Player({0}) LoadScene Finished.", m_playerInfo.id);
         bool allReady = GameController.AllPlayersReady();
@@ -467,7 +428,7 @@ public class GamePlayerController : NetworkBehaviour {
             //string path = string.Format("UnitsData/[Player{0}]", ctrl.playerId);
             SyncTankInfo syncInfo = new SyncTankInfo();
             //syncInfo.baseInfo = ResourceManager.instance.LoadTank(path, playerInfo.heroData);
-            syncInfo.baseInfo.root = "Player";
+            syncInfo.baseInfo.model = "Player";
             syncInfo.baseInfo.maxHp = 2000;
             syncInfo.baseInfo.isfixed = false;
             syncInfo.baseInfo.name = "PlayerTank";
@@ -511,7 +472,7 @@ public class GamePlayerController : NetworkBehaviour {
         // 创建普通单位
         SyncTankInfo syncInfo = new SyncTankInfo();
         //syncInfo.baseInfo = ResourceManager.instance.LoadUnit("", m_testUnits[Utils.Random.Next(m_testUnits.Count)].text);
-        syncInfo.baseInfo.root = "Test";
+        syncInfo.baseInfo.model = "Test";
         syncInfo.baseInfo.maxHp = 500;
         syncInfo.baseInfo.isfixed = false;
         syncInfo.baseInfo.name = "TestTank";
