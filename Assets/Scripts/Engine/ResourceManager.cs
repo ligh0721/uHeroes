@@ -124,10 +124,10 @@ public class ResourceManager {
         if (m_infos.TryGetValue(path, out baseInfo)) {
             return baseInfo as TYPE;
         }
-
+			
         TextAsset res = Resources.Load<TextAsset>(string.Format("{0}/info", path));
-        Resources.UnloadAsset(res);
         TYPE resInfo = JsonMapper.ToObject<TYPE>(res.text);
+		Resources.UnloadAsset(res);
         m_infos.Add(path, resInfo);
 
         Vector2 pivot = new Vector2((float)resInfo.pivot.x, (float)resInfo.pivot.y);
@@ -157,6 +157,7 @@ public class ResourceManager {
         foreach (string frame in resInfo.frames) {
             Texture2D texture = Resources.Load<Texture2D>(string.Format("{0}/{1}", path, frame));
             Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot);
+			Resources.UnloadAsset(texture);
             m_frames.Add(string.Format("{0}/{1}", path, frame), sprite);
         }
 
@@ -225,6 +226,7 @@ public class ResourceManager {
         }
 
         baseInfo = JsonMapper.ToObject<UnitInfo>(res.text);
+		//Resources.UnloadAsset(res);
         if (baseInfo == null) {
             return null;
         }
@@ -299,6 +301,7 @@ public class ResourceManager {
         }
 
         baseInfo = JsonMapper.ToObject<ProjectileInfo>(res.text);
+		//Resources.UnloadAsset(res);
         if (baseInfo == null) {
             return null;
         }
@@ -377,6 +380,7 @@ public class ResourceManager {
         }
 
         SkillInfoOnlyBaseId baseInfo = JsonUtility.FromJson<SkillInfoOnlyBaseId>(res.text);
+		//Resources.UnloadAsset(res);
         if (baseInfo == null || baseInfo.baseId.Length == 0) {
             return null;
         }
@@ -428,17 +432,34 @@ public class ResourceManager {
         }
     }
 
-    public delegate void OnUpdateProgress(int current, int total);
+    public enum LoadingProgressType {
+        Resource,
+        Scene
+    }
+
+    public struct LoadingProgressInfo {
+        public LoadingProgressInfo(LoadingProgressType type, float total) {
+            this.type = type;
+            current = 0.0f;
+            this.total = total;
+        }
+
+        public LoadingProgressType type;
+        public float current;
+        public float total;
+    }
+
+    public delegate void OnUpdateProgress(LoadingProgressInfo prog);
 
     /// <summary>
     /// 
     /// </summary>
     /// <param name="onUpdate"></param>
     /// <returns></returns>
-    public IEnumerator LoadResourcesFromQueue(OnUpdateProgress onUpdate) {
+    IEnumerator LoadResourcesFromQueue(OnUpdateProgress onUpdate) {
         int total = m_loadingQueue.Count;
-        int current = 0;
-        onUpdate(current, total);
+        LoadingProgressInfo prog = new LoadingProgressInfo(LoadingProgressType.Resource, m_loadingQueue.Count);
+        onUpdate(prog);
         yield return null;
         while (m_loadingQueue.Count > 0) {
             ResInfo res = m_loadingQueue.Dequeue();
@@ -450,22 +471,44 @@ public class ResourceManager {
                 LoadProjectile(res.path);
                 break;
             }
-            ++current;
-            onUpdate(current, total);
+            prog.current += 1.0f;;
+            onUpdate(prog);
             yield return null;
         }
+        // yield return *;
     }
 
     string m_nextScene;
+    AsyncOperation m_nextSceneAop;
 
-    public void LoadingScene(string nextScene) {
+    public void StartLoadingScene(string nextScene) {
         m_nextScene = nextScene;
         SceneManager.LoadScene("Loading");
     }
 
-    public IEnumerator LoadResourcesFromQueueAndSwitchScene(OnUpdateProgress onUpdate) {
+    IEnumerator ReplaceScene(OnUpdateProgress onUpdate) {
+        m_nextSceneAop = SceneManager.LoadSceneAsync(m_nextScene);
+        m_nextSceneAop.allowSceneActivation = false;
+        LoadingProgressInfo prog = new LoadingProgressInfo(LoadingProgressType.Scene, 0.9f);
+        onUpdate(prog);
+        yield return null;
+        while (m_nextSceneAop.progress < 0.9f) {
+            prog.current = m_nextSceneAop.progress;
+            onUpdate(prog);
+            yield return null;
+        }
+        prog.current = 0.9f;
+        onUpdate(prog);
+        yield return null;
+    }
+
+    public IEnumerator LoadResourcesFromQueueAndReplaceScene(OnUpdateProgress onUpdate) {
         yield return LoadResourcesFromQueue(onUpdate);
-        SceneManager.LoadScene(m_nextScene);
+        yield return ReplaceScene(onUpdate);
+    }
+
+    public void StartScene() {
+        m_nextSceneAop.allowSceneActivation = true;
     }
 }
 

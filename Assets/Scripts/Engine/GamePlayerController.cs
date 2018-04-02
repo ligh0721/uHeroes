@@ -29,6 +29,21 @@ public class GamePlayerController : NetworkBehaviour {
     public List<TextAsset> m_heroes;
 
     public List<TextAsset> m_testUnits;
+	string[] m_testProjectilesDatas = {
+		"Projectiles/ArcaneRay",
+		"Projectiles/ArcherArrow",
+		"Projectiles/Lightning",
+		"Projectiles/MageBolt",
+		"Projectiles/TeslaRay"
+	};
+	string[] m_testUnitsDatas = {
+		"Units/Arcane",
+		"Units/Archer",
+		"Units/Barracks",
+		"Units/Mage",
+		"Units/Malik",
+		"Units/Tesla"
+	};
     [Range(0, 8)]
     public int m_testPlayerCount = 1;
     [Range(0.02f, 10.0f)]
@@ -205,24 +220,9 @@ public class GamePlayerController : NetworkBehaviour {
     public void RpcStart() {
         GameController.ResetPlayersReady();
 #if _UHEROES_
-        string[] projectilesDatas = {
-            "ProjectilesData/ArcaneRay",
-            "ProjectilesData/ArcherArrow",
-            "ProjectilesData/Lightning",
-            "ProjectilesData/MageBolt",
-            "ProjectilesData/TeslaRay"
-        };
-        ResourceManager.instance.AddProjectilesToLoadingQueue(projectilesDatas);
-        string[] unitsDatas = {
-            "UnitsData/Arcane",
-            "UnitsData/Archer",
-            "UnitsData/Barracks",
-            "UnitsData/Mage",
-            "UnitsData/Malik",
-            "UnitsData/Tesla"
-        };
-        ResourceManager.instance.AddUnitsToLoadingQueue(unitsDatas);
-        ResourceManager.instance.LoadingScene("TestStage");
+        ResourceManager.instance.AddProjectilesToLoadingQueue(m_testProjectilesDatas);
+		ResourceManager.instance.AddUnitsToLoadingQueue(m_testUnitsDatas);
+        ResourceManager.instance.StartLoadingScene("TestStage");
 #else
         ResourceManager.instance.LoadingScene("TestTankStage");
 #endif
@@ -235,6 +235,7 @@ public class GamePlayerController : NetworkBehaviour {
         bool allReady = GameController.AllPlayersReady();
         if (allReady) {
             Debug.LogFormat("All Players LoadScene Finished.");
+            RpcStartScene();
             // 服务器创建单位
 #if _UHEROES_
             Invoke("ServerCreateUnits", 1.0f);
@@ -242,6 +243,11 @@ public class GamePlayerController : NetworkBehaviour {
             Invoke("ServerCreateTanks", 1.0f);
 #endif
         }
+    }
+
+    [ClientRpc]
+    void RpcStartScene() {
+        ResourceManager.instance.StartScene();
     }
 
 
@@ -263,14 +269,14 @@ public class GamePlayerController : NetworkBehaviour {
     // ============== Unit Game Actions ==============
 
 
-    // ======== 创建单位 ========
+    // ======== 创建单位, 需在World实例化之后调用 ========
     [Server]
     public void ServerCreateUnits() {
         Vector2 sz = Utils.halfCameraSize;
         // 创建玩家单位
         foreach (GamePlayerController ctrl in GameController.AllPlayers.Values) {
             PlayerInfo playerInfo = ctrl.playerInfo;
-            string path = string.Format("UnitsData/[Player{0}]", ctrl.playerId);
+            string path = string.Format("Units/[Player{0}]", ctrl.playerId);
             SyncUnitInfo syncInfo = new SyncUnitInfo();
             syncInfo.baseInfo = ResourceManager.instance.LoadUnit(path, playerInfo.heroData);
             syncInfo.id = Utils.IdGenerator.nextId;
@@ -299,7 +305,7 @@ public class GamePlayerController : NetworkBehaviour {
     void CreateOneTestUnit() {
         Vector2 sz = Utils.halfCameraSize;
         SyncUnitInfo syncInfo = new SyncUnitInfo();
-        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("UnitsData/Arcane");
+        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("Units/Arcane");
         syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
         syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
@@ -425,7 +431,7 @@ public class GamePlayerController : NetworkBehaviour {
         // 创建玩家单位
         foreach (GamePlayerController ctrl in GameController.AllPlayers.Values) {
             PlayerInfo playerInfo = ctrl.playerInfo;
-            //string path = string.Format("UnitsData/[Player{0}]", ctrl.playerId);
+            //string path = string.Format("Units/[Player{0}]", ctrl.playerId);
             SyncTankInfo syncInfo = new SyncTankInfo();
             //syncInfo.baseInfo = ResourceManager.instance.LoadTank(path, playerInfo.heroData);
             syncInfo.baseInfo.model = "Player";
@@ -442,7 +448,7 @@ public class GamePlayerController : NetworkBehaviour {
             attackSkill.range = 2.5f;
             attackSkill.horizontal = false;
             attackSkill.animations = new string[0];
-            attackSkill.projectile = "ProjectilesData/MageBolt";
+            attackSkill.projectile = "Projectiles/MageBolt";
             syncInfo.baseInfo.attackSkill = attackSkill;
             syncInfo.id = Utils.IdGenerator.nextId;
             syncInfo.hp = (float)syncInfo.baseInfo.maxHp;

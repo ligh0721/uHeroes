@@ -1,5 +1,5 @@
 {
-  "model": "Units/Mage",
+  "model": "Models/Units/Mage",
   "name": "Mage",
   "maxHp": 500,
   "move": 1.6,
@@ -15,6 +15,6 @@
       "act1",
       "act2"
     ],
-    "projectile": "ProjectilesData/MageBolt"
+    "projectile": "Projectiles/MageBolt"
   }
 }

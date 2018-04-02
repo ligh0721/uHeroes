@@ -1,5 +1,5 @@
 {
-  "model": "Units/Barracks",
+  "model": "Models/Units/Barracks",
   "name": "Barracks",
   "maxHp": 1300,
   "move": 1.5,

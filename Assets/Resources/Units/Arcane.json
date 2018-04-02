@@ -1,5 +1,5 @@
 {
-  "model": "Units/Arcane",
+  "model": "Models/Units/Arcane",
   "name": "Arcane Tower",
   "maxHp": 5000,
   "revivable": false,
@@ -13,7 +13,7 @@
     "animations": [
       "act1"
     ],
-    "projectile": "ProjectilesData/ArcaneRay"
+    "projectile": "Projectiles/ArcaneRay"
   },
   "isfixed": true
 }

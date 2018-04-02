@@ -47,8 +47,6 @@ public class WorldController : MonoBehaviour {
         ObjectPool<ProjectileRenderer>.instance.Alloc(50);
         ObjectPool<Projectile>.instance.Alloc(50);
         //MutiObjectPool.instance.Alloc<UnitRenderer>(50);
-
-        GamePlayerController.localClient.CmdClientLoadSceneFinished();
     }
 
     // Update is called once per frame

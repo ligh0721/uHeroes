@@ -1,5 +1,5 @@
 {
-  "model": "Units/Malik",
+  "model": "Models/Units/Malik",
   "name": "Malik",
   "maxHp": 1000,
   "move": 2,

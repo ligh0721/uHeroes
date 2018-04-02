@@ -1,5 +1,5 @@
 {
-  "model": "Units/Tesla",
+  "model": "Models/Units/Tesla",
   "name": "Tesla Tower",
   "maxHp": 5000,
   "revivable": false,
@@ -13,7 +13,7 @@
     "animations": [
       "act1"
     ],
-    "projectile": "ProjectilesData/TeslaRay"
+    "projectile": "Projectiles/TeslaRay"
   },
   "isfixed": true
 }

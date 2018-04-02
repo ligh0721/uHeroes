@@ -1,5 +1,5 @@
 {
-  "model": "Units/Archer",
+  "model": "Models/Units/Archer",
   "name": "Archer",
   "maxHp": 500,
   "move": 2.5,
@@ -14,6 +14,6 @@
     "animations": [
       "act1"
     ],
-    "projectile": "ProjectilesData/ArcherArrow"
+    "projectile": "Projectiles/ArcherArrow"
   }
 }
