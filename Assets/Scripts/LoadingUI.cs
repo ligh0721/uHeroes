@@ -20,13 +20,13 @@ public class LoadingUI : MonoBehaviour, INetworkable<GamePlayerController> {
                 if (m_progress.text != "Loading Scene") {
                     m_progressType.text = "Loading Scene";
                 }
-                if (prog.current == prog.total) {
-                    GamePlayerController.localClient.CmdClientLoadSceneFinished();
-                }
+                break;
+            case ResourceManager.LoadingProgressType.Done:
+                GamePlayerController.localClient.CmdClientLoadSceneFinished();
                 break;
             }
-            m_progress.text = string.Format("{0:N0}%", prog.current * 100.0f / prog.total);
-        }));
+            m_progress.text = string.Format("{0:N0}%", prog.value * 100.0f / prog.max);
+        }, null));
     }
 
     // Update is called once per frame

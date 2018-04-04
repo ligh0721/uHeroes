@@ -51,6 +51,10 @@ public class GamePlayerController : NetworkBehaviour {
     public int m_testMax = 50;
 
     internal static GamePlayerController s_localClient;
+    /// <summary>
+    /// 发送Command的一定是localClient
+    /// </summary>
+    /// <value>The local client.</value>
     public static GamePlayerController localClient {
         get {
             return s_localClient;
@@ -91,6 +95,7 @@ public class GamePlayerController : NetworkBehaviour {
 
     void Start() {
         DontDestroyOnLoad(gameObject);
+        m_roomui = GameObject.Find("Canvas").GetComponent<RoomUI>();
         if (isLocalPlayer) {
             // 创建新接入的可控本地，具备发送Cmd能力
             s_localClient = this;
@@ -164,7 +169,7 @@ public class GamePlayerController : NetworkBehaviour {
 
 
     // =======================================================
-
+    RoomUI m_roomui;
     [Command]
     void CmdAddPlayer(PlayerInfo playerInfo) {
         // 服务器补全信息
@@ -189,16 +194,10 @@ public class GamePlayerController : NetworkBehaviour {
     void ClientAddPlayerToSlot() {
         GameController.ClientAddPlayer(m_playerInfo.id, gameObject);
 
-        var canvas = GameObject.Find("Canvas");
-        var ui = canvas.GetComponent<RoomUI>();
-        var slot = ui.m_playerSlots[m_playerInfo.force - 1];
-
-        var portrait = slot.transform.Find("portrait").GetComponent<Image>();
+        var roomPlayerUI = m_roomui.m_playerUIs[m_playerInfo.force - 1];
         var baseInfo = JsonMapper.ToObject<UnitInfo>(m_playerInfo.heroData);
-        portrait.sprite = Resources.Load<Sprite>(string.Format("{0}/portrait_sel", baseInfo.model));
-
-        var name = slot.transform.Find("name").GetComponent<Text>();
-        name.text = m_playerInfo.name;
+        roomPlayerUI.Portrait = Resources.Load<Sprite>(string.Format("{0}/portrait_sel", baseInfo.model));
+        roomPlayerUI.Name = m_playerInfo.name;
     }
 
     [Command]
@@ -216,16 +215,56 @@ public class GamePlayerController : NetworkBehaviour {
         }
     }
 
+
+    [Command]
+    void CmdClientLoadProgress(float value) {
+        RpcClientLoadProgress(value);
+    }
+
+    [ClientRpc]
+    void RpcClientLoadProgress(float value) {
+        var slot = m_roomui.m_playerUIs[m_playerInfo.force - 1];
+        slot.Progress = value;
+    }
+
+    /// <summary>
+    /// 开始加载
+    /// </summary>
     [ClientRpc]
     public void RpcStart() {
         GameController.ResetPlayersReady();
 #if _UHEROES_
         ResourceManager.instance.AddProjectilesToLoadingQueue(m_testProjectilesDatas);
 		ResourceManager.instance.AddUnitsToLoadingQueue(m_testUnitsDatas);
-        ResourceManager.instance.StartLoadingScene("TestStage");
+        //ResourceManager.instance.SetNextSceneAndStartLoadingScene("TestStage");
+        localClient.StartLoadingWithoutLoadingScene("TestStage", 0.1f);
 #else
         ResourceManager.instance.LoadingScene("TestTankStage");
 #endif
+    }
+
+    static IEnumerator WaitForOneSeconds(ResourceManager.OnUpdateProgress onUpdate) {
+        yield return new WaitForSeconds(1.0f);
+    }
+
+    void StartLoadingWithoutLoadingScene(string name, float sceneper) {
+        m_roomui.ShowAllProgressText();
+        ResourceManager.instance.SetNextScene(name);
+        StartCoroutine(ResourceManager.instance.LoadResourcesFromQueueAndReplaceScene(delegate (ResourceManager.LoadingProgressInfo prog) {
+            switch (prog.type) {
+            case ResourceManager.LoadingProgressType.Resource:
+                CmdClientLoadProgress(prog.value / prog.max * (1.0f - sceneper));
+                break;
+            case ResourceManager.LoadingProgressType.Scene:
+                CmdClientLoadProgress(1.0f - sceneper + prog.value / prog.max * sceneper);
+                break;
+            case ResourceManager.LoadingProgressType.Custom:
+                break;
+            case ResourceManager.LoadingProgressType.Done:
+                CmdClientLoadSceneFinished();
+                break;
+            }
+        }, WaitForOneSeconds));
     }
 
     [Command]
@@ -249,8 +288,6 @@ public class GamePlayerController : NetworkBehaviour {
     void RpcStartScene() {
         ResourceManager.instance.StartScene();
     }
-
-
 
 
 

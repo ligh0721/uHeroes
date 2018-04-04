@@ -433,20 +433,23 @@ public class ResourceManager {
     }
 
     public enum LoadingProgressType {
+        Custom,
         Resource,
-        Scene
+        Scene,
+
+        Done
     }
 
     public struct LoadingProgressInfo {
-        public LoadingProgressInfo(LoadingProgressType type, float total) {
+        public LoadingProgressInfo(LoadingProgressType type, float max) {
             this.type = type;
-            current = 0.0f;
-            this.total = total;
+            value = 0.0f;
+            this.max = max;
         }
 
         public LoadingProgressType type;
-        public float current;
-        public float total;
+        public float value;
+        public float max;
     }
 
     public delegate void OnUpdateProgress(LoadingProgressInfo prog);
@@ -471,7 +474,7 @@ public class ResourceManager {
                 LoadProjectile(res.path);
                 break;
             }
-            prog.current += 1.0f;;
+            prog.value += 1.0f;;
             onUpdate(prog);
             yield return null;
         }
@@ -481,9 +484,13 @@ public class ResourceManager {
     string m_nextScene;
     AsyncOperation m_nextSceneAop;
 
-    public void StartLoadingScene(string nextScene) {
+    public void SetNextSceneAndStartLoadingScene(string nextScene) {
         m_nextScene = nextScene;
         SceneManager.LoadScene("Loading");
+    }
+
+    public void SetNextScene(string nextScene) {
+        m_nextScene = nextScene;
     }
 
     IEnumerator ReplaceScene(OnUpdateProgress onUpdate) {
@@ -493,18 +500,24 @@ public class ResourceManager {
         onUpdate(prog);
         yield return null;
         while (m_nextSceneAop.progress < 0.9f) {
-            prog.current = m_nextSceneAop.progress;
+            prog.value = m_nextSceneAop.progress;
             onUpdate(prog);
             yield return null;
         }
-        prog.current = 0.9f;
+        prog.value = 0.9f;
         onUpdate(prog);
         yield return null;
     }
 
-    public IEnumerator LoadResourcesFromQueueAndReplaceScene(OnUpdateProgress onUpdate) {
+    public delegate IEnumerator CustomCoroutineFunction(OnUpdateProgress onUpdate);
+    public IEnumerator LoadResourcesFromQueueAndReplaceScene(OnUpdateProgress onUpdate, CustomCoroutineFunction custom) {
         yield return LoadResourcesFromQueue(onUpdate);
         yield return ReplaceScene(onUpdate);
+        if (custom != null) {
+            yield return custom(onUpdate);
+        }
+        LoadingProgressInfo prog = new LoadingProgressInfo(LoadingProgressType.Done, 0.0f);
+        onUpdate(prog);
     }
 
     public void StartScene() {

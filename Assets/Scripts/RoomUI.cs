@@ -5,6 +5,8 @@ using System.Collections.Generic;
 public class RoomUI : MonoBehaviour, INetworkable<GamePlayerController> {
 
     public List<GameObject> m_playerSlots;
+    [HideInInspector]
+    public List<RoomPlayerUI> m_playerUIs;
 
     public Button m_start;
 
@@ -17,11 +19,22 @@ public class RoomUI : MonoBehaviour, INetworkable<GamePlayerController> {
             m_start.enabled = false;
             m_start.GetComponentInChildren<Text>().text = "Waiting for server to start...";
         }
+
+        m_playerUIs = new List<RoomPlayerUI>(m_playerSlots.Count);
+        foreach (var slot in m_playerSlots) {
+            m_playerUIs.Add(slot.GetComponent<RoomPlayerUI>());
+        }
     }
 
     public void OnStartClick() {
         GameNetworkDiscovery.singleton.StopBroadcast();
         localClient.RpcStart();
+    }
+
+    public void ShowAllProgressText() {
+        foreach (var slot in m_playerUIs) {
+            slot.ShowProgressText();
+        }
     }
 
     // INetworkable
