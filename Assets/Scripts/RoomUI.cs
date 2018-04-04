@@ -29,11 +29,25 @@ public class RoomUI : MonoBehaviour, INetworkable<GamePlayerController> {
     public void OnStartClick() {
         GameNetworkDiscovery.singleton.StopBroadcast();
         localClient.RpcStart();
+        m_start.enabled = false;
     }
 
     public void ShowAllProgressText() {
         foreach (var slot in m_playerUIs) {
             slot.ShowProgressText();
+        }
+    }
+
+    public bool IsAllProgressActionDone {
+        get {
+            bool value = true;
+            foreach (var slot in m_playerUIs) {
+                if (slot.IsRunningProgressAction) {
+                    value = false;
+                    break;
+                }
+            }
+            return value;
         }
     }
 

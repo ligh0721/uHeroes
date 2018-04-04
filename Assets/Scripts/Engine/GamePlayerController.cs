@@ -244,19 +244,32 @@ public class GamePlayerController : NetworkBehaviour {
     }
 
     static IEnumerator WaitForOneSeconds(ResourceManager.OnUpdateProgress onUpdate) {
+        while (!localClient.m_roomui.IsAllProgressActionDone) {
+            yield return null;
+        }
         yield return new WaitForSeconds(1.0f);
     }
 
     void StartLoadingWithoutLoadingScene(string name, float sceneper) {
+        float lastValue = -1.0f;
         m_roomui.ShowAllProgressText();
         ResourceManager.instance.SetNextScene(name);
         StartCoroutine(ResourceManager.instance.LoadResourcesFromQueueAndReplaceScene(delegate (ResourceManager.LoadingProgressInfo prog) {
+            float value;
             switch (prog.type) {
             case ResourceManager.LoadingProgressType.Resource:
-                CmdClientLoadProgress(prog.value / prog.max * (1.0f - sceneper));
+                value = prog.value / prog.max * (1.0f - sceneper);
+                if (value != lastValue) {
+                    CmdClientLoadProgress(value);
+                    lastValue = value;
+                }
                 break;
             case ResourceManager.LoadingProgressType.Scene:
-                CmdClientLoadProgress(1.0f - sceneper + prog.value / prog.max * sceneper);
+                value = 1.0f - sceneper + prog.value / prog.max * sceneper;
+                if (value != lastValue) {
+                    CmdClientLoadProgress(value);
+                    lastValue = value;
+                }
                 break;
             case ResourceManager.LoadingProgressType.Custom:
                 break;

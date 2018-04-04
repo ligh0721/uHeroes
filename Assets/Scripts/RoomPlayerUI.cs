@@ -13,6 +13,7 @@ public class RoomPlayerUI : MonoBehaviour {
 	void Start () {
         m_slider = GetComponent<Slider>();
         m_progress.enabled = false;
+        m_slider.value = 0.0f;
 	}
 
     public string Name {
@@ -28,20 +29,25 @@ public class RoomPlayerUI : MonoBehaviour {
     public float Progress {
         get { return m_slider.value; }
         set {
-            if (m_progAct != null) {
-                StopCoroutine(m_progAct);
-            }
-            m_progAct = ProgressAction(value);
-            StartCoroutine(m_progAct);
+            m_slider.value = value;
+            m_progress.text = string.Format("{0:N0}%", m_slider.value * 100.0f);
         }
     }
 
     IEnumerator ProgressAction(float to) {
         float from = m_slider.value;
-        m_slider.value = to;
-        m_progress.text = string.Format("{0:N0}%", m_slider.value * 100.0f);
-        yield return null;
+        while (from < to) {
+            from += 0.01f;
+            m_slider.value = from;
+            m_progress.text = string.Format("{0:N0}%", m_slider.value * 100.0f);
+            yield return null;
+        }
+        
         m_progAct = null;
+    }
+
+    public bool IsRunningProgressAction {
+        get { return m_progAct != null; }
     }
 
     public void ShowProgressText() {
