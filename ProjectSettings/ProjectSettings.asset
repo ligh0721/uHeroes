@@ -6,7 +6,7 @@ PlayerSettings:
   serializedVersion: 10
   productGUID: 9c837feb68dace44d9a91fa71ced8d3f
   AndroidProfiler: 0
-  defaultScreenOrientation: 4
+  defaultScreenOrientation: 3
   targetDevice: 2
   useOnDemandResources: 0
   accelerometerFrequency: 60
@@ -583,7 +583,7 @@ PlayerSettings:
   vrEditorSettings: {}
   cloudServicesEnabled:
     Analytics: 0
-    Build: 1
+    Build: 0
     Collab: 1
     ErrorHub: 0
     Game_Performance: 0
@@ -591,7 +591,7 @@ PlayerSettings:
     Purchasing: 0
     UNet: 1
     Unity_Ads: 0
-  cloudProjectId: 88b9fe21-3b73-4dc8-989c-28ce09e11f35
-  projectName: uHeroes
+  cloudProjectId: b750f6e4-06bf-4bae-ba5e-4cce23832c0c
+  projectName: uHeroes (1)
   organizationId: ligh0721
   cloudEnabled: 0

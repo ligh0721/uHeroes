@@ -95,7 +95,8 @@ public class GamePlayerController : NetworkBehaviour {
 
     void Start() {
         DontDestroyOnLoad(gameObject);
-        m_roomui = GameObject.Find("Canvas").GetComponent<RoomUI>();
+        var canvas = GameObject.Find("Canvas");
+        m_roomui = canvas.GetComponent<RoomUI>();
         if (isLocalPlayer) {
             // 创建新接入的可控本地，具备发送Cmd能力
             s_localClient = this;
@@ -236,8 +237,8 @@ public class GamePlayerController : NetworkBehaviour {
 #if _UHEROES_
         ResourceManager.instance.AddProjectilesToLoadingQueue(m_testProjectilesDatas);
 		ResourceManager.instance.AddUnitsToLoadingQueue(m_testUnitsDatas);
-        //ResourceManager.instance.SetNextSceneAndStartLoadingScene("TestStage");
-        localClient.StartLoadingWithoutLoadingScene("TestStage", 0.1f);
+        //ResourceManager.instance.SetNextSceneAndStartLoadingScene("BattleWorld");
+        localClient.StartLoadingWithoutLoadingScene("BattleWorld", 0.1f);
 #else
         ResourceManager.instance.LoadingScene("TestTankStage");
 #endif
@@ -301,8 +302,6 @@ public class GamePlayerController : NetworkBehaviour {
     void RpcStartScene() {
         ResourceManager.instance.StartScene();
     }
-
-
 
 
 

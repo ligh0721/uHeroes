@@ -70,6 +70,11 @@ public class World {
 
             SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
             unitCtrl.unit.AddPassiveSkill(splash);
+
+            if (client == GamePlayerController.localClient) {
+                PortraitGroupUI portraitui = GameObject.Find("Canvas/Panel/UI_PortraitGroup").GetComponent<PortraitGroupUI>();
+                portraitui.AddPortrait(unitCtrl.unit);
+            }
         } else {
             // 普通单位
             UnitController.Create(syncInfo, null);

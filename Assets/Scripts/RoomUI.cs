@@ -13,10 +13,10 @@ public class RoomUI : MonoBehaviour, INetworkable<GamePlayerController> {
     // Use this for initialization
     void Start() {
         if (isServer) {
-            m_start.enabled = true;
+            m_start.interactable = true;
             m_start.GetComponentInChildren<Text>().text = "Start";
         } else {
-            m_start.enabled = false;
+            m_start.interactable = false;
             m_start.GetComponentInChildren<Text>().text = "Waiting for server to start...";
         }
 
@@ -29,7 +29,8 @@ public class RoomUI : MonoBehaviour, INetworkable<GamePlayerController> {
     public void OnStartClick() {
         GameNetworkDiscovery.singleton.StopBroadcast();
         localClient.RpcStart();
-        m_start.enabled = false;
+        m_start.interactable = false;
+        m_start.GetComponentInChildren<Text>().text = "Loading..";
     }
 
     public void ShowAllProgressText() {
