@@ -47,10 +47,11 @@ public class SyncUnitInfo {
 
 
 public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> {
-    public Texture2D m_texHpBorder;
-    public Texture2D m_texHpFill;
+    public GameObject m_uiPrefab;
 
-    protected Unit m_unit;
+    public Unit m_unit;
+
+    public UnitHUD m_ui;
 
     public Unit unit {
         get {
@@ -99,25 +100,16 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
         unitCtrl.m_unit = unit;
         WorldController.instance.world.AddUnit(unit);
 
+        unitCtrl.m_ui = UnitHUD.Create(unitCtrl);
         return unitCtrl;
     }
 
-    void OnGUI() {
-        if (m_unit != null && !m_unit.Dead) {
-            Vector3 barSize = new Vector3(m_unit.Renderer.HalfOfWidth * 2 + 0.1f, 0.15f, 0);
-            Vector2 uPos = m_unit.Renderer.Node.worldPosition;
-            Vector3 pos = new Vector3(uPos.x - barSize.x * 0.5f, uPos.y + m_unit.Renderer.HalfOfHeight * 2.5f + 0.2f, 0);
-            Vector3 pos2 = new Vector3(pos.x + barSize.x, pos.y - barSize.y, 0);
-            Vector2 posUI = Camera.main.WorldToScreenPoint(pos);
-            Vector2 pos2UI = Camera.main.WorldToScreenPoint(pos2);
-            Vector2 barSizeUI = new Vector2(pos2UI.x - posUI.x, posUI.y - pos2UI.y);
-            posUI.y = Screen.height - posUI.y;
-            GUI.DrawTexture(new Rect(posUI, barSizeUI), m_texHpBorder, ScaleMode.ScaleAndCrop);
-            float percent = m_unit.Hp / m_unit.MaxHp;
-            GUI.color = new Color(Mathf.Min(1.0f, (1.00f - percent) * 2.0f), Mathf.Min(1.0f, 2.0f * percent), 0);
-            barSizeUI.x *= percent;
-            GUI.DrawTexture(new Rect(posUI, barSizeUI), m_texHpFill, ScaleMode.ScaleAndCrop);
-        }
+    void Start() {
+        
+    }
+
+    void OnDestroy() {
+        // 有GameObjectPool的时候，不会Destroy
     }
 
     protected MouseStatus m_mouse = new MouseStatus();

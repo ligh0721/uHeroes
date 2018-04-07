@@ -268,14 +268,14 @@ namespace cca
 
             set
             {
-                _gameObject.transform.parent = value.gameObject.transform;
+                _gameObject.transform.SetParent(value.gameObject.transform);
             }
         }
 
         public void removeFromParentAndCleanup()
         {
             Debug.Assert(_gameObject);
-            //_gameObject.transform.parent = null;
+            //_gameObject.transform.SetParent(null);
             this.destroy();
         }
 

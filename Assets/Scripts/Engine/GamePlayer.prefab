@@ -55,7 +55,7 @@ MonoBehaviour:
   - {fileID: 4900000, guid: dd22b14a12267f4409ca62bf52899e8d, type: 3}
   m_testPlayerCount: 3
   m_testCreateRate: 1
-  m_testMax: 50
+  m_testMax: 1
 --- !u!114 &11462970
 MonoBehaviour:
   m_ObjectHideFlags: 1

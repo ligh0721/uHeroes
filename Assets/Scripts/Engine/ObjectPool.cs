@@ -299,7 +299,9 @@ public class GameObjectPool : BaseObjectPool<GameObject> {
     protected GameObjectPool() {
         GameObject root = new GameObject("GameObjectPool");
         m_root = root.transform;
+#if !UNITY_EDITOR
         Object.DontDestroyOnLoad(root);
+#endif
         root.SetActive(false);
     }
 
@@ -340,11 +342,11 @@ public class GameObjectPool : BaseObjectPool<GameObject> {
     }
 
     protected override void OnAddToPool(object obj) {
-        ((GameObject)obj).transform.parent = m_root;
+        ((GameObject)obj).transform.SetParent(m_root);
     }
 
     protected override void OnRemoveFromPool(object obj) {
-        ((GameObject)obj).transform.parent = null;
+        ((GameObject)obj).transform.SetParent(null);
     }
 
     public GameObject Instantiate(GameObject type) {

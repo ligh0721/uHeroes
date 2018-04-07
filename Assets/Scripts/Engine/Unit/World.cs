@@ -51,9 +51,10 @@ public class World {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
 
         GamePlayerController client;
+        UnitController unitCtrl;
         if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
             // 玩家单位
-            UnitController unitCtrl = UnitController.Create(syncInfo, client);
+            unitCtrl = UnitController.Create(syncInfo, client);
             client.unitCtrl = unitCtrl;
             Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
             if (client == GamePlayerController.localClient) {
@@ -61,7 +62,7 @@ public class World {
             }
 
             // TEST !!!!
-            unitCtrl.unit.MaxHpBase = 100000;  // test
+            unitCtrl.unit.MaxHpBase = 10000;  // test
             unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
             unitCtrl.unit.AttackSkill.coolDownBase = 0;
             unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 2;

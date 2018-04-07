@@ -11,11 +11,12 @@ public class PortraitUI : MonoBehaviour {
     public Slider m_expSlider;
 
     int m_levelValue;
-    int m_hp;
-    int m_maxHp = 1;
+    float m_hp;
+    float m_maxHp = 1;
     int m_exp;
     int m_maxExp = 1;
     Unit m_unit;
+
     // Use this for initialization
     void Start () {
         transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
@@ -28,8 +29,13 @@ public class PortraitUI : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        MaxHp = (int)m_unit.MaxHp;
-        Hp = (int)m_unit.Hp;
+        if (MaxHp != m_unit.MaxHp) {
+            MaxHp = m_unit.MaxHp;
+        }
+        
+        if (Hp != m_unit.Hp) {
+            Hp = m_unit.Hp;
+        }
     }
     
     public int Level {
@@ -53,25 +59,25 @@ public class PortraitUI : MonoBehaviour {
         }
     }
 
-    public int Hp {
+    public float Hp {
         get {
             return m_hp;
         }
 
         set {
             m_hp = value;
-            float per = (float)m_hp / m_maxHp;
+            float per = m_hp / m_maxHp;
             m_hpSlider.value = per;
         }
     }
 
-    public int MaxHp {
+    public float MaxHp {
         get {
             return m_maxHp;
         }
 
         set {
-            m_hp = (int)(m_hp * 1.0f / m_maxHp * value);
+            m_hp = (m_hp / m_maxHp * value);
             m_maxHp = value;
         }
     }

@@ -243,13 +243,9 @@ public class ResourceManager {
     /// <param name="data"></param>
     /// <returns></returns>
     public UnitInfo LoadUnit(string path, string data) {
-        if (path == null) {
-            return null;
-        }
-
         // 如果该路径已经存在对应映射，直接返回
         UnitInfo baseInfo;
-        if (path.Length > 0 && m_unitInfos.TryGetValue(path, out baseInfo)) {
+        if (path != null && path.Length > 0 && m_unitInfos.TryGetValue(path, out baseInfo)) {
             LoadUnitModel(baseInfo.model);
             return baseInfo;
         }
@@ -261,7 +257,7 @@ public class ResourceManager {
         }
 
         // 建立对应映射
-        if (path.Length > 0) {
+        if (path != null && path.Length > 0) {
             if (m_unitInfos.ContainsKey(path)) {
                 m_unitInfos[path] = baseInfo;
             } else {
@@ -318,12 +314,8 @@ public class ResourceManager {
     /// <param name="data"></param>
     /// <returns></returns>
     public ProjectileInfo LoadProjectile(string path, string data) {
-        if (path == null) {
-            return null;
-        }
-
         ProjectileInfo baseInfo;
-        if (path.Length > 0 && m_projectileInfos.TryGetValue(path, out baseInfo)) {
+        if (path != null && path.Length > 0 && m_projectileInfos.TryGetValue(path, out baseInfo)) {
             LoadProjectileModel(baseInfo.model);
             return baseInfo;
         }
@@ -333,7 +325,7 @@ public class ResourceManager {
             return null;
         }
 
-        if (path.Length > 0) {
+        if (path != null && path.Length > 0) {
             if (m_projectileInfos.ContainsKey(path)) {
                 m_projectileInfos[path] = baseInfo;
             } else {

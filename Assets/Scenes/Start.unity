@@ -236,6 +236,7 @@ GameObject:
   - component: {fileID: 322020530}
   - component: {fileID: 322020529}
   - component: {fileID: 322020528}
+  - component: {fileID: 322020533}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -311,6 +312,17 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &322020533
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 322020527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bc78f65d66b2b5a43995b0ae8ebfa4c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &334477580
 GameObject:
   m_ObjectHideFlags: 0
@@ -1135,7 +1147,6 @@ GameObject:
   - component: {fileID: 1250030028}
   - component: {fileID: 1250030027}
   - component: {fileID: 1250030026}
-  - component: {fileID: 1250030031}
   - component: {fileID: 1250030030}
   m_Layer: 5
   m_Name: Canvas
@@ -1240,17 +1251,6 @@ MonoBehaviour:
   - "\u514D\u8D39\u73A9\u5BB6"
   - VIP
   - "\u5317\u51B0\u6D0B"
---- !u!114 &1250030031
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 1250030025}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bc78f65d66b2b5a43995b0ae8ebfa4c9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1342061637
 GameObject:
   m_ObjectHideFlags: 0

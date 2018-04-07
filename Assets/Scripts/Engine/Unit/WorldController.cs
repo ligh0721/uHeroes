@@ -9,6 +9,9 @@ using cca;
 public class WorldController : MonoBehaviour {
     public GameObject unitPrefab;
     public GameObject projectilePrefab;
+    public GameObject unitUIPrefab;
+
+    GameObject m_worldCanvas;
 
     World m_world;
     static WorldController s_instance;
@@ -22,6 +25,15 @@ public class WorldController : MonoBehaviour {
     public static WorldController instance {
         get {
             return s_instance;
+        }
+    }
+
+    public GameObject worldCanvas {
+        get {
+            if (m_worldCanvas == null) {
+                m_worldCanvas = GameObject.Find("HUDCanvas");
+            }
+            return m_worldCanvas;
         }
     }
 

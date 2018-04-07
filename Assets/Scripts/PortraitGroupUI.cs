@@ -18,7 +18,7 @@ public class PortraitGroupUI : MonoBehaviour {
 
     public void AddPortrait(Unit unit) {
         GameObject portrait = Instantiate(m_portraitPrefab);
-        portrait.transform.parent = gameObject.transform;
+        portrait.transform.SetParent(gameObject.transform);
         PortraitUI portraitUI = portrait.GetComponent<PortraitUI>();
         portraitUI.SetUnit(unit);
         portraitUI.Portrait = Resources.Load<Sprite>(string.Format("{0}/portrait_hero", unit.Model));

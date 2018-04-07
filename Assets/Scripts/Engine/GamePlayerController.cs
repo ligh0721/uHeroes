@@ -7,6 +7,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using LitJson;
+using UnityEditor;
 
 
 public struct PlayerInfo {
@@ -57,8 +58,20 @@ public class GamePlayerController : NetworkBehaviour {
     /// <value>The local client.</value>
     public static GamePlayerController localClient {
         get {
+#if UNITY_EDITOR
+            fakeClientForEditor();
+#endif
             return s_localClient;
         }
+    }
+
+    static void fakeClientForEditor() {
+        if (s_localClient != null) {
+            return;
+        }
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Scripts/Engine/GamePlayer.prefab");
+        var gamePlayer = Instantiate(prefab);
+        s_localClient = gamePlayer.GetComponent<GamePlayerController>();
     }
 
     public int playerId {
