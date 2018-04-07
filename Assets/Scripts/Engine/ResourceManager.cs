@@ -6,7 +6,7 @@ using LitJson;
 using System;
 
 
-public class BaseResInfo {
+public class ModelBaseInfo {
     public class Point {
         public double x = 0.5;
         public double y = 0.5;
@@ -22,7 +22,7 @@ public class BaseResInfo {
     public List<string> frames;
 }
 
-public class UnitResInfo : BaseResInfo {
+public class UnitModelInfo : ModelBaseInfo {
     public class Fire {
         public double x = 0.0;
         public double y = 0.0;
@@ -36,7 +36,7 @@ public class UnitResInfo : BaseResInfo {
     public Half half;
 }
 
-public class ProjectileResInfo : BaseResInfo {
+public class ProjectileModelInfo : ModelBaseInfo {
 }
 
 [Serializable]
@@ -104,37 +104,37 @@ public class ResourceManager {
         }
     }
 
-    public UnitResInfo LoadUnitModel(string path) {
-        return Load<UnitResInfo>(path);
+    public UnitModelInfo LoadUnitModel(string path) {
+        return LoadModel<UnitModelInfo>(path);
     }
 
-    public ProjectileResInfo LoadProjectileModel(string path) {
-        return Load<ProjectileResInfo>(path);
+    public ProjectileModelInfo LoadProjectileModel(string path) {
+        return LoadModel<ProjectileModelInfo>(path);
     }
 
     /// <summary>
-    /// 加载Units或Projectile模型资源(动画和帧)
-    /// 因为模型下info结构不同，所以需要用TYPE来区分(UnitResInfo或ProjectileResInfo)
+    /// 加载Unit或Projectile模型资源(动画和帧)
+    /// 因为模型下info结构不同，所以需要用TYPE来区分(UnitModelInfo或ProjectileModelInfo)
     /// </summary>
     /// <param name="path"></param>
     /// <returns></returns>
-    TYPE Load<TYPE>(string path)
-        where TYPE : BaseResInfo {
-        BaseResInfo baseInfo;
-        if (m_infos.TryGetValue(path, out baseInfo)) {
+    TYPE LoadModel<TYPE>(string path)
+        where TYPE : ModelBaseInfo {
+        ModelBaseInfo baseInfo;
+        if (m_modelInfos.TryGetValue(path, out baseInfo)) {
             return baseInfo as TYPE;
         }
 			
         TextAsset res = Resources.Load<TextAsset>(string.Format("{0}/info", path));
-        TYPE resInfo = JsonMapper.ToObject<TYPE>(res.text);
+        TYPE modelInfo = JsonMapper.ToObject<TYPE>(res.text);
 		Resources.UnloadAsset(res);
-        m_infos.Add(path, resInfo);
+        m_modelInfos.Add(path, modelInfo);
 
-        Vector2 pivot = new Vector2((float)resInfo.pivot.x, (float)resInfo.pivot.y);
+        Vector2 pivot = new Vector2((float)modelInfo.pivot.x, (float)modelInfo.pivot.y);
 
-        foreach (KeyValuePair<string, BaseResInfo.Action> action in resInfo.actions) {
+        foreach (KeyValuePair<string, ModelBaseInfo.Action> action in modelInfo.actions) {
             string actName = action.Key;
-            BaseResInfo.Action actData = action.Value;
+            ModelBaseInfo.Action actData = action.Value;
             int aframes = actData.frames;
             float adelay = (float)actData.delay;
             int aspecial = actData.special;
@@ -151,58 +151,68 @@ public class ResourceManager {
             if (aspecial >= 0) {
                 animation.setFrameData(aspecial, "onSpecial");
             }
-            m_animations.Add(string.Format("{0}/{1}", path, actName), animation);
+            m_modelAnimations.Add(string.Format("{0}/{1}", path, actName), animation);
         }
 
-        foreach (string frame in resInfo.frames) {
+        foreach (string frame in modelInfo.frames) {
             Texture2D texture = Resources.Load<Texture2D>(string.Format("{0}/{1}", path, frame));
             Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot);
 			Resources.UnloadAsset(texture);
-            m_frames.Add(string.Format("{0}/{1}", path, frame), sprite);
+            m_modelFrames.Add(string.Format("{0}/{1}", path, frame), sprite);
         }
 
-        return resInfo;
+        return modelInfo;
     }
 
     // like "Malik/move"
-    public cca.Animation GetAnimation(string name) {
-        return m_animations[name];
+    public cca.Animation GetAnimation(string path) {
+        return m_modelAnimations[path];
     }
 
     // like "Malik/default"
-    public Sprite GetFrame(string name) {
-        return m_frames[name];
+    public Sprite GetFrame(string path) {
+        return m_modelFrames[path];
     }
 
-    public BaseResInfo GetInfo(string name) {
-        return m_infos[name];
+    public ModelBaseInfo GetModelInfo(string path) {
+        return m_modelInfos[path];
     }
 
-    void PrepareResource(string name, ObjectRenderer renderer, BaseResInfo resInfo) {
-        foreach (var frame in resInfo.frames) {
-            renderer.PrepareFrame(ObjectRenderer.NameToId(frame), string.Format("{0}/{1}", name, frame));
+    /// <summary>
+    /// 把已经加载的模型资源与Node进行关联
+    /// </summary>
+    /// <param name="modelPath"></param>
+    /// <param name="node"></param>
+    /// <param name="modelInfo"></param>
+    void AssignModelToNode(string modelPath, ModelNode node, ModelBaseInfo modelInfo) {
+        foreach (var frameName in modelInfo.frames) {
+            var framePath = string.Format("{0}/{1}", modelPath, frameName);
+            var frame = GetFrame(framePath);
+            node.AssignFrame(ModelNode.NameToId(frameName), frame);
         }
 
-        foreach (var action in resInfo.actions) {
-            renderer.PrepareAnimation(ObjectRenderer.NameToId(action.Key), string.Format("{0}/{1}", name, action.Key));
+        foreach (var animationName in modelInfo.actions.Keys) {
+            var animationPath = string.Format("{0}/{1}", modelPath, animationName);
+            var animation = GetAnimation(animationPath);
+            node.AssignAnimation(ModelNode.NameToId(animationName), animation);
         }
     }
 
-    public void PrepareUnitResource(string name, UnitRenderer renderer) {
-        var resInfo = GetInfo(name) as UnitResInfo;
-        PrepareResource(name, renderer, resInfo);
-        renderer.SetGeometry((float)resInfo.half.x, (float)resInfo.half.y, new Vector2((float)resInfo.fire.x, (float)resInfo.fire.y));
+    public void AssignModelToUnitNode(string modelPath, UnitNode node) {
+        var modelInfo = GetModelInfo(modelPath) as UnitModelInfo;
+        AssignModelToNode(modelPath, node, modelInfo);
+        node.SetGeometry((float)modelInfo.half.x, (float)modelInfo.half.y, new Vector2((float)modelInfo.fire.x, (float)modelInfo.fire.y));
     }
 
-    public void PrepareProjectileResource(string name, ProjectileRenderer renderer) {
-        var resInfo = GetInfo(name) as ProjectileResInfo;
-        PrepareResource(name, renderer, resInfo);
+    public void AssignModelToProjectileNode(string modelPath, ProjectileNode node) {
+        var modelInfo = GetModelInfo(modelPath) as ProjectileModelInfo;
+        AssignModelToNode(modelPath, node, modelInfo);
     }
 
     static ResourceManager s_instance;
-    Dictionary<string, BaseResInfo> m_infos = new Dictionary<string, BaseResInfo>();
-    Dictionary<string, cca.Animation> m_animations = new Dictionary<string, cca.Animation>();
-    Dictionary<string, Sprite> m_frames = new Dictionary<string, Sprite>();
+    Dictionary<string, ModelBaseInfo> m_modelInfos = new Dictionary<string, ModelBaseInfo>();
+    Dictionary<string, cca.Animation> m_modelAnimations = new Dictionary<string, cca.Animation>();
+    Dictionary<string, Sprite> m_modelFrames = new Dictionary<string, Sprite>();
 
     /// <summary>
     /// 加载预设UnitsData中的数据

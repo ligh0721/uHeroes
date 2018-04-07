@@ -68,7 +68,7 @@ public class TankController : UnitController {
             atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
             atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
             foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
-                atk.AddCastAnimation(ObjectRenderer.NameToId(ani));
+                atk.AddCastAnimation(ModelNode.NameToId(ani));
             }
             atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
             atk.ProjectileTemplate.TypeOfFire = Projectile.FireType.kStraight;

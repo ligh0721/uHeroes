@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using cca;
 
 
-public class TankGunRenderer : UnitRenderer {
+public class TankGunRenderer : UnitNode {
     public TankGunRenderer() {
     }
 
@@ -27,7 +27,7 @@ public class TankGunRenderer : UnitRenderer {
 }
 
 
-public class TankRenderer : UnitRenderer {
+public class TankRenderer : UnitNode {
     public TankRenderer() {
     }
 

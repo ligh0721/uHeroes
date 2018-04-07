@@ -4,87 +4,46 @@ using System.Collections.Generic;
 
 namespace cca
 {
-    public class Node
+    public class Node : MonoBehaviour
     {
-        public Node()
-        {
-        }
+        public GameObject m_prefab;  // use to alloc object to pool
+        public ActionManager m_actionManager;
 
-        public Node(GameObject prefab, GameObject gameObject)
-        {
-            init(prefab, gameObject);
-        }
-
-        public virtual void init(GameObject prefab, GameObject gameObject)
-        {
-            Debug.Assert(!_nodeMapper.ContainsKey(gameObject));
-            _nodeMapper.Add(gameObject, this);
-            _prefab = prefab;
-            _gameObject = gameObject;
-        }
-
-        public GameObject gameObject
-        {
-            get
-            {
-                return _gameObject;
-            }
-        }
-
-        public bool valid
-        {
-            get
-            {
-                return _gameObject != null;
-            }
-        }
-
-        public static Node mapped(GameObject prefab, GameObject gameObject)
-        {
-            Node node;
-            if (!_nodeMapper.TryGetValue(gameObject, out node))
-            {
-                node = new Node(prefab, gameObject);
-                //node = ObjectPool<Node>.instance.Instantiate(); node.init(prefab, gameObject);
-            }
-            return node;
+        SpriteRenderer _spriteRenderer;
+        void Start() {
+            init();
         }
 
         // detach and destroy gameObject
-        public virtual void destroy()
+        void OnDestroy()
         {
             cleanup();
-            _nodeMapper.Remove(_gameObject);
-            GameObjectPool.instance.Destroy(_prefab, _gameObject);
-            _gameObject = null;
         }
 
-        public static void destroyAll()
-        {
-            var copy = new Dictionary<GameObject, Node>(_nodeMapper);
-            foreach (Node node in copy.Values)
-            {
-                node.destroy();
+        public virtual void init() {
+            if (m_actionManager == null) {
+                Debug.LogWarning("Action Manager is not set");
+                m_actionManager = ActionManager.instance;
             }
+            _spriteRenderer = GetComponent<SpriteRenderer>();
         }
 
-        public static implicit operator bool(Node node)
-        {
-            return node != null && node.valid;
+        public virtual void cleanup() {
+            m_actionManager.removeAllActions(this);
         }
 
         public virtual float positionZ
         {
             get
             {
-                return _gameObject.transform.localPosition.z;
+                return transform.localPosition.z;
             }
 
             set
             {
-                Vector3 pos = _gameObject.transform.localPosition;
+                Vector3 pos = transform.localPosition;
                 pos.z = value;
-                _gameObject.transform.localPosition = pos;
+                transform.localPosition = pos;
             }
         }
 
@@ -92,14 +51,14 @@ namespace cca
         {
             get
             {
-                return _gameObject.transform.position.z;
+                return transform.position.z;
             }
 
             set
             {
-                Vector3 pos = _gameObject.transform.position;
+                Vector3 pos = transform.position;
                 pos.z = value;
-                _gameObject.transform.position = pos;
+                transform.position = pos;
             }
         }
 
@@ -107,15 +66,15 @@ namespace cca
         {
             get
             {
-                return _gameObject.transform.localPosition;
+                return transform.localPosition;
             }
 
             set
             {
-                Vector3 pos = _gameObject.transform.localPosition;
+                Vector3 pos = transform.localPosition;
                 pos.x = value.x;
                 pos.y = value.y;
-                _gameObject.transform.localPosition = pos;
+                transform.localPosition = pos;
             }
         }
 
@@ -123,15 +82,15 @@ namespace cca
         {
             get
             {
-                return _gameObject.transform.position;
+                return transform.position;
             }
 
             set
             {
-                Vector3 pos = _gameObject.transform.position;
+                Vector3 pos = transform.position;
                 pos.x = value.x;
                 pos.y = value.y;
-                _gameObject.transform.position = pos;
+                transform.position = pos;
             }
         }
 
@@ -139,14 +98,14 @@ namespace cca
         {
             get
             {
-                return _gameObject.transform.localRotation.eulerAngles.z;
+                return transform.localRotation.eulerAngles.z;
             }
 
             set
             {
-                Vector3 rotation = _gameObject.transform.localRotation.eulerAngles;
+                Vector3 rotation = transform.localRotation.eulerAngles;
                 rotation.z = value;
-                _gameObject.transform.localRotation = Quaternion.Euler(rotation);
+                transform.localRotation = Quaternion.Euler(rotation);
             }
         }
 
@@ -154,7 +113,7 @@ namespace cca
         {
             get
             {
-                return _gameObject.GetComponent<SpriteRenderer>().sprite.bounds.size;
+                return _spriteRenderer.sprite.bounds.size;
             }
         }
 
@@ -162,7 +121,7 @@ namespace cca
         {
             get
             {
-                Sprite sprite = _gameObject.GetComponent<SpriteRenderer>().sprite;
+                Sprite sprite = _spriteRenderer.sprite;
                 return sprite.rect.size / sprite.pixelsPerUnit;
             }
         }
@@ -171,7 +130,7 @@ namespace cca
         {
             get
             {
-                return _gameObject.GetComponent<SpriteRenderer>().sprite.rect.size;
+                return _spriteRenderer.sprite.rect.size;
             }
         }
 
@@ -179,15 +138,15 @@ namespace cca
         {
             get
             {
-                return _gameObject.transform.localScale;
+                return transform.localScale;
             }
 
             set
             {
-                Vector3 scale = _gameObject.transform.localScale;
+                Vector3 scale = transform.localScale;
                 scale.x = value.x;
                 scale.y = value.y;
-                _gameObject.transform.localScale = scale;
+                transform.localScale = scale;
             }
         }
 
@@ -195,12 +154,12 @@ namespace cca
         {
             get
             {
-                return _gameObject.GetComponent<SpriteRenderer>().flipX;
+                return _spriteRenderer.flipX;
             }
 
             set
             {
-                _gameObject.GetComponent<SpriteRenderer>().flipX = value;
+                _spriteRenderer.flipX = value;
             }
         }
 
@@ -208,23 +167,23 @@ namespace cca
         {
             get
             {
-                return _gameObject.GetComponent<SpriteRenderer>().sprite;
+                return _spriteRenderer.sprite;
             }
 
             set
             {
-                _gameObject.GetComponent<SpriteRenderer>().sprite = value;
+                _spriteRenderer.sprite = value;
             }
         }
 
 		public bool visible
 		{
 			get {
-				return _gameObject.GetComponent<SpriteRenderer> ().enabled;
+				return _spriteRenderer.enabled;
 			}
 
 			set {
-				_gameObject.GetComponent<SpriteRenderer> ().enabled = value;
+                _spriteRenderer.enabled = value;
 			}
 		}
 
@@ -232,14 +191,14 @@ namespace cca
         {
             get
             {
-                return _gameObject.GetComponent<SpriteRenderer>().color.a;
+                return _spriteRenderer.color.a;
             }
 
             set
             {
-                Color color = _gameObject.GetComponent<SpriteRenderer>().color;
+                Color color = _spriteRenderer.color;
                 color.a = value;
-                _gameObject.GetComponent<SpriteRenderer>().color = color;
+                _spriteRenderer.color = color;
             }
         }
 
@@ -247,71 +206,51 @@ namespace cca
         {
             get
             {
-                if (_gameObject.transform.parent == null)
+                if (transform.parent == null)
                 {
                     return null;
                 }
 
-                Node node;
-                if (_nodeMapper.TryGetValue(_gameObject.transform.parent.gameObject, out node))
-                {
-                    return node;
-                }
-                else
-                {
-                    Debug.LogWarning("parent is not assigned to a node");
-                    //node = ObjectPool<Node>.instance.Instantiate(); node.init(_prefab, _gameObject.transform.parent.gameObject);
-                    //return node;
-                    return new Node(_prefab, _gameObject.transform.parent.gameObject);
-                }
+                Node parentNode = transform.parent.GetComponent<Node>();
+                return parentNode;
             }
 
             set
             {
-                _gameObject.transform.SetParent(value.gameObject.transform);
+                if (value != null) {
+                    transform.SetParent(value.transform);
+                } else {
+                    transform.SetParent(null);
+                }
             }
         }
 
         public void removeFromParentAndCleanup()
         {
-            Debug.Assert(_gameObject);
             //_gameObject.transform.SetParent(null);
-            this.destroy();
-        }
-
-        public void cleanup()
-        {
-            Debug.Assert(_gameObject);
-            _actionManager.removeAllActions(this);
+            //this.destroy();
+            parent = null;
+            GameObjectPool.instance.Destroy(m_prefab, gameObject);
         }
 
         public void runAction(Action action)
         {
-            Debug.Assert(_gameObject);
-            _actionManager.addAction(this, action);
+            m_actionManager.addAction(this, action);
         }
 
         public cca.Action getActionByTag(int tag)
         {
-            Debug.Assert(_gameObject);
-            return _actionManager.getActionByTag(this, tag);
+            return m_actionManager.getActionByTag(this, tag);
         }
 
         public void stopActionByTag(int tag)
         {
-            Debug.Assert(_gameObject);
-            _actionManager.removeActionByTag(this, tag);
+            m_actionManager.removeActionByTag(this, tag);
         }
 
         public void stopAllActions()
         {
-            Debug.Assert(_gameObject);
-            _actionManager.removeAllActions(this);
+            m_actionManager.removeAllActions(this);
         }
-
-        protected GameObject _gameObject;
-        protected GameObject _prefab;
-        protected static Dictionary<GameObject, Node> _nodeMapper = new Dictionary<GameObject, Node>();
-        protected ActionManager _actionManager = ActionManager.instance;
     }
 }

@@ -18,7 +18,7 @@ public class UnitAI : IUnitEvent
             return;
         }
 
-        UnitRenderer d = unit.Renderer;
+        UnitNode d = unit.Renderer;
 
         ActiveSkill atk = unit.AttackSkill;
         if (atk == null)
@@ -32,7 +32,7 @@ public class UnitAI : IUnitEvent
             Unit tt = unit.CastTarget.TargetUnit;
             if (tt != null && tt.Valid)
             {
-                UnitRenderer ttd = tt.Renderer;
+                UnitNode ttd = tt.Renderer;
                 if (ttd != null && unit.IsDoingAnd(Unit.kDoingCasting | Unit.kDoingMoving) && Vector2.Distance(d.Node.position, ttd.Node.position) < unit.HostilityRange)
                 {
                     // 正在追击施法，距离在仇恨范围内
@@ -67,7 +67,7 @@ public class UnitAI : IUnitEvent
             return;
         }
 
-        UnitRenderer d = unit.Renderer;
+        UnitNode d = unit.Renderer;
         if (d == null)
         {
             return;

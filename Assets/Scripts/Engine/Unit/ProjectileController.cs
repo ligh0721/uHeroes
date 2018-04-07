@@ -62,8 +62,8 @@ public class ProjectileController : MonoBehaviour
 
         ResourceManager.instance.LoadProjectileModel(path);  // high time cost
         //ProjectileRenderer r = new ProjectileRenderer(WorldController.instance.projectilePrefab, gameObject);
-        ProjectileRenderer r = ObjectPool<ProjectileRenderer>.instance.Instantiate(); r.Init(WorldController.instance.projectilePrefab, gameObject);
-        ResourceManager.instance.PrepareProjectileResource(path, r);
+        ProjectileNode r = ObjectPool<ProjectileNode>.instance.Instantiate(); r.Init(WorldController.instance.projectilePrefab, gameObject);
+        ResourceManager.instance.AssignModelToProjectileNode(path, r);
 
         //Projectile projectile = new Projectile(r);
         Projectile projectile = ObjectPool<Projectile>.instance.Instantiate(); projectile.Init(r);
@@ -104,7 +104,7 @@ public class ProjectileController : MonoBehaviour
             return null;
         }
 
-        ProjectileRenderer r = ObjectPool<ProjectileRenderer>.instance.Instantiate();
+        ProjectileNode r = ObjectPool<ProjectileNode>.instance.Instantiate();
         //Projectile projectile = new Projectile(r);
         Projectile projectile = ObjectPool<Projectile>.instance.Instantiate(); projectile.Init(r);
         projectile.m_model = baseInfo.model;

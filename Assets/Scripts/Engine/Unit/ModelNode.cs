@@ -2,8 +2,17 @@ using UnityEngine;
 using System.Collections.Generic;
 using cca;
 
-public class ObjectRenderer
+public class ModelNode : NodeWithHeight
 {
+    void Start() {
+        // TODO: delete test 删掉是否会被调用
+        init();
+    }
+
+    void OnDestroy() {
+        cleanup();
+    }
+
     public const int kActionMove = 0x1;
     public const int kActionDie = 0x2;
     public const int kActionAct1 = 0x11;
@@ -22,46 +31,6 @@ public class ObjectRenderer
 
     public const int CONST_LOOP_FOREVER = -1;
 
-    public ObjectRenderer()
-    {
-    }
-
-    /// <summary>
-    /// 
-    /// </summary>
-    /// <param name="prefab">对象池根据prefab来确定具体子池</param>
-    /// <param name="gameObject"></param>
-    public ObjectRenderer(GameObject prefab, GameObject gameObject)
-    {
-        Init(prefab, gameObject);
-    }
-
-    public void Init(GameObject prefab, GameObject gameObject)
-    {
-        Node = RendererNode.mapped(prefab, gameObject);
-    }
-
-    public RendererNode Node
-    {
-        get
-        {
-            return m_node;
-        }
-
-        set
-        {
-            m_node = value;
-            value.renderer = this;
-        }
-    }
-
-    public bool Valid
-    {
-        get
-        {
-            return m_node != null && m_node.valid;
-        }
-    }
 
     // like NameToId("move")
     public static int NameToId(string name)
@@ -135,34 +104,31 @@ public class ObjectRenderer
     }
 
     // like PrepareAnimation(kActionMove, "Malik/move")
-    public void PrepareAnimation(int id, string name)
+    public void AssignAnimation(int id, cca.Animation animation)
     {
-        var animation = ResourceManager.instance.GetAnimation(name);
         m_animations.Add(id, animation);
     }
 
-    public void PrepareFrame(int id, string name)
+    public void AssignFrame(int id, Sprite frame)
     {
-        var frame = ResourceManager.instance.GetFrame(name);
         m_frames.Add(id, frame);
     }
 
     public bool IsDoingAction(int tag)
     {
-        return tag != 0 && m_node.getActionByTag(tag) != null;
+        return tag != 0 && getActionByTag(tag) != null;
     }
 
     public virtual void StopAction(int tag)
     {
         if (tag != 0)
         {
-            m_node.stopActionByTag(tag);
+            stopActionByTag(tag);
         }
     }
 
-    public virtual void StopAllActions()
-    {
-        m_node.stopAllActions();
+    public virtual void StopAllActions() {
+        stopAllActions();
     }
 
     public virtual void SetActionSpeed(int tag, float speed)
@@ -172,7 +138,7 @@ public class ObjectRenderer
             return;
         }
 
-        Speed spd = m_node.getActionByTag(tag) as Speed;
+        Speed spd = getActionByTag(tag) as Speed;
         if (spd == null)
         {
             return;
@@ -181,26 +147,25 @@ public class ObjectRenderer
         spd.ActionSpeed = speed;
     }
 
+    public virtual void SetFlippedX(bool flippedX) {
+        base.flippedX = flippedX;
+    }
+
     public virtual void SetFrame(int id)
     {
-        Sprite frame;
-        if (!m_frames.TryGetValue(id, out frame))
+        Sprite fr;
+        if (!m_frames.TryGetValue(id, out fr))
         {
             return;
         }
-        m_node.frame = frame;
-    }
-
-    public virtual void SetFlippedX(bool flippedX)
-    {
-        m_node.flippedX = flippedX;
+        frame = fr;
     }
 
     public virtual void DoMoveTo(Vector2 pos, float duration, Function onFinished, float speed = 1.0f)
     {
         var action = new Speed(new Sequence(new MoveTo(duration, pos), new CallFunc(onFinished)), speed);
         action.tag = kActionMoveTo;
-        m_node.runAction(action);
+        runAction(action);
     }
 
     public virtual void DoAnimate(int id, Function onSpecial, int loop, Function onFinished, float speed = 1.0f)
@@ -243,11 +208,9 @@ public class ObjectRenderer
 
         Speed action = new Speed(act, speed);
         action.tag = id;
-        m_node.runAction(action);
+        runAction(action);
     }
 
-    protected RendererNode m_node;
     protected Dictionary<int, cca.Animation> m_animations = new Dictionary<int, cca.Animation>();
     protected Dictionary<int, Sprite> m_frames = new Dictionary<int, Sprite>();
-    protected float m_height;
 }

@@ -56,7 +56,7 @@ public class WorldController : MonoBehaviour {
         GameObjectPool.instance.Alloc(projectilePrefab, 50, reset);
 
         //ObjectPool<RendererNode>.instance.Alloc(100);
-        ObjectPool<ProjectileRenderer>.instance.Alloc(50);
+        ObjectPool<ProjectileNode>.instance.Alloc(50);
         ObjectPool<Projectile>.instance.Alloc(50);
         //MutiObjectPool.instance.Alloc<UnitRenderer>(50);
     }
@@ -111,4 +111,10 @@ public class WorldController : MonoBehaviour {
             GameNetworkDiscovery.singleton.StopBroadcast();
         }
     }
+
+
+
+
+
+    // world logic
 }

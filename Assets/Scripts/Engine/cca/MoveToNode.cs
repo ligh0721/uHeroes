@@ -9,7 +9,7 @@ public class MoveToNode : ActionInterval
     public const int kTypeUnit = 2;
     public const int kTypeProjectile = 3;
 
-    public MoveToNode(float duration, UnitRenderer unit, bool fixRotation = true, float maxHeightDelta = 0.0f)
+    public MoveToNode(float duration, UnitNode unit, bool fixRotation = true, float maxHeightDelta = 0.0f)
         : base(duration)
     {
         _eToType = kTypeUnit;
@@ -36,7 +36,7 @@ public class MoveToNode : ActionInterval
         base.startWithTarget(target);
 
         _eFromType = kTypeProjectile;
-        RendererNode rendererTarget = target as RendererNode;
+        NodeWithHeight rendererTarget = target as NodeWithHeight;
         _oStartPos = rendererTarget.position;
         _oEndPos = _unit.Node.position;
         _fFromHeight = rendererTarget.height;
@@ -70,7 +70,7 @@ public class MoveToNode : ActionInterval
         fA = -4 * _fMaxHeightDelta / (fA * fA);
         float fHeightDelta = fA * fX * fX + _fMaxHeightDelta;
 
-        RendererNode rendererTarget = _target as RendererNode;
+        NodeWithHeight rendererTarget = _target as NodeWithHeight;
         rendererTarget.position = _oStartPos + _oDeltaPos * time;
         rendererTarget.height = _fFromHeight + _fDeltaHeight * time + fHeightDelta;
 
@@ -90,7 +90,7 @@ public class MoveToNode : ActionInterval
     protected Vector2 _oDeltaPos;
 
     //protected RendererNode _endNode;
-    protected UnitRenderer _unit;
+    protected UnitNode _unit;
     protected int _eFromType;
     protected int _eToType;
     protected float _fMinSpeed;

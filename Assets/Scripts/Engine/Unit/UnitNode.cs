@@ -2,14 +2,25 @@ using UnityEngine;
 using System.Collections.Generic;
 using cca;
 
-public class UnitRenderer : ObjectRenderer, INetworkable<GamePlayerController> {
-    public UnitRenderer() {
+
+[RequireComponent(typeof(Unit))]
+public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
+    void Start() {
+        // TODO: delete test 删掉是否会被调用
+        init();
     }
 
-    public UnitRenderer(GameObject prefab, GameObject gameObject)
-        : base(prefab, gameObject) {
+    void OnDestroy() {
+        cleanup();
     }
 
+    public override void init() {
+        base.init();
+        m_unit = GetComponent<Unit>();
+        Debug.Assert(m_unit != null);
+    }
+
+    Unit m_unit;
     public Unit Unit {
         get {
             return m_unit;
@@ -19,7 +30,7 @@ public class UnitRenderer : ObjectRenderer, INetworkable<GamePlayerController> {
     public override void StopAction(int tag) {
 
         GamePlayerController.localClient.ServerAddSyncAction(new SyncStopAction(m_unit.Id, tag));
-        base.StopAction(tag);
+        StopAction(tag);
     }
 
     public override void StopAllActions() {
@@ -123,6 +134,4 @@ public class UnitRenderer : ObjectRenderer, INetworkable<GamePlayerController> {
     protected float m_halfOfWidth;
     protected float m_halfOfHeight;
     protected Vector2 m_fireOffset = new Vector2();
-
-    protected internal Unit m_unit;
 }

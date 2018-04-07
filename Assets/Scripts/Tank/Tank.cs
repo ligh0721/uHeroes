@@ -15,7 +15,7 @@ public class Tank : Unit {
         TankGunRenderer gunRenderer = new TankGunRenderer(null, gunGameObject);
         gunRenderer.Node.parent = Renderer.Node;
         gunRenderer.Node.positionZ = -1;
-        gunRenderer.SetFrame(ObjectRenderer.kFrameDefault);
+        gunRenderer.SetFrame(ModelNode.kFrameDefault);
         m_guns.Add(index, gunRenderer);
     }
 

@@ -2,28 +2,22 @@ using UnityEngine;
 using System.Collections.Generic;
 
 
-public class Unit : UnitForce, INetworkable<GamePlayerController> {
-    public Unit(UnitRenderer renderer) {
-        m_renderer = renderer;
-        renderer.m_unit = this;
-        m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+[RequireComponent(typeof(UnitNode))]
+public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
+    void Start() {
+        m_node = GetComponent<UnitNode>();
+        Debug.Assert(m_node != null);
+        m_node.SetFrame(ModelNode.kFrameDefault);
     }
 
-    public static implicit operator bool (Unit unit) {
-        return unit != null && unit.Valid;
-    }
-
-    public UnitRenderer Renderer {
+    UnitNode m_node;
+    public UnitNode Node {
         get {
-            return m_renderer;
+            return m_node;
         }
     }
 
-    public bool Valid {
-        get {
-            return m_renderer != null && m_renderer.Valid;
-        }
-    }
+    public UnitForce force = new UnitForce();
 
     public int Id {
         get {
@@ -57,7 +51,6 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         }
     }
 
-    protected UnitRenderer m_renderer;
     protected World m_world;
     protected string m_name;
     protected internal int m_id;
@@ -101,7 +94,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             return;
         }
 
-        m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+        m_node.SetFrame(ModelNode.kFrameDefault);
     }
 
     // 死亡时被通知
@@ -162,20 +155,18 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         OnTick(dt);
 
         // show hpChanged text
-        if (m_renderer != null && m_renderer.Valid) {
-            foreach (var kv in m_hpChanged) {
-                int id = kv.Key;
-                float val = kv.Value;
-                if (val > 0) {
-                    if (id == 0) {
-                        // heal
-                        string str = ((int)val).ToString();
-                        m_renderer.AddBattleTip(str, "", 18, new Color(40 / 255.0f, 220 / 255.0f, 40 / 255.0f));
-                    } else {
-                        // damage
-                        string str = ((int)-val).ToString();
-                        m_renderer.AddBattleTip(str, "", 18, new Color(220 / 255.0f, 40 / 255.0f, 40 / 255.0f));
-                    }
+        foreach (var kv in m_hpChanged) {
+            int id = kv.Key;
+            float val = kv.Value;
+            if (val > 0) {
+                if (id == 0) {
+                    // heal
+                    string str = ((int)val).ToString();
+                    m_node.AddBattleTip(str, "", 18, new Color(40 / 255.0f, 220 / 255.0f, 40 / 255.0f));
+                } else {
+                    // damage
+                    string str = ((int)-val).ToString();
+                    m_node.AddBattleTip(str, "", 18, new Color(220 / 255.0f, 40 / 255.0f, 40 / 255.0f));
                 }
             }
         }
@@ -186,10 +177,6 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     // 用来累加伤害/治疗数字ff
 
     protected void OnTick(float dt) {
-        if (!Valid) {
-            return;
-        }
-
         if (!Dead) {
             OnCommandTick(dt);
         }
@@ -219,9 +206,9 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             // 正在运行路径
             Vector2 target = m_movePath.getCurTargetPoint(m_pathCurPos);
             bool bPathEnd = false;
-            if (Vector2.Distance(target, m_renderer.Node.position) < m_pathBufArrive) {
+            if (Vector2.Distance(target, m_node.position) < m_pathBufArrive) {
                 bPathEnd = m_movePath.arriveCurTargetPoint(ref m_pathCurPos);
-                Vector2.Distance(target, m_renderer.Node.position);
+                Vector2.Distance(target, m_node.position);
             }
 
             if (bPathEnd) {
@@ -239,10 +226,10 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             }
         }
 
-        if (IsDoingAnd(kDoingCasting) && m_renderer.IsDoingAction(m_castActionId) == false) {
+        if (IsDoingAnd(kDoingCasting) && m_node.IsDoingAction(m_castActionId) == false) {
             // 正在施法，且不是在施法动画中
             Unit t = null;
-            UnitRenderer td = null;
+            UnitNode td = null;
             ActiveSkill skill = m_castActiveSkill;
             if (skill != null) {
                 // 如果施法技能仍存在
@@ -250,9 +237,9 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
                 if (bUnitTarget) {
                     // 如果是以单位为目标的技能
                     t = m_castTarget.TargetUnit;
-                    if (t != null && t.Valid && !t.Dead) {
+                    if (t != null && !t.Dead) {
                         // 单位存在且单位没有死亡
-                        td = t.Renderer;
+                        td = t.Node;
                         Debug.Assert(td != null);
                         m_castTarget.UpdateTargetPoint();
                     } else {
@@ -262,10 +249,10 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
                     }
                 }
 
-                if (CheckCastTargetDistance(skill, m_renderer.Node.position, m_castTarget, t)) {
+                if (CheckCastTargetDistance(skill, m_node.position, m_castTarget, t)) {
                     // 施法
                     if (!m_fixed) {
-                        m_renderer.SetFlippedX(m_castTarget.TargetPoint.x < m_renderer.Node.position.x);
+                        m_node.SetFlippedX(m_castTarget.TargetPoint.x < m_node.position.x);
                     }
 
                     CastSpell(skill);
@@ -1133,14 +1120,14 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     public void Die() {
         Stop();
         StartDoing(kDoingDying);
-        m_renderer.StopAllActions();
-        m_renderer.DoAnimate(ObjectRenderer.kActionDie, null, 1, OnDyingDone, 1.0f);
+        m_node.StopAllActions();
+        m_node.DoAnimate(ModelNode.kActionDie, null, 1, OnDyingDone, 1.0f);
 
         if (isServer) {
             if (client != null) {
-                //client.RpcDie(0, m_doingFlags, m_renderer.Node.position, m_renderer.Node.flippedX, ObjectRenderer.kActionDie, 1.0f);
+                //client.RpcDie(0, m_doingFlags, m_node.position, m_node.flippedX, ObjectNode.kActionDie, 1.0f);
             } else {
-                //localClient.RpcDie(m_id, m_doingFlags, m_renderer.Node.position, m_renderer.Node.flippedX, ObjectRenderer.kActionDie, 1.0f);
+                //localClient.RpcDie(m_id, m_doingFlags, m_node.position, m_node.flippedX, ObjectNode.kActionDie, 1.0f);
             }
         }
     }
@@ -1187,10 +1174,10 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     }
 
     protected void Stop(bool defaultFrame = true) {
-        m_renderer.StopAction(m_moveToActionId);
+        m_node.StopAction(m_moveToActionId);
         m_moveToActionId = 0;
 
-        m_renderer.StopAction(m_moveActionId);
+        m_node.StopAction(m_moveActionId);
         m_moveActionId = 0;
 
         EndDoing(kDoingMoving);
@@ -1198,7 +1185,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         StopCast(false);
 
         if (defaultFrame) {
-            m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+            m_node.SetFrame(ModelNode.kFrameDefault);
         }
     }
 
@@ -1303,9 +1290,9 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
 
         if (fDamage >= m_hp) {
             m_killer = source;
-            m_renderer.SetHp(0);
+            m_node.SetHp(0);
         } else {
-            m_renderer.SetHp(m_hp - fDamage);
+            m_node.SetHp(m_hp - fDamage);
         }
 
         OnDamagedDone(fDamage, source, triggerMask);
@@ -1534,8 +1521,8 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         }
 
         Unit t = null;
-        UnitRenderer td = null;
-        bool flippedX = m_renderer.Node.flippedX;
+        UnitNode td = null;
+        bool flippedX = m_node.flippedX;
 
         switch (skill.CastTargetType) {
         case CommandTarget.Type.kNoTarget:
@@ -1551,10 +1538,10 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
                 return -1;
             }
 
-            td = t.Renderer;
+            td = t.Node;
             Debug.Assert(td != null);
 
-            flippedX = (this == target.TargetUnit) ? m_renderer.Node.flippedX : (td.Node.position.x < m_renderer.Node.position.x);
+            flippedX = (this == target.TargetUnit) ? m_node.flippedX : (td.position.x < m_node.position.x);
 
             break;
 
@@ -1563,7 +1550,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
                 return -1;
             }
 
-            flippedX = (target.TargetPoint.x < m_renderer.Node.position.x);
+            flippedX = (target.TargetPoint.x < m_node.position.x);
 
             break;
         }
@@ -1572,7 +1559,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             return -1;
         }
 
-        bool disOk = CheckCastTargetDistance(skill, m_renderer.Node.position, target, t);
+        bool disOk = CheckCastTargetDistance(skill, m_node.position, target, t);
         if (disOk == false && Fixed) {
             return -1;
         }
@@ -1600,26 +1587,26 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             return 1;
         }
 
-        if (m_renderer.IsDoingAction(m_castActionId) &&
+        if (m_node.IsDoingAction(m_castActionId) &&
             isSameSkill &&
             isSameTarget &&
-            flippedX == m_renderer.Node.flippedX) {
+            flippedX == m_node.flippedX) {
             return 0;
         }
 
-        if (flippedX != m_renderer.Node.flippedX && !Fixed) {
-            m_renderer.SetFlippedX(flippedX);
+        if (flippedX != m_node.flippedX && !Fixed) {
+            m_node.SetFlippedX(flippedX);
         }
 
         return CastSpell(skill);
     }
 
     int CastSpell(ActiveSkill skill) {
-        if (m_renderer.IsDoingAction(m_castActionId)) {
-            m_renderer.StopAction(m_castActionId);
+        if (m_node.IsDoingAction(m_castActionId)) {
+            m_node.StopAction(m_castActionId);
         }
 
-        if (m_renderer.IsDoingAction(m_moveActionId)) {
+        if (m_node.IsDoingAction(m_moveActionId)) {
             StopMove();
         }
 
@@ -1635,7 +1622,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
 
         int aniId = skill.castRandomAnimation;
         if (aniId != -1) {
-            m_renderer.DoAnimate(aniId, OnCastEffect, 1, OnCastFinished, spd);
+            m_node.DoAnimate(aniId, OnCastEffect, 1, OnCastFinished, spd);
             m_castActionId = aniId;
         } else {
             OnCastEffect();
@@ -1655,7 +1642,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             if (this == td) {
                 return true;
             }
-            pos2 = td.Renderer.Node.position;
+            pos2 = td.Node.position;
             break;
 
         case CommandTarget.Type.kPointTarget:
@@ -1667,7 +1654,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             return false;
         }
 
-        float fDis = Vector2.Distance(pos, pos2) - m_renderer.HalfOfWidth - (td != null ? td.Renderer.HalfOfWidth : 0.0f);
+        float fDis = Vector2.Distance(pos, pos2) - m_node.HalfOfWidth - (td != null ? td.Node.HalfOfWidth : 0.0f);
         if (fDis < skill.CastMinRange || fDis > skill.CastRange) {
             return false;
         }
@@ -1676,9 +1663,9 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
     }
 
     void MoveToCastPosition(ActiveSkill skill, Unit td) {
-        float dis = (td != null ? td.Renderer.HalfOfWidth : 0) + m_renderer.HalfOfWidth + (skill.CastMinRange + skill.CastRange) * 0.5f;
-        Vector2 pos1 = m_renderer.Node.position;
-        Vector2 pos2 = (td != null ? td.Renderer.Node.position : CastTarget.TargetPoint);
+        float dis = (td != null ? td.Node.HalfOfWidth : 0) + m_node.HalfOfWidth + (skill.CastMinRange + skill.CastRange) * 0.5f;
+        Vector2 pos1 = m_node.position;
+        Vector2 pos2 = (td != null ? td.Node.position : CastTarget.TargetPoint);
 
         if (skill.CastHorizontal) {
             Move(new Vector2(pos2.x + ((pos1.x > pos2.x) ? dis : -dis), pos2.y));
@@ -1689,7 +1676,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
 
     public void StopCast(bool defaultFrame = true) {
         if (m_castActionId != 0) {
-            m_renderer.StopAction(m_castActionId);
+            m_node.StopAction(m_castActionId);
         }
         m_castActionId = 0;
         m_castActiveSkill = null;
@@ -1698,7 +1685,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
 
         //if (defaultFrame) {
         if (m_moveActionId == 0) {
-            m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+            m_node.SetFrame(ModelNode.kFrameDefault);
         }
     }
 
@@ -1712,7 +1699,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         }
 
         if (skill != AttackSkill) {
-            m_renderer.AddBattleTip(skill.name, "", 32, Color.black);
+            m_node.AddBattleTip(skill.name, "", 32, Color.black);
         }
 
         skill.Effect();
@@ -1729,7 +1716,7 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
 
         if (m_attackSkill != null && skill == m_attackSkill) {
             // 拥有攻击技能，正在释放的技能就是攻击技能
-            m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+            m_node.SetFrame(ModelNode.kFrameDefault);
             m_castActionId = 0;
             return;
         }
@@ -1774,10 +1761,10 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
 
         m_lastMoveTo = pos;
 
-        var here = m_renderer.Node.position;
+        var here = m_node.position;
 
         if (pos.x != here.x) {
-            m_renderer.SetFlippedX(pos.x < here.x);
+            m_node.SetFlippedX(pos.x < here.x);
         }
 
         float moveSpeed = m_moveSpeed.x;
@@ -1785,26 +1772,26 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
         float speed = MoveSpeed / moveSpeed;
 
         // 突发移动指令，打断旧移动，打断攻击，打断施法
-        if (m_renderer.IsDoingAction(m_moveToActionId)) {
-            m_renderer.StopAction(m_moveToActionId);
+        if (m_node.IsDoingAction(m_moveToActionId)) {
+            m_node.StopAction(m_moveToActionId);
             m_moveToActionId = 0;
         }
 
-        if (m_renderer.IsDoingAction(m_castActionId)) {
-            m_renderer.StopAction(m_castActionId);
+        if (m_node.IsDoingAction(m_castActionId)) {
+            m_node.StopAction(m_castActionId);
             m_castActionId = 0;
         }
 
         StartDoing(kDoingMoving);
 
         if (m_moveActionId == 0 && IsDoingOr(kDoingSpinning) == false) {
-            m_renderer.DoAnimate(ObjectRenderer.kActionMove, null, ObjectRenderer.CONST_LOOP_FOREVER, null, speed);
-            m_moveActionId = ObjectRenderer.kActionMove;
+            m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null, speed);
+            m_moveActionId = ModelNode.kActionMove;
         }
 
         if (m_moveToActionId == 0) {
-            m_renderer.DoMoveTo(pos, duration, OnMoveToFinished, speed);
-            m_moveToActionId = ObjectRenderer.kActionMoveTo;
+            m_node.DoMoveTo(pos, duration, OnMoveToFinished, speed);
+            m_moveToActionId = ModelNode.kActionMoveTo;
         }
     }        
 
@@ -1866,20 +1853,20 @@ public class Unit : UnitForce, INetworkable<GamePlayerController> {
             return;
         }
         float spd = MoveSpeed / moveSpeed;
-        m_renderer.SetActionSpeed(ObjectRenderer.kActionMove, spd);
-        m_renderer.SetActionSpeed(ObjectRenderer.kActionMoveTo, spd);
+        m_node.SetActionSpeed(ModelNode.kActionMove, spd);
+        m_node.SetActionSpeed(ModelNode.kActionMoveTo, spd);
     }
 
     public void StopMove() {
-        m_renderer.StopAction(ObjectRenderer.kActionMove);
+        m_node.StopAction(ModelNode.kActionMove);
         m_moveActionId = 0;
 
-        m_renderer.StopAction(ObjectRenderer.kActionMoveTo);
+        m_node.StopAction(ModelNode.kActionMoveTo);
         m_moveToActionId = 0;
 
         EndDoing(kDoingMoving | kDoingAlongPath);
 
-        m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+        m_node.SetFrame(ModelNode.kFrameDefault);
     }
 
     protected const float CONST_MIN_MOVE_SPEED = 0.1f;
@@ -2080,7 +2067,7 @@ public class CommandTarget {
 
     public void UpdateTargetPoint() {
         Debug.Assert(m_targetType == Type.kUnitTarget);
-        m_targetPoint = m_targetUnit.Renderer.Node.position;
+        m_targetPoint = m_targetUnit.Node.position;
     }
 
     protected Type m_targetType;

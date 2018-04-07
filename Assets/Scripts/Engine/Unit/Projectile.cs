@@ -3,29 +3,25 @@ using System.Collections.Generic;
 using cca;
 using System;
 
-public class Projectile : INetworkable<GamePlayerController> {
-    public Projectile() {
+
+[RequireComponent(typeof(ProjectileNode))]
+public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
+    void Start() {
+        m_node = GetComponent<ProjectileNode>();
+        Debug.Assert(m_node != null);
+        m_node.SetFrame(ModelNode.kFrameDefault);
     }
 
-    public Projectile(ProjectileRenderer renderer) {
-        Init(renderer);
-    }
-
-    public void Init(ProjectileRenderer renderer) {
-        m_renderer = renderer;
-        renderer.m_projectile = this;
-        m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+    ProjectileNode m_node;
+    public ProjectileNode Node {
+        get {
+            return m_node;
+        }
     }
 
     public int Id {
         get {
             return m_id;
-        }
-    }
-
-    public ProjectileRenderer Renderer {
-        get {
-            return m_renderer;
         }
     }
 
@@ -91,7 +87,7 @@ public class Projectile : INetworkable<GamePlayerController> {
     }
 
     protected void OnDyingDone() {
-        m_renderer.Node.stopAllActions();
+        m_node.stopAllActions();
         m_world.RemoveProjectile(this);
     }
 
@@ -121,18 +117,18 @@ public class Projectile : INetworkable<GamePlayerController> {
     protected void OnTick(float dt) {
         if (HasEffectFlag(kEffectOnContact)) {
             Unit s = m_srcUnit;
-            if (s == null || !s.Valid) {
+            if (s == null) {
                 return;
             }
 
             foreach (var kv in s.World.Units) {
                 var u = kv.Key;
-                if (u.Ghost || !s.CanEffect(u, m_effectiveTypeFlags)) {
+                if (u.Ghost || !s.force.CanEffect(u.force, m_effectiveTypeFlags)) {
                     continue;
                 }
 
-                UnitRenderer d = u.Renderer;
-                if (Vector2.Distance(d.Node.position, m_renderer.Node.position) - d.HalfOfWidth - Radius <= 0 && !m_contactedUnits.Contains(u)) {
+                UnitNode d = u.Node;
+                if (Vector2.Distance(d.position, m_node.position) - d.HalfOfWidth - Radius <= 0 && !m_contactedUnits.Contains(u)) {
                     if (u.OnProjectileArrive(this) == false) {
                         continue;
                     }
@@ -151,24 +147,24 @@ public class Projectile : INetworkable<GamePlayerController> {
     }
 
     protected void Die() {
-        m_renderer.Node.stopAllActions();
+        m_node.stopAllActions();
         cca.Function onEffect = null;
         if (HasEffectFlag(kEffectOnDying)) {
             onEffect = OnEffect;
         }
-        m_renderer.DoAnimate(ObjectRenderer.kActionDie, onEffect, 1, OnDyingDone);
+        m_node.DoAnimate(ModelNode.kActionDie, onEffect, 1, OnDyingDone);
     }
 
     protected void Effect(Unit target) {
         Unit s = m_srcUnit;
-        if (m_srcUnit == null || !s.Valid) {
+        if (m_srcUnit == null) {
             return;
         }
 
         DecContactLeft();
 
 #if true  // FOR TEST
-        if (m_attackData != null && m_srcUnit != null && m_srcUnit.Valid) {
+        if (m_attackData != null && m_srcUnit != null) {
             if (m_srcUnit.Attack(m_attackData, target, m_triggerMask)) {
                 target.Damaged(m_attackData, m_srcUnit, m_triggerMask);
             }
@@ -223,20 +219,20 @@ public class Projectile : INetworkable<GamePlayerController> {
 
                 if (m_fromToType == FromToType.kUnitToUnit) {
                     Unit u = m_fromUnit;
-                    UnitRenderer d = u.Renderer;
+                    UnitNode d = u.Node;
 
-                    m_renderer.Node.height = m_usingFirePoint ?
-                            d.Node.height + d.FireOffset.y :
-                            d.Node.height + d.HalfOfHeight;
+                    m_node.height = m_usingFirePoint ?
+                            d.height + d.FireOffset.y :
+                            d.height + d.HalfOfHeight;
                     m_fromPos = m_usingFirePoint ?
-                            d.Node.position + new Vector2(d.Node.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
-                            d.Node.position;
+                            d.position + new Vector2(d.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
+                            d.position;
                 }
 
                 Unit t = m_toUnit;
-                UnitRenderer td = t.Renderer;
+                UnitNode td = t.Node;
 
-                float fDis = Vector2.Distance(m_fromPos, td.Node.position + new Vector2(0, td.HalfOfHeight));
+                float fDis = Vector2.Distance(m_fromPos, td.position + new Vector2(0, td.HalfOfHeight));
                 FireFollow(fDis / Mathf.Max(float.Epsilon, m_moveSpeed));
             }
 
@@ -267,18 +263,18 @@ public class Projectile : INetworkable<GamePlayerController> {
 
                 if (m_fromToType == FromToType.kUnitToPoint || m_fromToType == FromToType.kUnitToUnit) {
                     Unit u = m_fromUnit;
-                    UnitRenderer d = u.Renderer;
+                    UnitNode d = u.Node;
 
-                    m_renderer.Node.height = m_usingFirePoint ?
-                            d.Node.height + d.FireOffset.y :
-                            d.Node.height + d.HalfOfHeight;
+                    m_node.height = m_usingFirePoint ?
+                            d.height + d.FireOffset.y :
+                            d.height + d.HalfOfHeight;
                     m_fromPos = m_usingFirePoint ?
-                            d.Node.position + new Vector2(d.Node.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
-                            d.Node.position;
+                            d.position + new Vector2(d.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
+                            d.position;
                 }
 
                 if (m_fromToType == FromToType.kUnitToUnit) {
-                    m_toPos = m_toUnit.Renderer.Node.position;
+                    m_toPos = m_toUnit.Node.position;
                 }
 
                 float fDis = Vector2.Distance(m_fromPos, m_toPos);
@@ -292,23 +288,22 @@ public class Projectile : INetworkable<GamePlayerController> {
     void FireFollow(float duration) {
         //m_fromPos = fromPos;
         //m_toUnit = toUnit;
-        Debug.Assert(m_toUnit.Valid);
 
-        m_renderer.Node.position = m_fromPos;
+        m_node.position = m_fromPos;
 
-        m_renderer.Node.stopAllActions();
+        m_node.stopAllActions();
 
-        m_renderer.DoAnimate(ObjectRenderer.kActionMove, null, ObjectRenderer.CONST_LOOP_FOREVER, null);
+        m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.Valid && m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.OnProjectileArrive(this) == false) {
                     return;
                 }
             }
 
             Die();
         };
-        m_renderer.DoMoveToUnit(m_toUnit.Renderer, true, m_maxHeightDelta, duration, onMoveToFinished);
+        m_node.DoMoveToUnit(m_toUnit.Node, true, m_maxHeightDelta, duration, onMoveToFinished);
     }
 
     void FireLink(Unit fromUint, Unit toUnit) {
@@ -316,22 +311,22 @@ public class Projectile : INetworkable<GamePlayerController> {
         m_toUnit = toUnit;
 
         Unit u = fromUint;
-        UnitRenderer d = u.Renderer;
+        UnitNode d = u.Node;
 
         Unit t = toUnit;
-        UnitRenderer td = t.Renderer;
+        UnitNode td = t.Node;
 
         Debug.Assert(u != null && t != null && d != null && td != null);
 
-        m_fromPos = d.Node.position;
-        m_toPos = td.Node.position;
-        m_renderer.Node.stopAllActions();
+        m_fromPos = d.position;
+        m_toPos = td.position;
+        m_node.stopAllActions();
 
         cca.Function onEffect = null;
         if (HasEffectFlag(kEffectOnDying)) {
             onEffect = OnEffect;
         }
-        m_renderer.DoLinkUnitToUnit(d, td, ObjectRenderer.kActionDie, onEffect, 1, OnDyingDone);
+        m_node.DoLinkUnitToUnit(d, td, ModelNode.kActionDie, onEffect, 1, OnDyingDone);
     }
 
     void FireStraight(Vector2 fromPos, Vector2 toPos, float duration, float maxHeightDelta) {
@@ -340,21 +335,21 @@ public class Projectile : INetworkable<GamePlayerController> {
         m_fromPos = fromPos;
         m_toPos = toPos;
 
-        m_renderer.Node.position = fromPos;
+        m_node.position = fromPos;
 
-        m_renderer.Node.stopAllActions();
+        m_node.stopAllActions();
 
-        m_renderer.DoAnimate(ObjectRenderer.kActionMove, null, ObjectRenderer.CONST_LOOP_FOREVER, null);
+        m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.Valid && m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.OnProjectileArrive(this) == false) {
                     return;
                 }
             }
 
             Die();
         };
-        m_renderer.DoMoveTo(toPos, duration, onMoveToFinished);
+        m_node.DoMoveTo(toPos, duration, onMoveToFinished);
     }
 
     public Vector2 FromPosition {
@@ -540,7 +535,7 @@ public class Projectile : INetworkable<GamePlayerController> {
 
     public float Radius {
         get {
-            Vector2 size = m_renderer.Node.size;
+            Vector2 size = m_node.size;
             return (size.x + size.y) / 2;
         }
     }
@@ -548,7 +543,6 @@ public class Projectile : INetworkable<GamePlayerController> {
     protected float m_moveSpeed = 1;
     protected float m_maxHeightDelta;
 
-    protected ProjectileRenderer m_renderer;
     protected World m_world;
     protected internal int m_id;
     protected internal string m_model;

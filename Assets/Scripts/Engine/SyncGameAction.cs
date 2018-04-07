@@ -16,7 +16,7 @@ public class SyncGameAction {
         }
     }
 
-    public UnitRenderer renderer {
+    public UnitNode renderer {
         get {
             Unit u = unit;
             return u != null ? u.Renderer : null;

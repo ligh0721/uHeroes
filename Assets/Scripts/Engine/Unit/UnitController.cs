@@ -21,7 +21,7 @@ public class SyncUnitInfo {
             var castAnimations = attack.castAnimations;
             syncInfo.baseInfo.attackSkill.animations = new string[castAnimations.Count];
             for (int i = 0; i < castAnimations.Count; ++i) {
-                syncInfo.baseInfo.attackSkill.animations[i] = ObjectRenderer.IdToName(castAnimations[i]);
+                syncInfo.baseInfo.attackSkill.animations[i] = ModelNode.IdToName(castAnimations[i]);
             }
             syncInfo.baseInfo.attackSkill.projectile = attack.ProjectileTemplate.Model;
         }
@@ -66,8 +66,8 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
         unitCtrl.m_client = client;
 
         ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
-        UnitRenderer r = new UnitRenderer(WorldController.instance.unitPrefab, gameObject);
-        ResourceManager.instance.PrepareUnitResource(syncInfo.baseInfo.model, r);
+        UnitNode r = new UnitNode(WorldController.instance.unitPrefab, gameObject);
+        ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, r);
 
         Unit unit = new Unit(r);
         unit.m_id = syncInfo.id;
@@ -84,7 +84,7 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
             atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
             atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
             foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
-                atk.AddCastAnimation(ObjectRenderer.NameToId(ani));
+                atk.AddCastAnimation(ModelNode.NameToId(ani));
             }
             atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
             unit.AddActiveSkill(atk);
@@ -173,7 +173,7 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
     }
 
     // Networkable
-    protected GamePlayerController m_client;
+    internal GamePlayerController m_client;
     public GamePlayerController client {
         get {
             return m_client;

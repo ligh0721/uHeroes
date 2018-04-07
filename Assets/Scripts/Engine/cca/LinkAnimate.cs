@@ -5,7 +5,7 @@ using cca;
 
 class LinkAnimate : Animate
 {
-	public LinkAnimate(cca.Animation animation, Animate.Function onSpecial, UnitRenderer from, UnitRenderer to)
+	public LinkAnimate(cca.Animation animation, Animate.Function onSpecial, UnitNode from, UnitNode to)
 		: base(animation, onSpecial)
 	{
 		m_fromToType = Projectile.FromToType.kUnitToUnit;
@@ -32,8 +32,8 @@ class LinkAnimate : Animate
 	{
 		base.startWithTarget (target);
 
-		RendererNode rendererTarget = target as RendererNode;
-		ProjectileRenderer r = rendererTarget.renderer as ProjectileRenderer;
+		NodeWithHeight rendererTarget = target as NodeWithHeight;
+		ProjectileNode r = rendererTarget.renderer as ProjectileNode;
 		Projectile p = r.Projectile;
 		m_fireFrom = m_fromToType == Projectile.FromToType.kUnitToUnit && p.SourceUnit != null && m_from == p.SourceUnit.Renderer;
 		//target.visible = false;
@@ -63,7 +63,7 @@ class LinkAnimate : Animate
             float fFromHeight = 0.0f;
             if (m_fireFrom)
             {
-                bool useFireOffset = ((_target as RendererNode).renderer as ProjectileRenderer).Projectile.UseFireOffset;
+                bool useFireOffset = ((_target as NodeWithHeight).renderer as ProjectileNode).Projectile.UseFireOffset;
                 float offsetX = useFireOffset ? m_from.FireOffset.x : m_from.HalfOfWidth;
                 float offsetY = useFireOffset ? m_from.FireOffset.y : m_from.HalfOfHeight;
                 bool bFlipX = m_fromPos.x > m_toPos.x;
@@ -101,9 +101,9 @@ class LinkAnimate : Animate
     }
 
 	protected Projectile.FromToType m_fromToType;
-	protected UnitRenderer m_from;
+	protected UnitNode m_from;
 	protected Vector2 m_fromPos;
-	protected UnitRenderer m_to;
+	protected UnitNode m_to;
 	protected Vector2 m_toPos;
 	protected bool m_fireFrom;  // 用来区分这段link是刚发射的，还是传递中的，他们的出发点位置不同
 }

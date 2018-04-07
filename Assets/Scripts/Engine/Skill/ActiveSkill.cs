@@ -51,7 +51,7 @@ public class ActiveSkill : Skill {
     /// </summary>
     public void Effect() {
         Unit o = m_owner;
-        UnitRenderer d = o.Renderer;
+        UnitNode d = o.Renderer;
 
         StartCoolingDown();
         OnUnitCastSkill();
@@ -76,7 +76,7 @@ public class ActiveSkill : Skill {
                     p.SourceSkill = this;
                     p.EffectiveTypeFlags = m_effectiveTypeFlags;
 
-                    UnitRenderer td = t.Renderer;
+                    UnitNode td = t.Renderer;
                     Debug.Assert(td != null);
 
                     p.TypeOfFromTo = Projectile.FromToType.kUnitToUnit;
@@ -185,11 +185,11 @@ public class ActiveSkill : Skill {
         }
 
         if (target != null) {
-            UnitRenderer td = target.Renderer;
+            UnitNode td = target.Renderer;
             return td.Node.position;
         }
 
-        UnitRenderer od = m_owner.Renderer;
+        UnitNode od = m_owner.Renderer;
 
         switch (m_castTargetType) {
         case CommandTarget.Type.kNoTarget:
@@ -205,7 +205,7 @@ public class ActiveSkill : Skill {
             return od.Node.position;
         }
 
-        UnitRenderer ud = u.Renderer;
+        UnitNode ud = u.Renderer;
         return ud.Node.position;
     }
 }

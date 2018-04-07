@@ -14,8 +14,18 @@ namespace cca
 	 
 	 @since v0.8
 	 */
-    public class ActionManager
+    public class ActionManager : MonoBehaviour
     {
+        void Awake() {
+            if (_instance == null) {
+                _instance = this;
+            }
+        }
+
+        void Update() {
+            update(Time.deltaTime);
+        }
+
         public class TargetActionData
         {
             protected class ActionData
@@ -460,7 +470,7 @@ namespace cca
         {
             get
             {
-                return _instance ?? (_instance = new ActionManager());
+                return _instance;
             }
         }
 

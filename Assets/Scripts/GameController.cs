@@ -184,4 +184,49 @@ public class GameController {
     public static bool AllPlayersReady() {
         return !m_playersReady.ContainsValue(false);
     }
+
+    public static GameObject CreateUnit(SyncUnitInfo syncInfo, GameObject prefab, GamePlayerController client) {
+        //Debug.Log("CreateUnit");
+        GameObject gameObject = GameObjectPool.instance.Instantiate(prefab);
+        UnitNode node = gameObject.GetComponent<UnitNode>();
+        Unit unit = gameObject.GetComponent<Unit>();
+        UnitController ctrl = gameObject.GetComponent<UnitController>();
+
+        ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
+        ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
+        
+        unit.m_id = syncInfo.id;
+        unit.m_client = client;
+        unit.m_model = syncInfo.baseInfo.model;
+        if (ctrl.isServer) {
+            unit.AI = UnitAI.instance;
+        }
+
+        unit.Name = syncInfo.baseInfo.name;
+        unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
+        if (syncInfo.baseInfo.attackSkill.valid) {
+            AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
+            atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
+            atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
+            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
+                atk.AddCastAnimation(ModelNode.NameToId(ani));
+            }
+            atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
+            unit.AddActiveSkill(atk);
+        }
+        node.position = syncInfo.position;
+        node.SetFlippedX(syncInfo.flippedX);
+        unit.Hp = syncInfo.hp;
+        unit.force.Force = syncInfo.force;
+        unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
+        unit.Revivable = syncInfo.baseInfo.revivable;
+        unit.Fixed = syncInfo.baseInfo.isfixed;
+
+        ctrl.m_unit = unit;
+        ctrl.m_client = client;
+        WorldController.instance.world.AddUnit(unit);
+
+        ctrl.m_ui = UnitHUD.Create(ctrl);
+        return gameObject;
+    }
 }

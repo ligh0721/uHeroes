@@ -22,8 +22,8 @@ public class UnitControllerEditor : Editor {
         TextAsset textAsset = EditorGUILayout.ObjectField("Unit", m_modelTextAsset, typeof(TextAsset), true) as TextAsset;
         if (textAsset != m_modelTextAsset) {
             UnitInfo baseInfo = ResourceManager.instance.LoadUnit(null, textAsset.text);
-            UnitRenderer r = new UnitRenderer(PrefabUtility.GetPrefabParent(t.gameObject) as GameObject, t.gameObject);
-            ResourceManager.instance.PrepareUnitResource(baseInfo.model, r);
+            UnitNode r = new UnitNode(PrefabUtility.GetPrefabParent(t.gameObject) as GameObject, t.gameObject);
+            ResourceManager.instance.AssignModelToUnitNode(baseInfo.model, r);
             t.m_unit = new Unit(r);
 
             if (t.m_ui == null) {

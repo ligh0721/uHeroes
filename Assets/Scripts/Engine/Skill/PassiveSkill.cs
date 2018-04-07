@@ -69,7 +69,7 @@ public class SplashPas : PassiveSkill {
             return;
         }
 
-        UnitRenderer td = pTarget.Renderer;
+        UnitNode td = pTarget.Renderer;
         float fDis;
         World w = o.World;
         var units = w.Units;
@@ -78,7 +78,7 @@ public class SplashPas : PassiveSkill {
                 continue;
             }
 
-            UnitRenderer pDraw = pUnit.Renderer;
+            UnitNode pDraw = pUnit.Renderer;
             if (!pUnit || pUnit.Ghost) {
                 continue;
             }

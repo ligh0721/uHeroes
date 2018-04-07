@@ -159,7 +159,7 @@ public class AttackAct : ActiveSkill {
         Unit o = m_owner;
         Debug.Assert(o != null);
         o.UpdateSkillCD(this);
-        UnitRenderer d = o.Renderer;
+        UnitNode d = o.Renderer;
         if (o.CastActiveSkill == o.AttackSkill) {
             d.SetActionSpeed(o.CastActionId, coolDownSpeedCoeff);
         }

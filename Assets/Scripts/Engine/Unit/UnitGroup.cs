@@ -28,7 +28,7 @@ public class UnitGroup
                 continue;
             }
 
-            UnitRenderer d = u.Renderer;
+            UnitNode d = u.Renderer;
             if (m_units.Count >= iMaxCount)
             {
                 return;
@@ -92,7 +92,7 @@ public class UnitGroup
                 continue;
             }
 
-            UnitRenderer d = u.Renderer;
+            UnitNode d = u.Renderer;
             if ((fDis = Vector2.Distance(d.Node.position, roPos) - d.HalfOfWidth) < fRadius && fMinDis > fDis && (match == null || (match(u, force))))
             {
                 target = u;
@@ -123,7 +123,7 @@ public class UnitGroup
                 continue;
             }
 
-            UnitRenderer d = u.Renderer;
+            UnitNode d = u.Renderer;
             if ((fDis = Vector2.Distance(d.Node.position, roPos) - d.HalfOfWidth) < fRadius && fMinDis > fDis && (match == null || (match(u, force))))
             {
                 target = u;
