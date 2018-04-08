@@ -3,30 +3,37 @@ using System.Collections.Generic;
 using cca;
 
 public class World : MonoBehaviour {
-    public GameObject m_unitPrefab;
-    public GameObject m_projectilePrefab;
+    static World _main;
 
-    static World m_main;
+    public GameObject unitPrefab;
+    public GameObject projectilePrefab;
+
+    bool shutdown = false;
+    Dictionary<Unit, int> units = new Dictionary<Unit, int>();
+    Dictionary<Unit, int> unitsToRevive = new Dictionary<Unit, int>();
+    Dictionary<Projectile, int> projectiles = new Dictionary<Projectile, int>();
+    Dictionary<int, Unit> unitsIndex = new Dictionary<int, Unit>();
+    //protected Dictionary<int, Projectile> projectilesIndex = new Dictionary<int, Projectile>();
 
     public static World Main {
-        get { return m_main; }
+        get { return _main; }
     }
 
     void Awake() {
-        if (m_main == null) {
-            m_main = this;
+        if (_main == null) {
+            _main = this;
         }
     }
 
     void OnDestroy() {
-        if (m_main == this) {
-            m_main = null;
+        if (_main == this) {
+            _main = null;
         }
     }
 
     void Start() {
-        Debug.Assert(m_unitPrefab != null);
-        Debug.Assert(m_projectilePrefab != null);
+        Debug.Assert(unitPrefab != null);
+        Debug.Assert(projectilePrefab != null);
 
         GameObjectPool.ResetFunction reset = delegate (GameObject gameObject) {
             gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
@@ -35,14 +42,19 @@ public class World : MonoBehaviour {
             gameObject.GetComponent<SpriteRenderer>().color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
         };
 
-        GameObjectPool.instance.Alloc(m_unitPrefab, 50, reset);
-        GameObjectPool.instance.Alloc(m_projectilePrefab, 50, reset);
-
-        m_main = this;
+        GameObjectPool.instance.Alloc(unitPrefab, 50, reset);
+        GameObjectPool.instance.Alloc(projectilePrefab, 50, reset);
     }
 
     void FixedUpdate() {
         Step(Time.fixedDeltaTime);
+        
+    }
+
+    void Update() {
+        if (GamePlayerController.localClient && GamePlayerController.localClient.isServer) {
+            GamePlayerController.localClient.ServerSyncActions();
+        }
     }
 
     protected void OnTick(float dt) {
@@ -68,13 +80,13 @@ public class World : MonoBehaviour {
 
     public void AddUnit(Unit unit) {
         unit.World = this;
-        m_units.Add(unit, unit.Id);
-        m_unitsIndex.Add(unit.Id, unit);
+        units.Add(unit, unit.Id);
+        unitsIndex.Add(unit.Id, unit);
     }
 
     public void AddProjectile(Projectile projectile) {
         projectile.World = this;
-        m_projectiles.Add(projectile, projectile.Id);
+        projectiles.Add(projectile, projectile.Id);
         //m_projectilesIndex.Add(projectile.Id, projectile);
     }
 
@@ -89,7 +101,7 @@ public class World : MonoBehaviour {
         GamePlayerController player;
         GameManager.AllPlayers.TryGetValue(playerId, out player);
 
-        GameObject gameObject = GameObjectPool.instance.Instantiate();
+        GameObject gameObject = GameObjectPool.instance.Instantiate(unitPrefab);
         UnitNode node = gameObject.GetComponent<UnitNode>();
         Unit unit = gameObject.GetComponent<Unit>();
         UnitController ctrl = gameObject.GetComponent<UnitController>();
@@ -157,45 +169,40 @@ public class World : MonoBehaviour {
 
     public void RemoveUnit(Unit unit, bool revivalbe = false) {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
-        if (!m_units.ContainsKey(unit)) {
+        if (!units.ContainsKey(unit)) {
             return;
         }
 
-        int id = m_units[unit];
+        int id = units[unit];
 
         OnDelUnit(unit);
 
         if (revivalbe) {
             // 如果单位可以复活，拖进灵魂域
-            m_unitsToRevive.Add(unit, id);
+            unitsToRevive.Add(unit, id);
         } else {
             // 如果不可以复活，该单位将不再拥有世界，清除该单位的所有CD中的技能
             unit.World = null;
             CleanAbilitiesCD(unit);
+            GameObjectPool.instance.Destroy(unitPrefab, unit.gameObject);
         }
-
-        m_unitsIndex.Remove(id);
-        m_units.Remove(unit);
-        unit.Renderer.Node.destroy();
+        unitsIndex.Remove(id);
+        units.Remove(unit);
     }
 
     protected void ReviveUnit(Unit unit, float hp) {
-        if (!m_unitsToRevive.ContainsKey(unit)) {
-            return;
-        }
-
-        if (!unit.Valid) {
+        if (!unitsToRevive.ContainsKey(unit)) {
             return;
         }
 
         AddUnit(unit);
         unit.Revive(hp);
 
-        m_unitsToRevive.Remove(unit);
+        unitsToRevive.Remove(unit);
     }
 
     public void RemoveProjectile(Projectile projectile) {
-        if (!m_projectiles.ContainsKey(projectile)) {
+        if (!projectiles.ContainsKey(projectile)) {
             return;
         }
 
@@ -205,8 +212,34 @@ public class World : MonoBehaviour {
         //int id = m_projectiles[projectile];
         //m_projectilesIndex.Remove(id);
         projectile.World = null;
-        m_projectiles.Remove(projectile);
-        projectile.Renderer.Node.destroy();
+        projectiles.Remove(projectile);
+        GameObjectPool.instance.Destroy(projectilePrefab, projectile.gameObject);
+    }
+
+    public void RemovePlayerUnits(int playerId) {
+        GamePlayerController player;
+        GameManager.AllPlayers.TryGetValue(playerId, out player);
+
+        List<Unit> toDel = new List<Unit>();
+        foreach (var unit in units.Keys) {
+            if (unit.client == player) {
+                toDel.Add(unit);
+            }
+        }
+        foreach (var unit in toDel) {
+            RemoveUnit(unit);
+        }
+        toDel.Clear();
+
+        foreach (var unit in unitsToRevive.Keys) {
+            if (unit.client == player) {
+                toDel.Add(unit);
+            }
+        }
+        foreach (var unit in toDel) {
+            CleanAbilitiesCD(unit);
+            unitsToRevive.Remove(unit);
+        }
     }
 
     // Skill
@@ -262,7 +295,7 @@ public class World : MonoBehaviour {
     protected void SkillReady(Skill skill) {
         // 由于技能的所有者可能在等待重生，所以主世界可能不存在该单位，但是单位仍未被释放
         Unit o = skill.owner;
-        if (o != null && o.Valid) {
+        if (o != null && !o.Dead) {
             // 存在于主世界中，则触发事件
             o.OnSkillReady(skill);
         }
@@ -272,7 +305,7 @@ public class World : MonoBehaviour {
     }
 
     public void Step(float dt) {
-        if (m_shutdown) {
+        if (shutdown) {
             return;
         }
 
@@ -291,7 +324,7 @@ public class World : MonoBehaviour {
         }
         delayToDel.Clear();
 
-        foreach (var kv in m_units) {
+        foreach (var kv in units) {
             var unit = kv.Key;
             unit.Step(dt);
 
@@ -301,7 +334,7 @@ public class World : MonoBehaviour {
             }
         }
 
-        foreach (var kv in m_projectiles) {
+        foreach (var kv in projectiles) {
             var projectile = kv.Key;
             projectile.Step(dt);
         }
@@ -309,24 +342,25 @@ public class World : MonoBehaviour {
         OnTick(dt);
     }
 
-    public void Start() {
+    public void StartWorld() {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncStartWorld());
-        m_shutdown = false;
+        shutdown = false;
     }
 
-    public void Shutdown() {  // 为避免CUnitEventAdapter(CWorld).CUnit.CWorld的retain cycle，在这里主动销毁一些子节点
-        OnShutDown();
-        m_shutdown = true;
-        m_units.Clear();
-        m_unitsToRevive.Clear();
-        m_projectiles.Clear();
-        m_unitsIndex.Clear();
+    public void StopWorld() {  // 为避免CUnitEventAdapter(CWorld).CUnit.CWorld的retain cycle，在这里主动销毁一些子节点
+        // TODO: SyncStopWorld
+        OnStop();
+        shutdown = true;
+        units.Clear();
+        unitsToRevive.Clear();
+        projectiles.Clear();
+        unitsIndex.Clear();
         //m_projectilesIndex.Clear();
         m_skillsCD.Clear();
-
+        // TODO: RemoveAllUnit and Projectile
     }
 
-    protected void OnShutDown() {
+    protected void OnStop() {
     }
 
     public Unit GetUnit(int id) {
@@ -335,7 +369,7 @@ public class World : MonoBehaviour {
         }
 
         Unit ret;
-        m_unitsIndex.TryGetValue(id, out ret);
+        unitsIndex.TryGetValue(id, out ret);
         return ret;
     }
 
@@ -354,15 +388,8 @@ public class World : MonoBehaviour {
     */
 
     public Dictionary<Unit, int> Units {
-        get { return m_units; }
+        get { return units; }
     }
 
-    protected bool m_shutdown;
-
-    protected Dictionary<Unit, int> m_units = new Dictionary<Unit, int>();
-    protected Dictionary<Unit, int> m_unitsToRevive = new Dictionary<Unit, int>();
-    protected Dictionary<Projectile, int> m_projectiles = new Dictionary<Projectile, int>();
-    protected Dictionary<int, Unit> m_unitsIndex = new Dictionary<int, Unit>();
-    //protected Dictionary<int, Projectile> m_projectilesIndex = new Dictionary<int, Projectile>();
-    protected internal WorldController m_ctrl;
+    
 }

@@ -186,7 +186,7 @@ public class SyncStartWorld : SyncGameAction {
     }
 
     public override void Play() {
-        world.Start();
+        world.StartWorld();
     }
 }
 

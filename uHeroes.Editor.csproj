@@ -123,12 +123,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="uHeroes.csproj">
-      <Project>{3D40F6F7-0152-9872-08A9-E1E3FEAA4A83}</Project>
-      <Name>uHeroes</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Compile Include="Assets\Editor\PortraitUIEditor.cs" />
     <Compile Include="Assets\Editor\UnitControllerEditor.cs" />
   </ItemGroup>

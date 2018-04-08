@@ -184,9 +184,4 @@ public class GameManager {
     public static bool AllPlayersReady() {
         return !m_playersReady.ContainsValue(false);
     }
-
-    static World m_world;
-    public static RunningWorld {
-        
-    }
 }

@@ -102,7 +102,7 @@ public class GamePlayerController : NetworkBehaviour {
 
     public World world {
         get {
-            return WorldController.instance.world;
+            return World.Main.world;
         }
     }
 

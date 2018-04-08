@@ -70,7 +70,7 @@ public class ProjectileController : MonoBehaviour
         projectile.m_model = path;
 
         projCtrl.m_projectile = projectile;
-        WorldController.instance.world.AddProjectile(projectile);
+        World.Main.AddProjectile(projectile);
 
         return projCtrl;
     }
