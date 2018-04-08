@@ -23,7 +23,7 @@ namespace cca
         public virtual void init() {
             if (m_actionManager == null) {
                 Debug.LogWarning("Action Manager is not set");
-                m_actionManager = ActionManager.instance;
+                m_actionManager = ActionManager.Main;
             }
             _spriteRenderer = GetComponent<SpriteRenderer>();
         }

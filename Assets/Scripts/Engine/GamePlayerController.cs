@@ -147,7 +147,7 @@ public class GamePlayerController : NetworkBehaviour {
             // sync不合法
             return;
         }
-        GameController.syncActionSender.Add(sync);
+        GameManager.syncActionSender.Add(sync);
     }
 
     /// <summary>
@@ -155,7 +155,7 @@ public class GamePlayerController : NetworkBehaviour {
     /// </summary>
     [Server]
     public void ServerSyncActions() {
-        var data = GameController.syncActionSender.Serialize();
+        var data = GameManager.syncActionSender.Serialize();
         if (data != null) {
             for (int i = 0; i < data.Length; ++i) {
                 localClient.RpcSyncActions(data[i], i + 1 == data.Length);
@@ -170,7 +170,7 @@ public class GamePlayerController : NetworkBehaviour {
         }
 
         //Debug.LogFormat("ServerSyncActions|Recv: {0}", data.Length);
-        SyncGameAction[] syncs = GameController.syncActionReceiver.Deserialize(data, end);
+        SyncGameAction[] syncs = GameManager.syncActionReceiver.Deserialize(data, end);
         if (syncs != null) {
             for (int i = 0; i < syncs.Length; ++i) {
                 syncs[i].Play();
@@ -188,7 +188,7 @@ public class GamePlayerController : NetworkBehaviour {
     void CmdAddPlayer(PlayerInfo playerInfo) {
         // 服务器补全信息
         playerInfo.id = Utils.IdGenerator.nextId;
-        playerInfo.force = GameController.ServerAddNewForce();
+        playerInfo.force = GameManager.ServerAddNewForce();
 
         // 下发到所有客户端
         RpcAddPlayer(playerInfo);
@@ -206,7 +206,7 @@ public class GamePlayerController : NetworkBehaviour {
     }
 
     void ClientAddPlayerToSlot() {
-        GameController.ClientAddPlayer(m_playerInfo.id, gameObject);
+        GameManager.ClientAddPlayer(m_playerInfo.id, gameObject);
 
         var roomPlayerUI = m_roomui.m_playerUIs[m_playerInfo.force - 1];
         var baseInfo = JsonMapper.ToObject<UnitInfo>(m_playerInfo.heroData);
@@ -221,9 +221,9 @@ public class GamePlayerController : NetworkBehaviour {
 
     [ClientRpc]
     void RpcPlayerReady() {
-        GameController.PlayerReady(m_playerInfo.id);
+        GameManager.PlayerReady(m_playerInfo.id);
         Debug.LogFormat("Player({0}) is Ready.", m_playerInfo.id);
-        bool allReady = GameController.AllPlayersReady();
+        bool allReady = GameManager.AllPlayersReady();
         if (allReady) {
             Debug.LogFormat("All Players are Ready.");
         }
@@ -246,7 +246,7 @@ public class GamePlayerController : NetworkBehaviour {
     /// </summary>
     [ClientRpc]
     public void RpcStart() {
-        GameController.ResetPlayersReady();
+        GameManager.ResetPlayersReady();
 #if _UHEROES_
         ResourceManager.instance.AddProjectilesToLoadingQueue(m_testProjectilesDatas);
 		ResourceManager.instance.AddUnitsToLoadingQueue(m_testUnitsDatas);
@@ -296,9 +296,9 @@ public class GamePlayerController : NetworkBehaviour {
 
     [Command]
     public void CmdClientLoadSceneFinished() {
-        GameController.PlayerReady(m_playerInfo.id);
+        GameManager.PlayerReady(m_playerInfo.id);
         Debug.LogFormat("Player({0}) LoadScene Finished.", m_playerInfo.id);
-        bool allReady = GameController.AllPlayersReady();
+        bool allReady = GameManager.AllPlayersReady();
         if (allReady) {
             Debug.LogFormat("All Players LoadScene Finished.");
             RpcStartScene();
@@ -336,7 +336,7 @@ public class GamePlayerController : NetworkBehaviour {
     public void ServerCreateUnits() {
         Vector2 sz = Utils.halfCameraSize;
         // 创建玩家单位
-        foreach (GamePlayerController ctrl in GameController.AllPlayers.Values) {
+        foreach (GamePlayerController ctrl in GameManager.AllPlayers.Values) {
             PlayerInfo playerInfo = ctrl.playerInfo;
             string path = string.Format("Units/[Player{0}]", ctrl.playerId);
             SyncUnitInfo syncInfo = new SyncUnitInfo();
@@ -358,7 +358,7 @@ public class GamePlayerController : NetworkBehaviour {
     }
 
     IEnumerator RepeatCreateUnit(string name) {
-        for (int i = 0; GameController.AllPlayers.Count <= m_testPlayerCount && i < m_testMax; i++) {
+        for (int i = 0; GameManager.AllPlayers.Count <= m_testPlayerCount && i < m_testMax; i++) {
             yield return new WaitForSeconds(m_testCreateRate);
             Invoke(name, 0.0f);
         }
@@ -461,7 +461,7 @@ public class GamePlayerController : NetworkBehaviour {
         ServerAddSyncAction(new SyncCreateTank(syncInfo, playerId));
 
         GamePlayerController client;
-        if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
+        if (GameManager.AllPlayers.TryGetValue(playerId, out client)) {
             // 玩家单位
             TankController unitCtrl = TankController.Create(syncInfo, client);
             client.unitCtrl = unitCtrl;
@@ -491,7 +491,7 @@ public class GamePlayerController : NetworkBehaviour {
     public void ServerCreateTanks() {
         Vector2 sz = Utils.halfCameraSize;
         // 创建玩家单位
-        foreach (GamePlayerController ctrl in GameController.AllPlayers.Values) {
+        foreach (GamePlayerController ctrl in GameManager.AllPlayers.Values) {
             PlayerInfo playerInfo = ctrl.playerInfo;
             //string path = string.Format("Units/[Player{0}]", ctrl.playerId);
             SyncTankInfo syncInfo = new SyncTankInfo();

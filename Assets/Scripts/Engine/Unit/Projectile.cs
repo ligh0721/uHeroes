@@ -13,32 +13,23 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     ProjectileNode m_node;
+
     public ProjectileNode Node {
-        get {
-            return m_node;
-        }
+        get { return m_node; }
     }
 
     public int Id {
-        get {
-            return m_id;
-        }
+        get { return m_id; }
     }
 
     public string Model {
-        get {
-            return m_model;
-        }
+        get { return m_model; }
     }
 
     public World World {
-        get {
-            return m_world;
-        }
+        get { return m_world; }
 
-        set {
-            m_world = value;
-        }
+        set { m_world = value; }
     }
 
     public virtual Projectile Clone() {
@@ -65,13 +56,9 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // 抛射物作用时机
     public uint EffectFlags {
-        get {
-            return m_effectFlags;
-        }
+        get { return m_effectFlags; }
 
-        set {
-            m_effectFlags = value;
-        }
+        set { m_effectFlags = value; }
     }
 
     bool HasEffectFlag(uint effectFlag) {
@@ -191,13 +178,9 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // 决定能影响的势力群组
     public uint EffectiveTypeFlags {
-        get {
-            return m_effectiveTypeFlags;
-        }
+        get { return m_effectiveTypeFlags; }
 
-        set {
-            m_effectiveTypeFlags = value;
-        }
+        set { m_effectiveTypeFlags = value; }
     }
 
     protected uint m_effectiveTypeFlags = UnitForce.kEnemy;
@@ -353,83 +336,51 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public Vector2 FromPosition {
-        get {
-            return m_fromPos;
-        }
+        get { return m_fromPos; }
 
-        set {
-            m_fromPos = value;
-        }
+        set { m_fromPos = value; }
     }
 
     public Vector2 ToPosition {
-        get {
-            return m_toPos;
-        }
+        get { return m_toPos; }
 
-        set {
-            m_toPos = value;
-        }
+        set { m_toPos = value; }
     }
 
     public Unit FromUnit {
-        get {
-            return m_fromUnit;
-        }
+        get { return m_fromUnit; }
 
-        set {
-            m_fromUnit = value;
-        }
+        set { m_fromUnit = value; }
     }
 
     public Unit ToUnit {
-        get {
-            return m_toUnit;
-        }
+        get { return m_toUnit; }
 
-        set {
-            m_toUnit = value;
-        }
+        set { m_toUnit = value; }
     }
 
     public AttackData AttackData {
-        get {
-            return m_attackData;
-        }
+        get { return m_attackData; }
 
-        set {
-            m_attackData = value;
-        }
+        set { m_attackData = value; }
     }
 
     public uint TriggerMask {
-        get {
-            return m_triggerMask;
-        }
+        get { return m_triggerMask; }
 
-        set {
-            m_triggerMask = value;
-        }
+        set { m_triggerMask = value; }
     }
 
     public Unit SourceUnit {
-        get {
-            return m_srcUnit;
-        }
+        get { return m_srcUnit; }
 
-        set {
-            m_srcUnit = value;
-        }
+        set { m_srcUnit = value; }
     }
 
     public Skill SourceSkill {
-        get {
-            return m_srcSkill;
-        }
+        get { return m_srcSkill; }
 
-        set {
-            m_srcSkill = value;
-        }
+        set { m_srcSkill = value; }
     }
 
     public enum FromToType {
@@ -472,33 +423,21 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public FromToType TypeOfFromTo {
-        get {
-            return m_fromToType;
-        }
+        get { return m_fromToType; }
 
-        set {
-            m_fromToType = value;
-        }
+        set { m_fromToType = value; }
     }
 
     public FireType TypeOfFire {
-        get {
-            return m_fireType;
-        }
+        get { return m_fireType; }
 
-        set {
-            m_fireType = value;
-        }
+        set { m_fireType = value; }
     }
 
     public bool UseFireOffset {
-        get {
-            return m_usingFirePoint;
-        }
+        get { return m_usingFirePoint; }
 
-        set {
-            m_usingFirePoint = value;
-        }
+        set { m_usingFirePoint = value; }
     }
 
     protected Vector2 m_fromPos;
@@ -514,23 +453,15 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     protected FireType m_fireType = FireType.kFollow;
 
     public float MoveSpeed {
-        get {
-            return m_moveSpeed;
-        }
+        get { return m_moveSpeed; }
 
-        set {
-            m_moveSpeed = value;
-        }
+        set { m_moveSpeed = value; }
     }
 
     public float MaxHeightDelta {
-        get {
-            return m_maxHeightDelta;
-        }
+        get { return m_maxHeightDelta; }
 
-        set {
-            m_maxHeightDelta = value;
-        }
+        set { m_maxHeightDelta = value; }
     }
 
     public float Radius {
@@ -549,14 +480,10 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // Networkable
     public GamePlayerController localClient {
-        get {
-            return GamePlayerController.localClient;
-        }
+        get { return GamePlayerController.localClient; }
     }
 
     public bool isServer {
-        get {
-            return localClient.isServer;
-        }
+        get { return localClient.isServer; }
     }
 }

@@ -46,7 +46,7 @@ public class StartUI : MonoBehaviour {
         nd.StartAsServer();
 
         PlayerPrefs.SetString("name", m_playerName.text);
-        GameController.Init(true);
+        GameManager.Init(true);
     }
 
     public void OnJoinGameClick()
@@ -57,7 +57,7 @@ public class StartUI : MonoBehaviour {
         nm.StartClient();
 
         PlayerPrefs.SetString("name", m_playerName.text);
-        GameController.Init(false);
+        GameManager.Init(false);
     }
 
     public void OnSearchGameClick()

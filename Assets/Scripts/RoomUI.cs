@@ -61,7 +61,7 @@ public class RoomUI : MonoBehaviour, INetworkable<GamePlayerController> {
 
     public bool isServer {
         get {
-            return GameController.isServer;
+            return GameManager.isServer;
         }
     }
 }

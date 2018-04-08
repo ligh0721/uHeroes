@@ -11,6 +11,7 @@ public class ModelBaseInfo {
         public double x = 0.5;
         public double y = 0.5;
     }
+
     public Point pivot = new Point();
 
     public class Action {
@@ -18,6 +19,7 @@ public class ModelBaseInfo {
         public double delay = 0.1;
         public int special = -1;
     }
+
     public Dictionary<string, Action> actions = new Dictionary<string, Action>();
     public List<string> frames;
 }
@@ -27,12 +29,14 @@ public class UnitModelInfo : ModelBaseInfo {
         public double x = 0.0;
         public double y = 0.0;
     }
+
     public Fire fire;
 
     public class Half {
         public double x = 0.2;
         public double y = 0.2;
     }
+
     public Half half;
 }
 
@@ -50,9 +54,7 @@ public class AttackInfo {
     }
 
     public bool valid {
-        get {
-            return animations != null;
-        }
+        get { return animations != null; }
     }
 
     public string name = "Normal Attack";
@@ -99,9 +101,7 @@ public class TankInfo {
 
 public class ResourceManager {
     public static ResourceManager instance {
-        get {
-            return s_instance ?? (s_instance = new ResourceManager());
-        }
+        get { return s_instance ?? (s_instance = new ResourceManager()); }
     }
 
     public UnitModelInfo LoadUnitModel(string path) {
@@ -127,7 +127,7 @@ public class ResourceManager {
 			
         TextAsset res = Resources.Load<TextAsset>(string.Format("{0}/info", path));
         TYPE modelInfo = JsonMapper.ToObject<TYPE>(res.text);
-		Resources.UnloadAsset(res);
+        Resources.UnloadAsset(res);
         m_modelInfos.Add(path, modelInfo);
 
         Vector2 pivot = new Vector2((float)modelInfo.pivot.x, (float)modelInfo.pivot.y);
@@ -157,7 +157,7 @@ public class ResourceManager {
         foreach (string frame in modelInfo.frames) {
             Texture2D texture = Resources.Load<Texture2D>(string.Format("{0}/{1}", path, frame));
             Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), pivot);
-			Resources.UnloadAsset(texture);
+            Resources.UnloadAsset(texture);
             m_modelFrames.Add(string.Format("{0}/{1}", path, frame), sprite);
         }
 
@@ -236,7 +236,7 @@ public class ResourceManager {
         }
 
         baseInfo = JsonMapper.ToObject<UnitInfo>(res.text);
-		//Resources.UnloadAsset(res);
+        //Resources.UnloadAsset(res);
         if (baseInfo == null) {
             return null;
         }
@@ -307,7 +307,7 @@ public class ResourceManager {
         }
 
         baseInfo = JsonMapper.ToObject<ProjectileInfo>(res.text);
-		//Resources.UnloadAsset(res);
+        //Resources.UnloadAsset(res);
         if (baseInfo == null) {
             return null;
         }
@@ -382,7 +382,7 @@ public class ResourceManager {
         }
 
         SkillInfoOnlyBaseId baseInfo = JsonUtility.FromJson<SkillInfoOnlyBaseId>(res.text);
-		//Resources.UnloadAsset(res);
+        //Resources.UnloadAsset(res);
         if (baseInfo == null || baseInfo.baseId.Length == 0) {
             return null;
         }
@@ -476,7 +476,8 @@ public class ResourceManager {
                 LoadProjectile(res.path);
                 break;
             }
-            prog.value += 1.0f;;
+            prog.value += 1.0f;
+            ;
             onUpdate(prog);
             yield return null;
         }
@@ -512,6 +513,7 @@ public class ResourceManager {
     }
 
     public delegate IEnumerator CustomCoroutineFunction(OnUpdateProgress onUpdate);
+
     public IEnumerator LoadResourcesFromQueueAndReplaceScene(OnUpdateProgress onUpdate, CustomCoroutineFunction custom) {
         yield return LoadResourcesFromQueue(onUpdate);
         yield return ReplaceScene(onUpdate);

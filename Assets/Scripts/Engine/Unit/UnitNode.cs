@@ -21,10 +21,9 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     }
 
     Unit m_unit;
+
     public Unit Unit {
-        get {
-            return m_unit;
-        }
+        get { return m_unit; }
     }
 
     public override void StopAction(int tag) {
@@ -87,9 +86,7 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     }
 
     public float HalfOfWidth {
-        get {
-            return m_halfOfWidth;
-        }
+        get { return m_halfOfWidth; }
 
         //set
         //{
@@ -98,9 +95,7 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     }
 
     public float HalfOfHeight {
-        get {
-            return m_halfOfHeight;
-        }
+        get { return m_halfOfHeight; }
 
         //set
         //{
@@ -109,9 +104,7 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     }
 
     public Vector2 FireOffset {
-        get {
-            return m_fireOffset;
-        }
+        get { return m_fireOffset; }
 
         //set
         //{
@@ -120,15 +113,11 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     }
 
     public GamePlayerController localClient {
-        get {
-            return GamePlayerController.localClient;
-        }
+        get { return GamePlayerController.localClient; }
     }
 
     public bool isServer {
-        get {
-            return localClient.isServer;
-        }
+        get { return localClient.isServer; }
     }
 
     protected float m_halfOfWidth;

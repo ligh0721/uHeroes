@@ -17,15 +17,11 @@ public class WorldController : MonoBehaviour {
     static WorldController s_instance;
 
     public World world {
-        get {
-            return m_world;
-        }
+        get { return m_world; }
     }
 
     public static WorldController instance {
-        get {
-            return s_instance;
-        }
+        get { return s_instance; }
     }
 
     public GameObject worldCanvas {
@@ -67,7 +63,7 @@ public class WorldController : MonoBehaviour {
     }
 
     void Update() {
-        ActionManager.instance.update(Time.deltaTime);
+        ActionManager.Main.update(Time.deltaTime);
         if (GamePlayerController.localClient && GamePlayerController.localClient.isServer) {
             GamePlayerController.localClient.ServerSyncActions();
         }
@@ -99,9 +95,9 @@ public class WorldController : MonoBehaviour {
 
     public void OnTestBtn() {
         StopWorld();
-        GameController.Reset();
+        GameManager.Reset();
 
-        if (GameController.isServer) {
+        if (GameManager.isServer) {
             NetworkManager.singleton.StopHost();
         } else {
             NetworkManager.singleton.StopClient();

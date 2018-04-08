@@ -33,7 +33,7 @@ class LinkAnimate : Animate
 		base.startWithTarget (target);
 
 		NodeWithHeight rendererTarget = target as NodeWithHeight;
-		ProjectileNode r = rendererTarget.renderer as ProjectileNode;
+		ProjectileNode r = rendererTarget.GetComponent<Renderer>() as ProjectileNode;
 		Projectile p = r.Projectile;
 		m_fireFrom = m_fromToType == Projectile.FromToType.kUnitToUnit && p.SourceUnit != null && m_from == p.SourceUnit.Renderer;
 		//target.visible = false;
@@ -63,7 +63,7 @@ class LinkAnimate : Animate
             float fFromHeight = 0.0f;
             if (m_fireFrom)
             {
-                bool useFireOffset = ((_target as NodeWithHeight).renderer as ProjectileNode).Projectile.UseFireOffset;
+                bool useFireOffset = ((_target as NodeWithHeight).GetComponent<Renderer>() as ProjectileNode).Projectile.UseFireOffset;
                 float offsetX = useFireOffset ? m_from.FireOffset.x : m_from.HalfOfWidth;
                 float offsetY = useFireOffset ? m_from.FireOffset.y : m_from.HalfOfHeight;
                 bool bFlipX = m_fromPos.x > m_toPos.x;

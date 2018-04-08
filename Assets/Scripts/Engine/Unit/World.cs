@@ -2,11 +2,47 @@ using UnityEngine;
 using System.Collections.Generic;
 using cca;
 
-public class World {
-    public WorldController Controller {
-        get {
-            return m_ctrl;
+public class World : MonoBehaviour {
+    public GameObject m_unitPrefab;
+    public GameObject m_projectilePrefab;
+
+    static World m_main;
+
+    public static World Main {
+        get { return m_main; }
+    }
+
+    void Awake() {
+        if (m_main == null) {
+            m_main = this;
         }
+    }
+
+    void OnDestroy() {
+        if (m_main == this) {
+            m_main = null;
+        }
+    }
+
+    void Start() {
+        Debug.Assert(m_unitPrefab != null);
+        Debug.Assert(m_projectilePrefab != null);
+
+        GameObjectPool.ResetFunction reset = delegate (GameObject gameObject) {
+            gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
+            gameObject.GetComponent<SpriteRenderer>().enabled = true;
+            gameObject.GetComponent<SpriteRenderer>().color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+        };
+
+        GameObjectPool.instance.Alloc(m_unitPrefab, 50, reset);
+        GameObjectPool.instance.Alloc(m_projectilePrefab, 50, reset);
+
+        m_main = this;
+    }
+
+    void FixedUpdate() {
+        Step(Time.fixedDeltaTime);
     }
 
     protected void OnTick(float dt) {
@@ -50,35 +86,72 @@ public class World {
     public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
 
-        GamePlayerController client;
-        UnitController unitCtrl;
-        if (GameController.AllPlayers.TryGetValue(playerId, out client)) {
-            // 玩家单位
-            unitCtrl = UnitController.Create(syncInfo, client);
-            client.unitCtrl = unitCtrl;
-            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unitCtrl.unit.Id, client.playerId);
-            if (client == GamePlayerController.localClient) {
-                Debug.LogFormat("That's Me, {0}.", unitCtrl.unit.Name);
+        GamePlayerController player;
+        GameManager.AllPlayers.TryGetValue(playerId, out player);
+
+        GameObject gameObject = GameObjectPool.instance.Instantiate();
+        UnitNode node = gameObject.GetComponent<UnitNode>();
+        Unit unit = gameObject.GetComponent<Unit>();
+        UnitController ctrl = gameObject.GetComponent<UnitController>();
+
+        ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
+        ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
+
+        unit.m_id = syncInfo.id;
+        unit.m_client = player;
+        unit.m_model = syncInfo.baseInfo.model;
+        if (GamePlayerController.localClient.isServer) {
+            unit.AI = UnitAI.instance;
+        }
+
+        unit.Name = syncInfo.baseInfo.name;
+        unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
+        if (syncInfo.baseInfo.attackSkill.valid) {
+            AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
+            atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
+            atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
+            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
+                atk.AddCastAnimation(ModelNode.NameToId(ani));
             }
+            atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
+            unit.AddActiveSkill(atk);
+        }
+        node.position = syncInfo.position;
+        node.SetFlippedX(syncInfo.flippedX);
+        unit.Hp = syncInfo.hp;
+        unit.force.Force = syncInfo.force;
+        unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
+        unit.Revivable = syncInfo.baseInfo.revivable;
+        unit.Fixed = syncInfo.baseInfo.isfixed;
 
-            // TEST !!!!
-            unitCtrl.unit.MaxHpBase = 10000;  // test
-            unitCtrl.unit.Hp = unitCtrl.unit.MaxHp;
-            unitCtrl.unit.AttackSkill.coolDownBase = 0;
-            unitCtrl.unit.AttackSkill.coolDownSpeedCoeff = 2;
-            unitCtrl.unit.CriticalRateBase = 0.2f;
-            unitCtrl.unit.CriticalDamageBase = 20.0f;
+        ctrl.m_client = player;
+        WorldController.instance.world.AddUnit(unit);
 
-            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
-            unitCtrl.unit.AddPassiveSkill(splash);
+        if (player == null) {
+            return;
+        }
 
-            if (client == GamePlayerController.localClient) {
-                PortraitGroupUI portraitui = GameObject.Find("Canvas/Panel/UI_PortraitGroup").GetComponent<PortraitGroupUI>();
-                portraitui.AddPortrait(unitCtrl.unit);
-            }
-        } else {
-            // 普通单位
-            UnitController.Create(syncInfo, null);
+        // 玩家单位
+        player.unitCtrl = ctrl;
+        Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unit.Id, player.playerId);
+        if (player == GamePlayerController.localClient) {
+            Debug.LogFormat("That's Me, {0}.", unit.Name);
+        }
+
+        // TEST !!!!
+        unit.MaxHpBase = 10000;  // test
+        unit.Hp = unit.MaxHp;
+        unit.AttackSkill.coolDownBase = 0;
+        unit.AttackSkill.coolDownSpeedCoeff = 2;
+        unit.CriticalRateBase = 0.2f;
+        unit.CriticalDamageBase = 20.0f;
+
+        SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
+        unit.AddPassiveSkill(splash);
+
+        if (player == GamePlayerController.localClient) {
+            PortraitGroupUI portraitui = GameObject.Find("Canvas/Panel/UI_PortraitGroup").GetComponent<PortraitGroupUI>();
+            portraitui.AddPortrait(unit);
         }
     }
 
@@ -222,8 +295,7 @@ public class World {
             var unit = kv.Key;
             unit.Step(dt);
 
-            if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying))  // terrible code
-            {
+            if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying)) {  // terrible code
                 // 刚死，计划最后移除该单位
                 unit.OnDying();
             }
@@ -242,8 +314,7 @@ public class World {
         m_shutdown = false;
     }
 
-    public void Shutdown()  // 为避免CUnitEventAdapter(CWorld).CUnit.CWorld的retain cycle，在这里主动销毁一些子节点
-    {
+    public void Shutdown() {  // 为避免CUnitEventAdapter(CWorld).CUnit.CWorld的retain cycle，在这里主动销毁一些子节点
         OnShutDown();
         m_shutdown = true;
         m_units.Clear();
@@ -283,9 +354,7 @@ public class World {
     */
 
     public Dictionary<Unit, int> Units {
-        get {
-            return m_units;
-        }
+        get { return m_units; }
     }
 
     protected bool m_shutdown;

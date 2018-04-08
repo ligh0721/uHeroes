@@ -11,44 +11,31 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     UnitNode m_node;
+
     public UnitNode Node {
-        get {
-            return m_node;
-        }
+        get { return m_node; }
     }
 
     public UnitForce force = new UnitForce();
 
     public int Id {
-        get {
-            return m_id;
-        }
+        get { return m_id; }
     }
 
     public string Name {
-        get {
-            return m_name;
-        }
+        get { return m_name; }
 
-        set {
-            m_name = value;
-        }
+        set { m_name = value; }
     }
 
     public World World {
-        get {
-            return m_world;
-        }
+        get { return m_world; }
 
-        set {
-            m_world = value;
-        }
+        set { m_world = value; }
     }
 
     public string Model {
-        get {
-            return m_model;
-        }
+        get { return m_model; }
     }
 
     protected World m_world;
@@ -58,22 +45,17 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // Networkable
     protected internal GamePlayerController m_client;
+
     public GamePlayerController client {
-        get {
-            return m_client;
-        }
+        get { return m_client; }
     }
 
     public GamePlayerController localClient {
-        get {
-            return GamePlayerController.localClient;
-        }
+        get { return GamePlayerController.localClient; }
     }
 
     public bool isServer {
-        get {
-            return localClient.isServer;
-        }
+        get { return localClient.isServer; }
     }
 
     // event
@@ -215,15 +197,15 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
                 m_movePath = null;
                 EndDoing(kDoingAlongPath);
             } else if ((target != m_lastMoveTo || IsDoingOr(kDoingMoving) == false) && IsDoingOr(kDoingCasting) == false) {
-                // 单位没有施法，并且当前路径目标点不是移动目标点 或 单位没在移动，则继续沿路径行进
-                if (m_pathObstinate) {
-                    StartDoing(kDoingObstinate);
-                } else {
-                    EndDoing(kDoingObstinate);
-                }
+                    // 单位没有施法，并且当前路径目标点不是移动目标点 或 单位没在移动，则继续沿路径行进
+                    if (m_pathObstinate) {
+                        StartDoing(kDoingObstinate);
+                    } else {
+                        EndDoing(kDoingObstinate);
+                    }
 
-                Move(target);
-            }
+                    Move(target);
+                }
         }
 
         if (IsDoingAnd(kDoingCasting) && m_node.IsDoingAction(m_castActionId) == false) {
@@ -257,13 +239,13 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
                     CastSpell(skill);
                 } else if (skill.coolingDown == false && (IsDoingOr(kDoingMoving) == false || CheckCastTargetDistance(skill, m_lastMoveTo, m_castTarget, t) == false)) {
-                    if (!m_fixed) {
-                        MoveToCastPosition(skill, t);
-                    } else {
-                        StopCast(false);
-                        EndDoing(kDoingObstinate);
+                        if (!m_fixed) {
+                            MoveToCastPosition(skill, t);
+                        } else {
+                            StopCast(false);
+                            EndDoing(kDoingObstinate);
+                        }
                     }
-                }
                 return;
             } else {
                 EndDoing(kDoingObstinate);  // 没有成功施法，需要去除固执状态
@@ -444,8 +426,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // 技能CD开始时被通知
-    public void OnSkillCD(Skill skill)  // 以后将区分出onItemCD
-    {
+    public void OnSkillCD(Skill skill) {  // 以后将区分出onItemCD
         if (!isServer) {
             return;
         }
@@ -456,8 +437,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // 技能CD结束时被通知
-    public void OnSkillReady(Skill skill)  // 以后将区分出onItemReady
-    {
+    public void OnSkillReady(Skill skill) {  // 以后将区分出onItemReady
         if (!isServer) {
             return;
         }
@@ -680,9 +660,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     protected bool TriggerFree {
-        get {
-            return m_triggerRefCount == 0;
-        }
+        get { return m_triggerRefCount == 0; }
     }
 
     // 触发器链的触发，内部调用
@@ -823,27 +801,19 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // Skill
 
     public HashSet<ActiveSkill> ActiveSkills {
-        get {
-            return m_activeSkills;
-        }
+        get { return m_activeSkills; }
     }
 
     public HashSet<PassiveSkill> PassiveSkills {
-        get {
-            return m_passiveSkills;
-        }
+        get { return m_passiveSkills; }
     }
 
     public HashSet<BuffSkill> BuffSkills {
-        get {
-            return m_buffSkills;
-        }
+        get { return m_buffSkills; }
     }
 
     public HashSet<PassiveSkill> SystemSkills {
-        get {
-            return m_systemSkills;
-        }
+        get { return m_systemSkills; }
     }
 
     public void SkillCD(Skill skill) {
@@ -851,9 +821,9 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         if (w.IsSkillCD(skill)) {
             return;
         } else if (!skill.coolingDown) {
-            skill.coolingDownElapsed = float.MaxValue;
-            return;
-        }
+                skill.coolingDownElapsed = float.MaxValue;
+                return;
+            }
 
         w.AddSkillCD(skill);
         OnSkillCD(skill);
@@ -1026,22 +996,16 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     protected HashSet<PassiveSkill> m_systemSkills = new HashSet<PassiveSkill>();
 
     public ActiveSkill AttackSkill {
-        get {
-            return m_attackSkill;
-        }
+        get { return m_attackSkill; }
 
-        set {
-            m_attackSkill = value;
-        }
+        set { m_attackSkill = value; }
     }
 
     protected ActiveSkill m_attackSkill;
 
     // Hp
     public float Hp {
-        get {
-            return m_hp;
-        }
+        get { return m_hp; }
 
         set {
             if (Dead) {
@@ -1062,15 +1026,11 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public float MaxHp {
-        get {
-            return m_maxHp.v;
-        }
+        get { return m_maxHp.v; }
     }
 
     public float MaxHpBase {
-        get {
-            return m_maxHp.x;
-        }
+        get { return m_maxHp.x; }
 
         set {
             float fOldMaxHp = m_maxHp.v;
@@ -1084,9 +1044,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public Coeff MaxHpCoeff {
-        get {
-            return m_maxHp.coeff;
-        }
+        get { return m_maxHp.coeff; }
 
         set {
             float oldMaxHp = m_maxHp.v;
@@ -1100,9 +1058,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public bool Dead {
-        get {
-            return m_hp <= 0;
-        }
+        get { return m_hp <= 0; }
     }
 
     public bool Revive(float hp) {
@@ -1152,13 +1108,9 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public bool Revivable {
-        get {
-            return m_revivable;
-        }
+        get { return m_revivable; }
 
-        set {
-            m_revivable = value;
-        }
+        set { m_revivable = value; }
     }
 
     protected float m_hp = 1;
@@ -1190,13 +1142,9 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public Unit Killer {
-        get {
-            return m_killer;
-        }
+        get { return m_killer; }
 
-        set {
-            m_killer = value;
-        }
+        set { m_killer = value; }
     }
 
     protected Unit m_killer;
@@ -1331,43 +1279,31 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // AI
     public UnitAI AI {
-        get {
-            return m_AI;
-        }
+        get { return m_AI; }
 
-        set {
-            m_AI = value;
-        }
+        set { m_AI = value; }
     }
 
     protected UnitAI m_AI;
 
     // Fixed
     public bool Fixed {
-        get {
-            return m_fixed;
-        }
+        get { return m_fixed; }
 
-        set {
-            m_fixed = value;
-        }
+        set { m_fixed = value; }
     }
 
     protected bool m_fixed;
 
     public float HostilityRange {
-        get {
-            return m_hostilityRange;
-        }
+        get { return m_hostilityRange; }
     }
 
     protected float m_hostilityRange = 3.0f;
 
     // Suspend
     public bool Suspended {
-        get {
-            return m_suspendCount > 0;
-        }
+        get { return m_suspendCount > 0; }
     }
 
     void Suspend() {
@@ -1414,15 +1350,11 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public bool Ghost {
-        get {
-            return m_ghostOwner != null;
-        }
+        get { return m_ghostOwner != null; }
     }
 
     public Unit GhostOwner {
-        get {
-            return m_ghostOwner;
-        }
+        get { return m_ghostOwner; }
     }
 
     public Unit RootGhostOwner {
@@ -1473,33 +1405,21 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // Cast
     public CommandTarget CastTarget {
-        get {
-            return m_castTarget;
-        }
+        get { return m_castTarget; }
 
-        set {
-            m_castTarget = value;
-        }
+        set { m_castTarget = value; }
     }
 
     public ActiveSkill CastActiveSkill {
-        get {
-            return m_castActiveSkill;
-        }
+        get { return m_castActiveSkill; }
 
-        set {
-            m_castActiveSkill = value;
-        }
+        set { m_castActiveSkill = value; }
     }
 
     public int CastActionId {
-        get {
-            return m_castActionId;
-        }
+        get { return m_castActionId; }
 
-        set {
-            m_castActionId = value;
-        }
+        set { m_castActionId = value; }
     }
 
     CommandTarget m_castTarget;
@@ -1509,8 +1429,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     ActiveSkill m_waitForCastTargetActiveSkill;
     // 等待目标的技能
 
-    public int CommandCastSpell(CommandTarget target, ActiveSkill activeSkill, bool obstinate = true)  // 可能是施法失败，施法中，施法追逐中，所以返回类型为int
-    {
+    public int CommandCastSpell(CommandTarget target, ActiveSkill activeSkill, bool obstinate = true) {  // 可能是施法失败，施法中，施法追逐中，所以返回类型为int
         if (Suspended || Dead) {
             return -1;
         }
@@ -1793,7 +1712,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
             m_node.DoMoveTo(pos, duration, OnMoveToFinished, speed);
             m_moveToActionId = ModelNode.kActionMoveTo;
         }
-    }        
+    }
 
     protected internal void OnMoveToFinished() {
         EndDoing(kDoingObstinate);  // 移动自行停止后，需要去除固执状态
@@ -1823,9 +1742,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public float MoveSpeedBase {
-        get {
-            return m_moveSpeed.x;
-        }
+        get { return m_moveSpeed.x; }
 
         set {
             value = Mathf.Max(value, CONST_MIN_MOVE_SPEED);
@@ -1836,9 +1753,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public Coeff MoveSpeadCoeff {
-        get {
-            return m_moveSpeed.coeff;
-        }
+        get { return m_moveSpeed.coeff; }
 
         set {
             m_moveSpeed.coeff = value;
@@ -1882,97 +1797,63 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     protected ArmorValue m_armorValue = new ArmorValue(global::ArmorValue.Type.kHeavy, 0);
 
     public float ArmorValue {
-        get {
-            return m_armorValue.v;
-        }
+        get { return m_armorValue.v; }
     }
 
     public ArmorValue.Type ArmorType {
-        get {
-            return m_armorValue.type;
-        }
+        get { return m_armorValue.type; }
 
-        set {
-            m_armorValue.type = value;
-        }
+        set { m_armorValue.type = value; }
     }
 
     public float ArmorValueBase {
-        get {
-            return m_armorValue.x;
-        }
+        get { return m_armorValue.x; }
 
-        set {
-            m_armorValue.x = value;
-        }
+        set { m_armorValue.x = value; }
     }
 
     public Coeff ArmorValueCoeff {
-        get {
-            return m_armorValue.coeff;
-        }
+        get { return m_armorValue.coeff; }
 
-        set {
-            m_armorValue.coeff = value;
-        }
+        set { m_armorValue.coeff = value; }
     }
 
     // 暴击率
     protected Value m_critRate = new Value(0.2f);
 
     public float CriticalRate {
-        get {
-            return m_critRate.v;
-        }
+        get { return m_critRate.v; }
     }
 
     public float CriticalRateBase {
-        get {
-            return m_critRate.x;
-        }
+        get { return m_critRate.x; }
 
-        set {
-            m_critRate.x = value;
-        }
+        set { m_critRate.x = value; }
     }
 
     public Coeff CriticalRateCoeff {
-        get {
-            return m_critRate.coeff;
-        }
+        get { return m_critRate.coeff; }
 
-        set {
-            m_critRate.coeff = value;
-        }
+        set { m_critRate.coeff = value; }
     }
 
     // 暴击伤害
     protected Value m_critDmg = new Value(0.5f);
 
     public float CriticalDamage {
-        get {
-            return m_critDmg.v;
-        }
+        get { return m_critDmg.v; }
     }
 
     public float CriticalDamageBase {
-        get {
-            return m_critDmg.x;
-        }
+        get { return m_critDmg.x; }
 
-        set {
-            m_critDmg.x = value;
-        }
+        set { m_critDmg.x = value; }
     }
 
     public Coeff CriticalDamageCoeff {
-        get {
-            return m_critDmg.coeff;
-        }
+        get { return m_critDmg.coeff; }
 
-        set {
-            m_critDmg.coeff = value;
-        }
+        set { m_critDmg.coeff = value; }
     }
 }
 
@@ -1993,8 +1874,7 @@ public class UnitPath {
         return m_points[curPos];
     }
 
-    public bool arriveCurTargetPoint(ref int rCurPos)  // return true when end
-    {
+    public bool arriveCurTargetPoint(ref int rCurPos) {  // return true when end
         if (rCurPos < m_points.Count) {
             ++rCurPos;
         }
@@ -2048,21 +1928,15 @@ public class CommandTarget {
     }
 
     public Type TargetType {
-        get {
-            return m_targetType;
-        }
+        get { return m_targetType; }
     }
 
     public Vector2 TargetPoint {
-        get {
-            return m_targetPoint;
-        }
+        get { return m_targetPoint; }
     }
 
     public Unit TargetUnit {
-        get {
-            return m_targetUnit;
-        }
+        get { return m_targetUnit; }
     }
 
     public void UpdateTargetPoint() {

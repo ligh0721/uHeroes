@@ -82,12 +82,11 @@ public class SyncObjectReceiver<SyncObject> {
 /// <summary>
 /// 全局唯一数据在这里
 /// </summary>
-public class GameController {
+public class GameManager {
     static bool m_isServer;
+
     public static bool isServer {
-        get {
-            return m_isServer;
-        }
+        get { return m_isServer; }
     }
 
     // ===== 全局Server专用数据 =====
@@ -98,13 +97,14 @@ public class GameController {
 
     // ===== 全局玩家数据 =====
     public static SyncObjectReceiver<SyncGameAction> syncActionReceiver;
-    static Dictionary<int, GamePlayerController> m_allPlayers;  // 所有玩家
+    static Dictionary<int, GamePlayerController> m_allPlayers;
+    // 所有玩家
     public static Dictionary<int, GamePlayerController> AllPlayers {
-        get {
-            return m_allPlayers;
-        }
+        get { return m_allPlayers; }
     }
-    static Dictionary<int, bool> m_playersReady;  // 玩家准备状态，点击准备按钮和加载资源完成的时候会设置这个状态                                                  // ===== 全局玩家数据 结束 =====
+
+    static Dictionary<int, bool> m_playersReady;
+    // 玩家准备状态，点击准备按钮和加载资源完成的时候会设置这个状态                                                  // ===== 全局玩家数据 结束 =====
 
     // ===== 通用成员函数 =====
     /// <summary>
@@ -185,48 +185,8 @@ public class GameController {
         return !m_playersReady.ContainsValue(false);
     }
 
-    public static GameObject CreateUnit(SyncUnitInfo syncInfo, GameObject prefab, GamePlayerController client) {
-        //Debug.Log("CreateUnit");
-        GameObject gameObject = GameObjectPool.instance.Instantiate(prefab);
-        UnitNode node = gameObject.GetComponent<UnitNode>();
-        Unit unit = gameObject.GetComponent<Unit>();
-        UnitController ctrl = gameObject.GetComponent<UnitController>();
-
-        ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
-        ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
+    static World m_world;
+    public static RunningWorld {
         
-        unit.m_id = syncInfo.id;
-        unit.m_client = client;
-        unit.m_model = syncInfo.baseInfo.model;
-        if (ctrl.isServer) {
-            unit.AI = UnitAI.instance;
-        }
-
-        unit.Name = syncInfo.baseInfo.name;
-        unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
-        if (syncInfo.baseInfo.attackSkill.valid) {
-            AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
-            atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
-            atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
-            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
-                atk.AddCastAnimation(ModelNode.NameToId(ani));
-            }
-            atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
-            unit.AddActiveSkill(atk);
-        }
-        node.position = syncInfo.position;
-        node.SetFlippedX(syncInfo.flippedX);
-        unit.Hp = syncInfo.hp;
-        unit.force.Force = syncInfo.force;
-        unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
-        unit.Revivable = syncInfo.baseInfo.revivable;
-        unit.Fixed = syncInfo.baseInfo.isfixed;
-
-        ctrl.m_unit = unit;
-        ctrl.m_client = client;
-        WorldController.instance.world.AddUnit(unit);
-
-        ctrl.m_ui = UnitHUD.Create(ctrl);
-        return gameObject;
     }
 }
