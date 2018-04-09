@@ -2,71 +2,27 @@ using UnityEngine;
 using System;
 
 
-[Serializable]
-public class SyncProjectileInfo
-{
-    public static SyncProjectileInfo Create(Projectile projectile)
-    {
-        SyncProjectileInfo syncInfo = new SyncProjectileInfo();
-
-        syncInfo.baseInfo.model = projectile.Model;
-        syncInfo.baseInfo.move = projectile.MoveSpeed;
-        syncInfo.baseInfo.height = projectile.MaxHeightDelta;
-        syncInfo.baseInfo.fire = Projectile.FireTypeToName(projectile.TypeOfFire);
-        syncInfo.baseInfo.effect = (int)projectile.EffectFlags;
-
-        syncInfo.position = projectile.Renderer.Node.position;
-        syncInfo.visible = projectile.Renderer.Node.visible;
-        syncInfo.fromTo = projectile.TypeOfFromTo;
-        syncInfo.useFireOffset = projectile.UseFireOffset;
-        syncInfo.srcUnit = projectile.SourceUnit != null ? projectile.SourceUnit.Id : 0;
-        syncInfo.fromUnit = projectile.FromUnit != null ? projectile.FromUnit.Id : 0;
-        syncInfo.toUnit = projectile.ToUnit != null ? projectile.ToUnit.Id : 0;
-        syncInfo.fromPos = projectile.FromPosition;
-        syncInfo.toPos = projectile.ToPosition;
-
-        return syncInfo;
-    }
-
-    public int id;
-    public ProjectileInfo baseInfo = new ProjectileInfo();
-    public Vector2Serializable position;
-    public bool visible;
-    public Projectile.FromToType fromTo;
-    public bool useFireOffset;
-    public int srcUnit;
-    public int fromUnit;
-    public int toUnit;
-    public Vector2Serializable fromPos;
-    public Vector2Serializable toPos;
-}
-
-
-public class ProjectileController : MonoBehaviour
-{
+public class ProjectileController : MonoBehaviour {
     protected Projectile m_projectile;
 
-    public Projectile projectile
-    {
-        get
-        {
-            return m_projectile;
-        }
+    public Projectile projectile {
+        get { return m_projectile; }
     }
 
     // 用于projectile克隆，只包含少数信息
-    public static ProjectileController Create(string path)
-    {
-		GameObject gameObject = GameObjectPool.instance.Instantiate(WorldController.instance.projectilePrefab);
+    public static ProjectileController Create(string path) {
+        GameObject gameObject = GameObjectPool.instance.Instantiate(WorldController.instance.projectilePrefab);
         ProjectileController projCtrl = gameObject.GetComponent<ProjectileController>();
 
         ResourceManager.instance.LoadProjectileModel(path);  // high time cost
         //ProjectileRenderer r = new ProjectileRenderer(WorldController.instance.projectilePrefab, gameObject);
-        ProjectileNode r = ObjectPool<ProjectileNode>.instance.Instantiate(); r.Init(WorldController.instance.projectilePrefab, gameObject);
+        ProjectileNode r = ObjectPool<ProjectileNode>.instance.Instantiate();
+        r.Init(WorldController.instance.projectilePrefab, gameObject);
         ResourceManager.instance.AssignModelToProjectileNode(path, r);
 
         //Projectile projectile = new Projectile(r);
-        Projectile projectile = ObjectPool<Projectile>.instance.Instantiate(); projectile.Init(r);
+        Projectile projectile = ObjectPool<Projectile>.instance.Instantiate();
+        projectile.Init(r);
         projectile.m_model = path;
 
         projCtrl.m_projectile = projectile;
@@ -76,8 +32,7 @@ public class ProjectileController : MonoBehaviour
     }
 
     // 创建projectile
-    public static ProjectileController Create(SyncProjectileInfo syncInfo)
-    {
+    public static ProjectileController Create(SyncProjectileInfo syncInfo) {
         ProjectileController projCtrl = Create(syncInfo.baseInfo.model);
         Projectile projectile = projCtrl.projectile;
         SetProjectileFromBaseInfo(projectile, syncInfo.baseInfo);
@@ -96,17 +51,16 @@ public class ProjectileController : MonoBehaviour
     }
 
     // 用于创建projectile模板，通常用于配置技能
-    public static Projectile CreateProjectileTemplate(string path)
-    {
+    public static Projectile CreateProjectileTemplate(string path) {
         ProjectileInfo baseInfo = ResourceManager.instance.LoadProjectile(path);
-        if (baseInfo == null)
-        {
+        if (baseInfo == null) {
             return null;
         }
 
         ProjectileNode r = ObjectPool<ProjectileNode>.instance.Instantiate();
         //Projectile projectile = new Projectile(r);
-        Projectile projectile = ObjectPool<Projectile>.instance.Instantiate(); projectile.Init(r);
+        Projectile projectile = ObjectPool<Projectile>.instance.Instantiate();
+        projectile.Init(r);
         projectile.m_model = baseInfo.model;
         SetProjectileFromBaseInfo(projectile, baseInfo);
 
@@ -114,8 +68,7 @@ public class ProjectileController : MonoBehaviour
     }
 
     // 从baseInfo中读取除model之外的信息
-	static void SetProjectileFromBaseInfo(Projectile projectile, ProjectileInfo baseInfo)
-    {
+    static void SetProjectileFromBaseInfo(Projectile projectile, ProjectileInfo baseInfo) {
         projectile.MoveSpeed = (float)baseInfo.move;
         projectile.MaxHeightDelta = (float)baseInfo.height;
         projectile.TypeOfFire = Projectile.FireNameToType(baseInfo.fire);

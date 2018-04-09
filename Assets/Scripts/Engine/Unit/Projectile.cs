@@ -188,8 +188,6 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     // fire
     // you need to set m_fireType, m_fromToType, m_toUnit or m_toPos, m_fromUnit or m_fromPos before call me
     public void Fire() {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncFireProjectile(SyncProjectileInfo.Create(this)));
-
         PlayFireSound();
 
         switch (m_fireType) {
@@ -486,4 +484,42 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     public bool isServer {
         get { return localClient.isServer; }
     }
+}
+
+[Serializable]
+public class SyncProjectileInfo {
+    public SyncProjectileInfo() {
+    }
+
+    public SyncProjectileInfo(Projectile projectile) {
+        ProjectileNode node = projectile.Node;
+
+        baseInfo.model = projectile.Model;
+        baseInfo.move = projectile.MoveSpeed;
+        baseInfo.height = projectile.MaxHeightDelta;
+        baseInfo.fire = Projectile.FireTypeToName(projectile.TypeOfFire);
+        baseInfo.effect = (int)projectile.EffectFlags;
+
+        position = node.position;
+        visible = node.visible;
+        fromTo = projectile.TypeOfFromTo;
+        useFireOffset = projectile.UseFireOffset;
+        srcUnit = projectile.SourceUnit != null ? projectile.SourceUnit.Id : 0;
+        fromUnit = projectile.FromUnit != null ? projectile.FromUnit.Id : 0;
+        toUnit = projectile.ToUnit != null ? projectile.ToUnit.Id : 0;
+        fromPos = projectile.FromPosition;
+        toPos = projectile.ToPosition;
+    }
+
+    public int id;
+    public ProjectileInfo baseInfo = new ProjectileInfo();
+    public Vector2Serializable position;
+    public bool visible;
+    public Projectile.FromToType fromTo;
+    public bool useFireOffset;
+    public int srcUnit;
+    public int fromUnit;
+    public int toUnit;
+    public Vector2Serializable fromPos;
+    public Vector2Serializable toPos;
 }

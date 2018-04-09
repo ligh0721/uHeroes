@@ -3,53 +3,6 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 
-[Serializable]
-public class SyncUnitInfo {
-    public SyncUnitInfo() {
-    }
-
-    public SyncUnitInfo(GameObject from) {
-        Unit unit = from.GetComponent<Unit>();
-        UnitNode node = from.GetComponent<UnitNode>();
-
-        SyncUnitInfo syncInfo = new SyncUnitInfo();
-        syncInfo.baseInfo.model = unit.Model;
-        syncInfo.baseInfo.name = unit.Name;
-        syncInfo.baseInfo.maxHp = unit.MaxHpBase;
-        AttackAct attack = unit.AttackSkill as AttackAct;
-        if (attack != null) {
-            syncInfo.baseInfo.attackSkill = new AttackInfo();
-            syncInfo.baseInfo.attackSkill.cd = attack.coolDownBase;
-            syncInfo.baseInfo.attackSkill.type = AttackValue.TypeToName(attack.AttackType);
-            syncInfo.baseInfo.attackSkill.value = attack.AttackValueBase;
-            syncInfo.baseInfo.attackSkill.range = attack.CastRange;
-            syncInfo.baseInfo.attackSkill.horizontal = attack.CastHorizontal;
-            var castAnimations = attack.castAnimations;
-            syncInfo.baseInfo.attackSkill.animations = new string[castAnimations.Count];
-            for (int i = 0; i < castAnimations.Count; ++i) {
-                syncInfo.baseInfo.attackSkill.animations[i] = ModelNode.IdToName(castAnimations[i]);
-            }
-            syncInfo.baseInfo.attackSkill.projectile = attack.ProjectileTemplate.Model;
-        }
-
-        syncInfo.position = node.position;
-        syncInfo.flippedX = node.flippedX;
-        syncInfo.hp = unit.Hp;
-        syncInfo.force = unit.force.Force;
-        syncInfo.baseInfo.move = unit.MoveSpeedBase;
-        syncInfo.baseInfo.revivable = unit.Revivable;
-        syncInfo.baseInfo.isfixed = unit.Fixed;
-    }
-
-    public int id;
-    public UnitInfo baseInfo = new UnitInfo();
-    public Vector2Serializable position;
-    public bool flippedX;
-    public float hp;
-    public int force;
-}
-
-
 public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> {
     void Start() {
         
