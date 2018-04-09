@@ -29,7 +29,7 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     public override void StopAction(int tag) {
 
         GamePlayerController.localClient.ServerAddSyncAction(new SyncStopAction(m_unit.Id, tag));
-        StopAction(tag);
+        base.StopAction(tag);
     }
 
     public override void StopAllActions() {

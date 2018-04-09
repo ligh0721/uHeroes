@@ -95,7 +95,7 @@ public class World : MonoBehaviour {
     /// </summary>
     /// <param name="syncInfo"></param>
     /// <param name="playerId"></param>
-    public void CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
+    public Unit CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
 
         GamePlayerController player;
@@ -137,7 +137,6 @@ public class World : MonoBehaviour {
         unit.Fixed = syncInfo.baseInfo.isfixed;
 
         ctrl.m_client = player;
-        WorldController.instance.world.AddUnit(unit);
 
         if (player == null) {
             return;
@@ -165,6 +164,39 @@ public class World : MonoBehaviour {
             PortraitGroupUI portraitui = GameObject.Find("Canvas/Panel/UI_PortraitGroup").GetComponent<PortraitGroupUI>();
             portraitui.AddPortrait(unit);
         }
+
+        AddUnit(unit);
+        return unit;
+    }
+
+    public Projectile CreateProjectile(SyncProjectileInfo syncInfo) {
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateProjectile(syncInfo));
+
+        GameObject gameObject = GameObjectPool.instance.Instantiate(projectilePrefab);
+        ProjectileNode node = gameObject.GetComponent<ProjectileNode>();
+        Projectile projectile = gameObject.GetComponent<Projectile>();
+        ProjectileController ctrl = gameObject.GetComponent<ProjectileController>();
+
+        ResourceManager.instance.LoadProjectileModel(syncInfo.baseInfo.model);  // high time cost
+        ResourceManager.instance.AssignModelToProjectileNode(syncInfo.baseInfo.model, node);
+
+        projectile.MoveSpeed = (float)syncInfo.baseInfo.move;
+        projectile.MaxHeightDelta = (float)syncInfo.baseInfo.height;
+        projectile.TypeOfFire = Projectile.FireNameToType(syncInfo.baseInfo.fire);
+        projectile.EffectFlags = (uint)syncInfo.baseInfo.effect;
+
+        node.position = syncInfo.position;
+        node.visible = syncInfo.visible;
+        projectile.TypeOfFromTo = syncInfo.fromTo;
+        projectile.UseFireOffset = syncInfo.useFireOffset;
+        projectile.SourceUnit = GetUnit(syncInfo.srcUnit);
+        projectile.FromUnit = GetUnit(syncInfo.fromUnit);
+        projectile.ToUnit = GetUnit(syncInfo.toUnit);
+        projectile.FromPosition = syncInfo.fromPos;
+        projectile.ToPosition = syncInfo.toPos;
+
+        AddProjectile(projectile);
+        return projectile;
     }
 
     public void RemoveUnit(Unit unit, bool revivalbe = false) {

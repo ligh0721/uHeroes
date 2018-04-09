@@ -13,6 +13,12 @@ public class ProjectileNode : ModelNode {
         cleanup();
     }
 
+    public override void init() {
+        base.init();
+        m_projectile = GetComponent<Projectile>();
+        Debug.Assert(m_projectile != null);
+    }
+
     Projectile m_projectile;
 
     public Projectile Projectile {

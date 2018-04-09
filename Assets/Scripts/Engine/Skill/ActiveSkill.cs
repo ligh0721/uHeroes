@@ -51,7 +51,7 @@ public class ActiveSkill : Skill {
     /// </summary>
     public void Effect() {
         Unit o = m_owner;
-        UnitNode d = o.Renderer;
+        UnitNode d = o.Node;
 
         StartCoolingDown();
         OnUnitCastSkill();
@@ -76,7 +76,7 @@ public class ActiveSkill : Skill {
                     p.SourceSkill = this;
                     p.EffectiveTypeFlags = m_effectiveTypeFlags;
 
-                    UnitNode td = t.Renderer;
+                    UnitNode td = t.Node;
                     Debug.Assert(td != null);
 
                     p.TypeOfFromTo = Projectile.FromToType.kUnitToUnit;
@@ -100,7 +100,7 @@ public class ActiveSkill : Skill {
 
                 p.TypeOfFromTo = Projectile.FromToType.kUnitToPoint;
                 p.FromUnit = o;
-                p.ToPosition = Utils.GetForwardPoint(d.Node.position, o.CastTarget.TargetPoint, m_castRange);
+                p.ToPosition = Utils.GetForwardPoint(d.position, o.CastTarget.TargetPoint, m_castRange);
 
                 p.Fire();
             } else {
@@ -113,63 +113,39 @@ public class ActiveSkill : Skill {
     }
 
     public CommandTarget.Type CastTargetType {
-        get {
-            return m_castTargetType;
-        }
+        get { return m_castTargetType; }
 
-        set {
-            m_castTargetType = value;
-        }
+        set { m_castTargetType = value; }
     }
 
     public float CastMinRange {
-        get {
-            return m_castMinRange;
-        }
+        get { return m_castMinRange; }
 
-        set {
-            m_castMinRange = value;
-        }
+        set { m_castMinRange = value; }
     }
 
     public float CastRange {
-        get {
-            return m_castRange;
-        }
+        get { return m_castRange; }
 
-        set {
-            m_castRange = value;
-        }
+        set { m_castRange = value; }
     }
 
     public float CastTargetRadius {
-        get {
-            return m_castTargetRadius;
-        }
+        get { return m_castTargetRadius; }
 
-        set {
-            m_castTargetRadius = value;
-        }
+        set { m_castTargetRadius = value; }
     }
 
     public Projectile ProjectileTemplate {
-        get {
-            return m_projectileTemplate;
-        }
+        get { return m_projectileTemplate; }
 
-        set {
-            m_projectileTemplate = value;
-        }
+        set { m_projectileTemplate = value; }
     }
 
     public bool CastHorizontal {
-        get {
-            return m_castHorizontal;
-        }
+        get { return m_castHorizontal; }
 
-        set {
-            m_castHorizontal = value;
-        }
+        set { m_castHorizontal = value; }
     }
 
     protected CommandTarget.Type m_castTargetType;
@@ -181,19 +157,19 @@ public class ActiveSkill : Skill {
 
     public Vector2 GetAbilityEffectPoint(Projectile pProjectile, Unit target) {
         if (pProjectile != null) {
-            return pProjectile.Renderer.Node.position;
+            return pProjectile.Node.position;
         }
 
         if (target != null) {
-            UnitNode td = target.Renderer;
-            return td.Node.position;
+            UnitNode td = target.Node;
+            return td.position;
         }
 
-        UnitNode od = m_owner.Renderer;
+        UnitNode od = m_owner.Node;
 
         switch (m_castTargetType) {
         case CommandTarget.Type.kNoTarget:
-            return od.Node.position;
+            return od.position;
 
         case CommandTarget.Type.kPointTarget:
             return m_owner.CastTarget.TargetPoint;
@@ -202,10 +178,10 @@ public class ActiveSkill : Skill {
         Unit u = m_owner.CastTarget.TargetUnit;
         if (u == null) {
             Debug.LogError("GetAbilityEffectPoint() err.");
-            return od.Node.position;
+            return od.position;
         }
 
-        UnitNode ud = u.Renderer;
-        return ud.Node.position;
+        UnitNode ud = u.Node;
+        return ud.position;
     }
 }

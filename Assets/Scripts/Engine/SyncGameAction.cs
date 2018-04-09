@@ -11,28 +11,24 @@ public class SyncGameAction {
 
     public Unit unit {
         get {
-            Unit u = WorldController.instance.world.GetUnit(unitId);
+            Unit u = World.Main.GetUnit(unitId);
             return u;
         }
     }
 
-    public UnitNode renderer {
+    public UnitNode node {
         get {
             Unit u = unit;
-            return u != null ? u.Renderer : null;
+            return u != null ? u.Node : null;
         }
     }
 
     public World world {
-        get {
-            return WorldController.instance.world;
-        }
+        get { return World.Main; }
     }
 
     public bool valid {
-        get {
-            return unitId != 0;
-        }
+        get { return unitId != 0; }
     }
 
     public virtual void Play() {
@@ -49,7 +45,7 @@ public class SyncStopAction : SyncGameAction {
     }
 
     public override void Play() {
-        renderer.StopAction(tag);
+        node.StopAction(tag);
     }
 
     int tag;
@@ -172,11 +168,25 @@ public class SyncCreateUnit : SyncGameAction {
 
     public override void Play() {
         Debug.Log("SyncCreateUnit");
-        WorldController.instance.world.CreateUnit(syncInfo, playerId);
+        World.Main.CreateUnit(syncInfo, playerId);
     }
 
     SyncUnitInfo syncInfo;
     int playerId;
+}
+
+[Serializable]
+public class SyncCreateProjectile : SyncGameAction {
+    public SyncCreateProjectile(SyncProjectileInfo syncInfo)
+        : base(-1) {
+        this.syncInfo = syncInfo;
+    }
+
+    public override void Play() {
+        World.Main.CreateProjectile(syncInfo);
+    }
+
+    SyncProjectileInfo syncInfo;
 }
 
 [Serializable]
@@ -204,21 +214,6 @@ public class SyncRemoveUnit : SyncGameAction {
     bool revivalbe;
 }
 
-[Serializable]
-public class SyncFireProjectile : SyncGameAction {
-    public SyncFireProjectile(SyncProjectileInfo syncInfo)
-        : base(-1) {
-        this.syncInfo = syncInfo;
-    }
-
-    public override void Play() {
-        ProjectileController projCtrl = ProjectileController.Create(syncInfo);
-        Projectile projectile = projCtrl.projectile;
-        projectile.Fire();
-    }
-
-    SyncProjectileInfo syncInfo;
-}
 
 
 
