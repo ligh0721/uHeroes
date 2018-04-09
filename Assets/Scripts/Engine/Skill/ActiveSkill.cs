@@ -71,19 +71,18 @@ public class ActiveSkill : Skill {
                 }
 
                 if (m_projectileTemplate != null && t != o) {
-                    Projectile p = m_projectileTemplate.Clone();
-                    p.SourceUnit = o;
-                    p.SourceSkill = this;
-                    p.EffectiveTypeFlags = m_effectiveTypeFlags;
+                    SyncProjectileInfo syncInfo = new SyncProjectileInfo();
+                    syncInfo.baseInfo = m_projectileTemplate;
+                    syncInfo.fromTo = Projectile.FromToType.kUnitToUnit;
+                    syncInfo.useFireOffset = true;
+                    syncInfo.srcUnit = o.Id;
+                    syncInfo.fromUnit = o.Id;
+                    syncInfo.toUnit = t.Id;
 
-                    UnitNode td = t.Node;
-                    Debug.Assert(td != null);
+                    Projectile projectile = World.Main.CreateProjectile(syncInfo, this);
 
-                    p.TypeOfFromTo = Projectile.FromToType.kUnitToUnit;
-                    p.FromUnit = o;
-                    p.ToUnit = t;
-
-                    p.Fire();
+                    //UnitNode td = t.Node;
+                    //Debug.Assert(td != null);
                 } else {
                     PlayEffectSound();
                     OnUnitSkillEffect(null, t);
@@ -93,21 +92,18 @@ public class ActiveSkill : Skill {
 
         case CommandTarget.Type.kPointTarget:
             if (m_projectileTemplate != null) {
-                Projectile p = m_projectileTemplate.Clone();
-                p.SourceUnit = o;
-                p.SourceSkill = this;
-                p.EffectiveTypeFlags = m_effectiveTypeFlags;
-
-                p.TypeOfFromTo = Projectile.FromToType.kUnitToPoint;
-                p.FromUnit = o;
-                p.ToPosition = Utils.GetForwardPoint(d.position, o.CastTarget.TargetPoint, m_castRange);
-
-                p.Fire();
+                SyncProjectileInfo syncInfo = new SyncProjectileInfo();
+                syncInfo.baseInfo = m_projectileTemplate;
+                syncInfo.fromTo = Projectile.FromToType.kUnitToPoint;
+                syncInfo.useFireOffset = true;
+                syncInfo.srcUnit = o.Id;
+                syncInfo.fromUnit = o.Id;
+                syncInfo.toPos = Utils.GetForwardPoint(d.position, o.CastTarget.TargetPoint, m_castRange);
+                Projectile projectile = World.Main.CreateProjectile(syncInfo, this);
             } else {
                 PlayEffectSound();
                 OnUnitSkillEffect(null, null);
             }
-
             break;
         }
     }
@@ -136,7 +132,7 @@ public class ActiveSkill : Skill {
         set { m_castTargetRadius = value; }
     }
 
-    public Projectile ProjectileTemplate {
+    public ProjectileInfo ProjectileTemplate {
         get { return m_projectileTemplate; }
 
         set { m_projectileTemplate = value; }
@@ -152,7 +148,7 @@ public class ActiveSkill : Skill {
     protected float m_castMinRange;
     protected float m_castRange;
     protected float m_castTargetRadius;
-    protected Projectile m_projectileTemplate;
+    protected ProjectileInfo m_projectileTemplate;
     protected bool m_castHorizontal;
 
     public Vector2 GetAbilityEffectPoint(Projectile pProjectile, Unit target) {

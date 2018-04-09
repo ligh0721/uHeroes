@@ -32,10 +32,9 @@ class LinkAnimate : Animate
 	{
 		base.startWithTarget (target);
 
-		NodeWithHeight rendererTarget = target as NodeWithHeight;
-		ProjectileNode r = rendererTarget.GetComponent<Renderer>() as ProjectileNode;
+        ProjectileNode r = target as ProjectileNode;
 		Projectile p = r.Projectile;
-		m_fireFrom = m_fromToType == Projectile.FromToType.kUnitToUnit && p.SourceUnit != null && m_from == p.SourceUnit.Renderer;
+		m_fireFrom = m_fromToType == Projectile.FromToType.kUnitToUnit && p.SourceUnit != null && m_from == p.SourceUnit.Node;
 		//target.visible = false;
 	}
 
@@ -55,41 +54,32 @@ class LinkAnimate : Animate
 
 	protected void fixTargetPosition()
 	{
-		if (m_from.Valid)
-        {
-            m_fromPos = m_from.Node.position;
+        m_fromPos = m_from.position;
 
-            float fFromOffsetX = 0.0f;
-            float fFromHeight = 0.0f;
-            if (m_fireFrom)
-            {
-                bool useFireOffset = ((_target as NodeWithHeight).GetComponent<Renderer>() as ProjectileNode).Projectile.UseFireOffset;
-                float offsetX = useFireOffset ? m_from.FireOffset.x : m_from.HalfOfWidth;
-                float offsetY = useFireOffset ? m_from.FireOffset.y : m_from.HalfOfHeight;
-                bool bFlipX = m_fromPos.x > m_toPos.x;
-                fFromOffsetX = (bFlipX ? -offsetX : offsetX);
-                fFromHeight = m_from.Node.height + offsetY;
-            }
-            else
-            {
-                fFromHeight = m_from.Node.height + m_from.HalfOfHeight;
-            }
-
-            m_fromPos.x += fFromOffsetX;
-            m_fromPos.y += fFromHeight;
+        float fFromOffsetX = 0.0f;
+        float fFromHeight = 0.0f;
+        if (m_fireFrom) {
+            bool useFireOffset = (_target as ProjectileNode).Projectile.UseFireOffset;
+            float offsetX = useFireOffset ? m_from.FireOffset.x : m_from.HalfOfWidth;
+            float offsetY = useFireOffset ? m_from.FireOffset.y : m_from.HalfOfHeight;
+            bool bFlipX = m_fromPos.x > m_toPos.x;
+            fFromOffsetX = (bFlipX ? -offsetX : offsetX);
+            fFromHeight = m_from.height + offsetY;
+        } else {
+            fFromHeight = m_from.height + m_from.HalfOfHeight;
         }
 
-        if (m_to.Valid)
-        {
-            m_toPos = m_to.Node.position;
-            float fToHeight = m_to.Node.height + m_to.HalfOfHeight;
-            m_toPos.y += fToHeight;
-        }
+        m_fromPos.x += fFromOffsetX;
+        m_fromPos.y += fFromHeight;
 
-		//RendererNode rendererTarget = _target as RendererNode;
-		//rendererTarget.height = (fFromHeight + fToHeight) / 2;
+        m_toPos = m_to.position;
+        float fToHeight = m_to.height + m_to.HalfOfHeight;
+        m_toPos.y += fToHeight;
 
-		Vector2 delta = m_toPos - m_fromPos;
+        //RendererNode rendererTarget = _target as RendererNode;
+        //rendererTarget.height = (fFromHeight + fToHeight) / 2;
+
+        Vector2 delta = m_toPos - m_fromPos;
 		float fR = Utils.GetAngle(delta);
 
         float fScale = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y) / _target.size.x;

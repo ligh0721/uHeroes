@@ -500,8 +500,8 @@ public class SyncProjectileInfo {
         baseInfo.fire = Projectile.FireTypeToName(projectile.TypeOfFire);
         baseInfo.effect = (int)projectile.EffectFlags;
 
-        position = node.position;
-        visible = node.visible;
+        //position = node.position;
+        //visible = node.visible;
         fromTo = projectile.TypeOfFromTo;
         useFireOffset = projectile.UseFireOffset;
         srcUnit = projectile.SourceUnit != null ? projectile.SourceUnit.Id : 0;
@@ -513,8 +513,8 @@ public class SyncProjectileInfo {
 
     public int id;
     public ProjectileInfo baseInfo = new ProjectileInfo();
-    public Vector2Serializable position;
-    public bool visible;
+    //public Vector2Serializable position;
+    //public bool visible;
     public Projectile.FromToType fromTo;
     public bool useFireOffset;
     public int srcUnit;

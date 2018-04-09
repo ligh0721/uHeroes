@@ -138,38 +138,36 @@ public class World : MonoBehaviour {
 
         ctrl.m_client = player;
 
-        if (player == null) {
-            return;
-        }
+        if (player != null) {
+            // 玩家单位
+            player.unitCtrl = ctrl;
+            Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unit.Id, player.playerId);
+            if (player == GamePlayerController.localClient) {
+                Debug.LogFormat("That's Me, {0}.", unit.Name);
+            }
 
-        // 玩家单位
-        player.unitCtrl = ctrl;
-        Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unit.Id, player.playerId);
-        if (player == GamePlayerController.localClient) {
-            Debug.LogFormat("That's Me, {0}.", unit.Name);
-        }
+            // TEST !!!!
+            unit.MaxHpBase = 10000;  // test
+            unit.Hp = unit.MaxHp;
+            unit.AttackSkill.coolDownBase = 0;
+            unit.AttackSkill.coolDownSpeedCoeff = 2;
+            unit.CriticalRateBase = 0.2f;
+            unit.CriticalDamageBase = 20.0f;
 
-        // TEST !!!!
-        unit.MaxHpBase = 10000;  // test
-        unit.Hp = unit.MaxHp;
-        unit.AttackSkill.coolDownBase = 0;
-        unit.AttackSkill.coolDownSpeedCoeff = 2;
-        unit.CriticalRateBase = 0.2f;
-        unit.CriticalDamageBase = 20.0f;
+            SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
+            unit.AddPassiveSkill(splash);
 
-        SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
-        unit.AddPassiveSkill(splash);
-
-        if (player == GamePlayerController.localClient) {
-            PortraitGroupUI portraitui = GameObject.Find("Canvas/Panel/UI_PortraitGroup").GetComponent<PortraitGroupUI>();
-            portraitui.AddPortrait(unit);
+            if (player == GamePlayerController.localClient) {
+                PortraitGroupUI portraitui = GameObject.Find("Canvas/Panel/UI_PortraitGroup").GetComponent<PortraitGroupUI>();
+                portraitui.AddPortrait(unit);
+            }
         }
 
         AddUnit(unit);
         return unit;
     }
 
-    public Projectile CreateProjectile(SyncProjectileInfo syncInfo) {
+    public Projectile CreateProjectile(SyncProjectileInfo syncInfo, Skill sourceSkill = null) {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateProjectile(syncInfo));
 
         GameObject gameObject = GameObjectPool.instance.Instantiate(projectilePrefab);
@@ -185,8 +183,8 @@ public class World : MonoBehaviour {
         projectile.TypeOfFire = Projectile.FireNameToType(syncInfo.baseInfo.fire);
         projectile.EffectFlags = (uint)syncInfo.baseInfo.effect;
 
-        node.position = syncInfo.position;
-        node.visible = syncInfo.visible;
+        //node.position = syncInfo.position;
+        //node.visible = syncInfo.visible;
         projectile.TypeOfFromTo = syncInfo.fromTo;
         projectile.UseFireOffset = syncInfo.useFireOffset;
         projectile.SourceUnit = GetUnit(syncInfo.srcUnit);
@@ -194,8 +192,13 @@ public class World : MonoBehaviour {
         projectile.ToUnit = GetUnit(syncInfo.toUnit);
         projectile.FromPosition = syncInfo.fromPos;
         projectile.ToPosition = syncInfo.toPos;
+        if (sourceSkill != null) {
+            projectile.SourceSkill = sourceSkill;
+            projectile.EffectiveTypeFlags = sourceSkill.effectiveTypeFlags;
+        }
 
         AddProjectile(projectile);
+        projectile.Fire();
         return projectile;
     }
 

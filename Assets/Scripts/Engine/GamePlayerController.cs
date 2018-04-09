@@ -102,7 +102,7 @@ public class GamePlayerController : NetworkBehaviour {
 
     public World world {
         get {
-            return World.Main.world;
+            return World.Main;
         }
     }
 
@@ -354,7 +354,7 @@ public class GamePlayerController : NetworkBehaviour {
         //CreateOneTestUnit();
 
         // 世界开始运转
-        world.Start();
+        world.StartWorld();
     }
 
     IEnumerator RepeatCreateUnit(string name) {
@@ -403,7 +403,7 @@ public class GamePlayerController : NetworkBehaviour {
             target = new CommandTarget();
             break;
         case CommandTarget.Type.kUnitTarget:
-            target = new CommandTarget(m_unitCtrl.unit.World.GetUnit(targetUnit));
+            target = new CommandTarget(world.GetUnit(targetUnit));
             break;
         case CommandTarget.Type.kPointTarget:
             target = new CommandTarget(targetPoint);
@@ -532,7 +532,7 @@ public class GamePlayerController : NetworkBehaviour {
         //CreateOneTestUnit();
 
         // 世界开始运转
-        world.Start();
+        world.StartWorld();
     }
 
     void CreateTestTank() {

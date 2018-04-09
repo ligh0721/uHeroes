@@ -18,7 +18,7 @@ public class UnitAI : IUnitEvent
             return;
         }
 
-        UnitNode d = unit.Renderer;
+        UnitNode d = unit.Node;
 
         ActiveSkill atk = unit.AttackSkill;
         if (atk == null)
@@ -32,8 +32,8 @@ public class UnitAI : IUnitEvent
             Unit tt = unit.CastTarget.TargetUnit;
             if (tt != null && tt.Valid)
             {
-                UnitNode ttd = tt.Renderer;
-                if (ttd != null && unit.IsDoingAnd(Unit.kDoingCasting | Unit.kDoingMoving) && Vector2.Distance(d.Node.position, ttd.Node.position) < unit.HostilityRange)
+                UnitNode ttd = tt.Node;
+                if (ttd != null && unit.IsDoingAnd(Unit.kDoingCasting | Unit.kDoingMoving) && Vector2.Distance(d.position, ttd.position) < unit.HostilityRange)
                 {
                     // 正在追击施法，距离在仇恨范围内
                     return;
@@ -41,7 +41,7 @@ public class UnitAI : IUnitEvent
             }
         }
 
-        Unit t = UnitGroup.getNearestUnitInRange(unit.World, d.Node.position, unit.HostilityRange, UnitGroup.MatchFunctionLivingEnemy, unit);
+        Unit t = UnitGroup.getNearestUnitInRange(unit.World, d.position, unit.HostilityRange, UnitGroup.MatchFunctionLivingEnemy, unit.force);
         if (t == null || !t.Valid || t.Dead)
         {
             // 搜不到仇恨区内的目标，有没有必要设置为doNothing？
@@ -62,12 +62,12 @@ public class UnitAI : IUnitEvent
             return;
         }
         //Debug.LogErrorFormat("{0}.", u.isDoingAnd(Unit.kDoingObstinate) ? "Obs" : "NOT");
-        if (source == null || !source.Valid || source.Dead || source.IsMyAlly(unit))
+        if (source == null || !source.Valid || source.Dead || source.force.IsMyAlly(unit.force))
         {
             return;
         }
 
-        UnitNode d = unit.Renderer;
+        UnitNode d = unit.Node;
         if (d == null)
         {
             return;
@@ -105,7 +105,7 @@ public class UnitAI : IUnitEvent
 
         // 当前目标存在！   如果能打到之前的目标 或 之前的目标在仇视范围内    (目标非建筑  或(是建筑，且源也是建筑))
         // 果伤害源
-        if (t != null && t.Valid && (Vector2.Distance(d.Node.position, t.Renderer.Node.position) < unit.HostilityRange || unit.CheckCastTargetDistance(atking, d.Node.position, unit.CastTarget, t)))
+        if (t != null && t.Valid && (Vector2.Distance(d.position, t.Node.position) < unit.HostilityRange || unit.CheckCastTargetDistance(atking, d.position, unit.CastTarget, t)))
         {
             // 如果能打到之前的目标，不改变攻击目标
             return;

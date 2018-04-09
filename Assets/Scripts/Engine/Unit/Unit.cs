@@ -17,23 +17,17 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         get { return m_node; }
     }
 
+    public bool Valid { get; set; }
+
     public UnitForce force = new UnitForce();
 
     public int Id {
         get { return m_id; }
     }
 
-    public string Name {
-        get { return m_name; }
+    public string Name { get; set; }
 
-        set { m_name = value; }
-    }
-
-    public World World {
-        get { return m_world; }
-
-        set { m_world = value; }
-    }
+    public World World { get; set; }
 
     public string Model {
         get { return m_model; }
