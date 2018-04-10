@@ -15,10 +15,9 @@ public class BaseObjectPool<KEY> {
     }
 
     public static BaseObjectPool<KEY> instance {
-        get {
-            return s_inst ?? (s_inst = new BaseObjectPool<KEY>());
-        }
+        get { return s_inst ?? (s_inst = new BaseObjectPool<KEY>()); }
     }
+
     protected static BaseObjectPool<KEY> s_inst;
 
     /// <summary>
@@ -38,8 +37,11 @@ public class BaseObjectPool<KEY> {
     public const int CONST_DEFAULT_CAPACITY = 10;
 
     public delegate object CreateFunction(KEY type);
+
     public delegate void ResetFunction(object obj);
+
     public delegate void DestroyFunction(object obj);
+
     public void Alloc(KEY type, int capacity, CreateFunction create, ResetFunction reset = null, DestroyFunction destroy = null) {
         Debug.Assert(capacity > 0);
         Debug.Assert(create != null);
@@ -126,23 +128,15 @@ public class BaseObjectPool<KEY> {
     }
 
     public bool enabled {
-        get {
-            return m_enabled;
-        }
+        get { return m_enabled; }
 
-        set {
-            m_enabled = value;
-        }
+        set { m_enabled = value; }
     }
 
     public bool autoReAlloc {
-        get {
-            return m_autoReAlloc;
-        }
+        get { return m_autoReAlloc; }
 
-        set {
-            m_autoReAlloc = value;
-        }
+        set { m_autoReAlloc = value; }
     }
 
     protected class SubPool {
@@ -152,6 +146,7 @@ public class BaseObjectPool<KEY> {
         public ResetFunction reset;
         public DestroyFunction destroy;
     }
+
     protected Dictionary<KEY, SubPool> m_pool = new Dictionary<KEY, SubPool>();
     protected bool m_enabled = true;
     protected bool m_autoReAlloc = false;
@@ -163,10 +158,9 @@ public class ObjectPool<TYPE> : BaseObjectPool<System.Type>
     }
 
     public static new ObjectPool<TYPE> instance {
-        get {
-            return s_inst ?? (s_inst = new ObjectPool<TYPE>());
-        }
+        get { return s_inst ?? (s_inst = new ObjectPool<TYPE>()); }
     }
+
     protected new static ObjectPool<TYPE> s_inst;
 
     protected static TYPE CreateObjectFunction() {
@@ -174,7 +168,9 @@ public class ObjectPool<TYPE> : BaseObjectPool<System.Type>
     }
 
     public new delegate TYPE CreateFunction();
+
     public new delegate void ResetFunction(TYPE obj);
+
     public new delegate void DestroyFunction(TYPE obj);
 
     public void Alloc(int capacity, CreateFunction create, ResetFunction reset = null, DestroyFunction destroy = null) {
@@ -264,10 +260,9 @@ public class ObjectPool<TYPE> : BaseObjectPool<System.Type>
 
 public class MutiObjectPool : BaseObjectPool<System.Type> {
     public static new MutiObjectPool instance {
-        get {
-            return s_inst ?? (s_inst = new MutiObjectPool());
-        }
+        get { return s_inst ?? (s_inst = new MutiObjectPool()); }
     }
+
     protected new static MutiObjectPool s_inst;
 
     protected static TYPE CreateObjectFunction<TYPE>() where TYPE : new() {
@@ -275,8 +270,11 @@ public class MutiObjectPool : BaseObjectPool<System.Type> {
     }
 
     public delegate TYPE CreateFunction<TYPE>() where TYPE : new();
+
     public delegate void ResetFunction<TYPE>(TYPE obj) where TYPE : new();
+
     public delegate void DestroyFunction<TYPE>(TYPE obj) where TYPE : new();
+
     public void Alloc<TYPE>(int capacity, CreateFunction<TYPE> create, ResetFunction<TYPE> reset = null, DestroyFunction<TYPE> destroy = null)
         where TYPE : new() {
         CreateFunction baseCreate = delegate (System.Type type) {
@@ -333,10 +331,9 @@ public class GameObjectPool : BaseObjectPool<GameObject> {
     }
 
     public static new GameObjectPool instance {
-        get {
-            return s_inst ?? (s_inst = new GameObjectPool());
-        }
+        get { return s_inst ?? (s_inst = new GameObjectPool()); }
     }
+
     protected new static GameObjectPool s_inst;
 
     protected static GameObject CreateGameObjectFunction(GameObject prefab) {
@@ -344,8 +341,11 @@ public class GameObjectPool : BaseObjectPool<GameObject> {
     }
 
     public new delegate GameObject CreateFunction(GameObject prefab);
+
     public new delegate void ResetFunction(GameObject obj);
+
     public new delegate void DestroyFunction(GameObject obj);
+
     public void Alloc(GameObject prefab, int capacity, CreateFunction create, ResetFunction reset = null, DestroyFunction destroy = null) {
         BaseObjectPool<GameObject>.CreateFunction baseCreate = delegate (GameObject type) {
             return create(type);

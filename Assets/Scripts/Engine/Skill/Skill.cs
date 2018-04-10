@@ -17,29 +17,19 @@ public class Skill {
     }
 
     public Unit owner {
-        get {
-            return m_owner;
-        }
+        get { return m_owner; }
 
-        set {
-            m_owner = value;
-        }
+        set { m_owner = value; }
     }
 
     public bool valid {
-        get {
-            return m_owner != null && m_owner.Valid;
-        }
+        get { return m_owner != null && m_owner.Valid; }
     }
 
     public string name {
-        get {
-            return m_name;
-        }
+        get { return m_name; }
 
-        set {
-            m_name = value;
-        }
+        set { m_name = value; }
     }
 
     public virtual Skill Clone() {
@@ -63,9 +53,7 @@ public class Skill {
     }
 
     public string baseId {
-        get {
-            return m_base;
-        }
+        get { return m_base; }
     }
 
     // 技能持有者事件响应，只覆被注册的触发器相应的事件函数即可
@@ -123,8 +111,7 @@ public class Skill {
         return true;
     }
 
-    public virtual void OnUnitSkillEffect(Projectile projectile, Unit target)  // no need to register this trigger
-    {
+    public virtual void OnUnitSkillEffect(Projectile projectile, Unit target) {  // no need to register this trigger
     }
 
     public virtual void OnUnitCalcDamageTarget(float fDamage, Unit target) {
@@ -148,61 +135,39 @@ public class Skill {
     }
 
     public virtual float coolDown {
-        get {
-            return m_coolDown.v;
-        }
+        get { return m_coolDown.v; }
     }
 
     public float coolDownBase {
-        get {
-            return m_coolDown.x;
-        }
+        get { return m_coolDown.x; }
 
-        set {
-            m_coolDown.x = value;
-        }
+        set { m_coolDown.x = value; }
     }
 
     public virtual float coolDownCoeff {
-        get {
-            return m_coolDown.a;
-        }
+        get { return m_coolDown.a; }
 
-        set {
-            m_coolDown.a = value;
-        }
+        set { m_coolDown.a = value; }
     }
 
     public virtual float coolDownSpeed {
-        get {
-            return 1 / coolDown;
-        }
+        get { return 1 / coolDown; }
     }
 
     public virtual float coolDownSpeedCoeff {
-        get {
-            return 1 / coolDownCoeff;
-        }
+        get { return 1 / coolDownCoeff; }
 
-        set {
-            coolDownCoeff = 1 / value;
-        }
+        set { coolDownCoeff = 1 / value; }
     }
 
     public float coolingDownElapsed {
-        get {
-            return m_coolingDownElapsed;
-        }
+        get { return m_coolingDownElapsed; }
 
-        set {
-            m_coolingDownElapsed = value;
-        }
+        set { m_coolingDownElapsed = value; }
     }
 
     public bool coolingDown {
-        get {
-            return m_coolingDownElapsed < coolDown;
-        }
+        get { return m_coolingDownElapsed < coolDown; }
     }
 
     public void ResetCD() {
@@ -216,9 +181,7 @@ public class Skill {
     }
 
     public float interval {
-        get {
-            return m_interval;
-        }
+        get { return m_interval; }
 
         set {
             if (value <= float.Epsilon) {
@@ -232,23 +195,15 @@ public class Skill {
     }
 
     public float intervalElapsed {
-        get {
-            return m_intervalElapsed;
-        }
+        get { return m_intervalElapsed; }
 
-        set {
-            m_intervalElapsed = value;
-        }
+        set { m_intervalElapsed = value; }
     }
 
     public uint triggerFlags {
-        get {
-            return m_triggerFlags;
-        }
+        get { return m_triggerFlags; }
 
-        set {
-            m_triggerFlags = value;
-        }
+        set { m_triggerFlags = value; }
     }
 
     public void SetTriggerFlags(uint triggerFlags) {
@@ -264,9 +219,7 @@ public class Skill {
     }
 
     public List<int> castAnimations {
-        get {
-            return m_castAnimations;
-        }
+        get { return m_castAnimations; }
     }
 
     public int castRandomAnimation {
@@ -280,13 +233,9 @@ public class Skill {
     }
 
     public uint effectiveTypeFlags {
-        get {
-            return m_effectiveTypeFlags;
-        }
+        get { return m_effectiveTypeFlags; }
 
-        set {
-            m_effectiveTypeFlags = value;
-        }
+        set { m_effectiveTypeFlags = value; }
     }
 
     protected string m_name;

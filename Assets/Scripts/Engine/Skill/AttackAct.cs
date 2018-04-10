@@ -87,9 +87,7 @@ public class AttackAct : ActiveSkill {
     }
 
     public float AttackValue {
-        get {
-            return m_attackValue.v;
-        }
+        get { return m_attackValue.v; }
     }
 
     public float RandomAttackValue {
@@ -103,33 +101,21 @@ public class AttackAct : ActiveSkill {
     }
 
     public AttackValue.Type AttackType {
-        get {
-            return m_attackValue.type;
-        }
+        get { return m_attackValue.type; }
 
-        set {
-            m_attackValue.type = value;
-        }
+        set { m_attackValue.type = value; }
     }
 
     public float AttackValueBase {
-        get {
-            return m_attackValue.x;
-        }
+        get { return m_attackValue.x; }
 
-        set {
-            m_attackValue.x = value;
-        }
+        set { m_attackValue.x = value; }
     }
 
     public Coeff AttackValueCoeff {
-        get {
-            return m_attackValue.coeff;
-        }
+        get { return m_attackValue.coeff; }
 
-        set {
-            m_attackValue.coeff = value;
-        }
+        set { m_attackValue.coeff = value; }
     }
 
     // 攻击间隔

@@ -12,6 +12,13 @@ public class ModelNode : NodeWithHeight {
         cleanup();
     }
 
+    bool active = true;
+
+    public bool Active {
+        get { return active; }
+        set { active = value; }
+    }
+
     public const int kActionMove = 0x1;
     public const int kActionDie = 0x2;
     public const int kActionAct1 = 0x11;

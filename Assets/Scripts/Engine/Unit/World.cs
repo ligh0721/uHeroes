@@ -38,12 +38,20 @@ public class World : MonoBehaviour {
         GameObjectPool.ResetFunction reset = delegate (GameObject gameObject) {
             gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
-            gameObject.GetComponent<SpriteRenderer>().enabled = true;
-            gameObject.GetComponent<SpriteRenderer>().color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+            var sr = gameObject.GetComponent<SpriteRenderer>();
+            sr.enabled = true;
+            sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+            var node = gameObject.GetComponent<ModelNode>();
+            node.Active = true;
+        };
+        GameObjectPool.DestroyFunction destroy = delegate(GameObject obj) {
+            var node = gameObject.GetComponent<ModelNode>();
+            node.Active = false;
+            node.stop
         };
 
-        GameObjectPool.instance.Alloc(unitPrefab, 50, reset);
-        GameObjectPool.instance.Alloc(projectilePrefab, 50, reset);
+        GameObjectPool.instance.Alloc(unitPrefab, 50, reset, destroy);
+        GameObjectPool.instance.Alloc(projectilePrefab, 50, reset, destroy);
     }
 
     void FixedUpdate() {
@@ -125,7 +133,7 @@ public class World : MonoBehaviour {
             foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
                 atk.AddCastAnimation(ModelNode.NameToId(ani));
             }
-            atk.ProjectileTemplate = ProjectileController.CreateProjectileTemplate(syncInfo.baseInfo.attackSkill.projectile);
+            atk.ProjectileTemplate = ResourceManager.instance.LoadProjectile(syncInfo.baseInfo.attackSkill.projectile);
             unit.AddActiveSkill(atk);
         }
         node.position = syncInfo.position;
@@ -173,7 +181,6 @@ public class World : MonoBehaviour {
         GameObject gameObject = GameObjectPool.instance.Instantiate(projectilePrefab);
         ProjectileNode node = gameObject.GetComponent<ProjectileNode>();
         Projectile projectile = gameObject.GetComponent<Projectile>();
-        ProjectileController ctrl = gameObject.GetComponent<ProjectileController>();
 
         ResourceManager.instance.LoadProjectileModel(syncInfo.baseInfo.model);  // high time cost
         ResourceManager.instance.AssignModelToProjectileNode(syncInfo.baseInfo.model, node);
