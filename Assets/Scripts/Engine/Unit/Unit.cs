@@ -17,17 +17,41 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         get { return m_node; }
     }
 
-    public bool Valid { get; set; }
-
     public UnitForce force = new UnitForce();
+
+    public virtual void Cleanup() {
+        UnrefAll();
+    }
+
+    internal HashSet<UnitSafe> m_refs = new HashSet<UnitSafe>();
+    public void Ref(UnitSafe safe) {
+        m_refs.Add(safe);
+    }
+
+    public void Unref(UnitSafe safe) {
+        m_refs.Remove(safe);
+    }
+
+    public void UnrefAll() {
+        foreach (var safe in m_refs) {
+            safe._ref = null;
+        }
+        m_refs.Clear();
+    }
 
     public int Id {
         get { return m_id; }
     }
 
-    public string Name { get; set; }
+    public string Name {
+        get { return m_name; }
+        set { m_name = value; }
+    }
 
-    public World World { get; set; }
+    public World World {
+        get { return m_world;  }
+        set { m_world = value; }
+    }
 
     public string Model {
         get { return m_model; }
@@ -214,7 +238,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
                 if (bUnitTarget) {
                     // 如果是以单位为目标的技能
                     t = m_castTarget.TargetUnit;
-                    if (t != null && !t.Dead) {
+                    if (t != null && t.enabled && !t.Dead) {
                         // 单位存在且单位没有死亡
                         td = t.Node;
                         Debug.Assert(td != null);
@@ -1068,7 +1092,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         return false;
     }
 
-    public void Die() {
+    void Die() {
         Stop();
         StartDoing(kDoingDying);
         m_node.StopAllActions();
@@ -1884,6 +1908,40 @@ public class UnitPath {
     protected List<Vector2> m_points;
 }
 
+public class UnitSafe {
+    internal Unit _ref;
+    ~UnitSafe() {
+        Unset();
+    }
+
+    public Unit Set(Unit unit) {
+        if (unit != _ref && _ref != null) {
+            _ref.Unref(this);
+        }
+        if (unit != null) {
+            unit.Ref(this);
+        }
+        _ref = unit;
+        return _ref;
+    }
+
+    public void Unset() {
+        Set(null);
+    }
+
+    public Unit Unit {
+        get { return _ref; }
+    }
+
+    public UnitNode Node {
+        get { return _ref != null ? _ref.Node : null; }
+    }
+
+    public static implicit operator Unit(UnitSafe safe) {
+        return safe._ref;  // unit = safe
+    }
+}
+
 public class CommandTarget {
     public enum Type {
         kNoTarget,
@@ -1898,13 +1956,13 @@ public class CommandTarget {
 
     public CommandTarget(Unit target) {
         m_targetType = Type.kUnitTarget;
-        m_targetUnit = target;
+        m_targetUnit.Set(target);
     }
 
     public CommandTarget(Vector2 target) {
         m_targetType = Type.kPointTarget;
         m_targetPoint = target;
-        m_targetUnit = null;
+        m_targetUnit.Set(null);
     }
 
     protected bool Equels(CommandTarget target) {
@@ -1935,29 +1993,29 @@ public class CommandTarget {
     }
 
     public void UpdateTargetPoint() {
-        Debug.Assert(m_targetType == Type.kUnitTarget);
+        Debug.Assert(m_targetUnit.Unit != null && m_targetType == Type.kUnitTarget);
         m_targetPoint = m_targetUnit.Node.position;
     }
 
     protected Type m_targetType;
     protected Vector2 m_targetPoint;
-    protected Unit m_targetUnit;
+    protected UnitSafe m_targetUnit = new UnitSafe();
 
     public void setTarget() {
         m_targetType = Type.kNoTarget;
-        m_targetUnit = null;
+        m_targetUnit.Set(null);
         m_targetPoint.x = m_targetPoint.y = 0;
     }
 
     public void setTarget(Unit target) {
         m_targetType = Type.kUnitTarget;
-        m_targetUnit = target;
+        m_targetUnit.Set(target);
         m_targetPoint.x = m_targetPoint.y = 0;
     }
 
     public void setTarget(Vector2 target) {
         m_targetType = Type.kPointTarget;
-        m_targetUnit = null;
+        m_targetUnit.Set(null);
         m_targetPoint = target;
     }
 }
@@ -1967,6 +2025,7 @@ public class SyncUnitInfo {
     public SyncUnitInfo() {
     }
 
+#if false
     public SyncUnitInfo(Unit unit) {
         UnitNode node = unit.Node;
 
@@ -1997,6 +2056,7 @@ public class SyncUnitInfo {
         baseInfo.revivable = unit.Revivable;
         baseInfo.isfixed = unit.Fixed;
     }
+#endif
 
     public int id;
     public UnitInfo baseInfo = new UnitInfo();

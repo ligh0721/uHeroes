@@ -35,28 +35,53 @@ public class World : MonoBehaviour {
         Debug.Assert(unitPrefab != null);
         Debug.Assert(projectilePrefab != null);
 
-        GameObjectPool.ResetFunction reset = delegate (GameObject gameObject) {
+        // unit pool
+        GameObjectPool.ResetFunction unitReset = delegate (GameObject gameObject) {
             gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
             var sr = gameObject.GetComponent<SpriteRenderer>();
             sr.enabled = true;
             sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-            var node = gameObject.GetComponent<ModelNode>();
-            node.Active = true;
+            var node = gameObject.GetComponent<UnitNode>();
+            node.enabled = true;
+            var unit = gameObject.GetComponent<Unit>();
+            unit.enabled = true;
         };
-        GameObjectPool.DestroyFunction destroy = delegate(GameObject obj) {
-            var node = gameObject.GetComponent<ModelNode>();
-            node.Active = false;
-            node.stop
+        GameObjectPool.DestroyFunction unitDestroy = delegate(GameObject obj) {
+            var node = gameObject.GetComponent<UnitNode>();
+            node.cleanup();
+            node.enabled = false;
+            var unit = gameObject.GetComponent<Unit>();
+            unit.Cleanup();
+            unit.enabled = false;
         };
+        GameObjectPool.instance.Alloc(unitPrefab, 50, unitReset, unitDestroy);
 
-        GameObjectPool.instance.Alloc(unitPrefab, 50, reset, destroy);
-        GameObjectPool.instance.Alloc(projectilePrefab, 50, reset, destroy);
+        // projectile pool
+        GameObjectPool.ResetFunction projectileReset = delegate (GameObject gameObject) {
+            gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
+            var sr = gameObject.GetComponent<SpriteRenderer>();
+            sr.enabled = true;
+            sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
+            var node = gameObject.GetComponent<ProjectileNode>();
+            node.enabled = true;
+            var unit = gameObject.GetComponent<Projectile>();
+            unit.enabled = true;
+        };
+        GameObjectPool.DestroyFunction projectileDestroy = delegate (GameObject obj) {
+            var node = gameObject.GetComponent<ProjectileNode>();
+            node.cleanup();
+            node.enabled = false;
+            var projectile = gameObject.GetComponent<Projectile>();
+            //projectile.Cleanup();
+            projectile.enabled = false;
+        };
+        GameObjectPool.instance.Alloc(projectilePrefab, 50, projectileReset, projectileDestroy);
     }
 
     void FixedUpdate() {
         Step(Time.fixedDeltaTime);
-        
     }
 
     void Update() {
@@ -233,6 +258,7 @@ public class World : MonoBehaviour {
     }
 
     protected void ReviveUnit(Unit unit, float hp) {
+        Debug.Assert(unit.enabled);
         if (!unitsToRevive.ContainsKey(unit)) {
             return;
         }
@@ -337,7 +363,7 @@ public class World : MonoBehaviour {
     protected void SkillReady(Skill skill) {
         // 由于技能的所有者可能在等待重生，所以主世界可能不存在该单位，但是单位仍未被释放
         Unit o = skill.owner;
-        if (o != null && !o.Dead) {
+        if (o != null && o.enabled && !o.Dead) {
             // 存在于主世界中，则触发事件
             o.OnSkillReady(skill);
         }

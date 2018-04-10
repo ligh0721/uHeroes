@@ -32,24 +32,6 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         set { m_world = value; }
     }
 
-    public virtual Projectile Clone() {
-        Projectile ret = ProjectileController.Create(m_model).projectile;
-        CopyDataTo(ret);
-        return ret;
-    }
-
-    protected virtual void CopyDataTo(Projectile to) {
-        to.m_moveSpeed = m_moveSpeed;
-        to.m_maxHeightDelta = m_maxHeightDelta;
-        to.m_srcUnit = m_srcUnit;
-        to.m_effectiveTypeFlags = m_effectiveTypeFlags;
-        to.m_effectFlags = m_effectFlags;
-        to.m_fromToType = m_fromToType;
-        to.m_fireType = m_fireType;
-        to.m_fireSounds.AddRange(m_fireSounds);
-        to.m_effectSounds.AddRange(m_effectSounds);
-    }
-
     // Effect Flags
     public const uint kEffectOnDying = 1 << 0;
     public const uint kEffectOnContact = 1 << 1;
@@ -104,12 +86,11 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     protected void OnTick(float dt) {
         if (HasEffectFlag(kEffectOnContact)) {
             Unit s = m_srcUnit;
-            if (s == null) {
+            if (s == null || !s.enabled) {
                 return;
             }
 
-            foreach (var kv in s.World.Units) {
-                var u = kv.Key;
+            foreach (var u in m_world.Units.Keys) {
                 if (u.Ghost || !s.force.CanEffect(u.force, m_effectiveTypeFlags)) {
                     continue;
                 }
@@ -144,7 +125,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     protected void Effect(Unit target) {
         Unit s = m_srcUnit;
-        if (m_srcUnit == null) {
+        if (m_srcUnit == null || !s.enabled) {
             return;
         }
 
@@ -223,7 +204,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
             {
                 switch (m_fromToType) {
                 case FromToType.kUnitToUnit:
-                    FireLink(m_fromUnit, m_toUnit);
+                    FireLink();
                     break;
 
                 default:
@@ -259,16 +240,21 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
                 }
 
                 float fDis = Vector2.Distance(m_fromPos, m_toPos);
-                FireStraight(m_fromPos, m_toPos, fDis / Mathf.Max(float.Epsilon, m_moveSpeed), m_maxHeightDelta);
+                FireStraight(fDis / Mathf.Max(float.Epsilon, m_moveSpeed));
             }
 
             break;
         }
     }
 
+    /// <summary>
+    /// need fromPos,toUnit
+    /// </summary>
+    /// <param name="duration"></param>
     void FireFollow(float duration) {
         //m_fromPos = fromPos;
         //m_toUnit = toUnit;
+        Debug.Assert(m_toUnit.enabled);
 
         m_node.position = m_fromPos;
 
@@ -277,7 +263,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.enabled && m_toUnit.OnProjectileArrive(this) == false) {
                     return;
                 }
             }
@@ -287,14 +273,14 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoMoveToUnit(m_toUnit.Node, true, m_maxHeightDelta, duration, onMoveToFinished);
     }
 
-    void FireLink(Unit fromUint, Unit toUnit) {
-        m_fromUnit = fromUint;
-        m_toUnit = toUnit;
-
-        Unit u = fromUint;
+    /// <summary>
+    /// need fromUnit,toUnit
+    /// </summary>
+    void FireLink() {
+        Unit u = m_fromUnit;
         UnitNode d = u.Node;
 
-        Unit t = toUnit;
+        Unit t = m_toUnit;
         UnitNode td = t.Node;
 
         Debug.Assert(u != null && t != null && d != null && td != null);
@@ -310,27 +296,28 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoLinkUnitToUnit(d, td, ModelNode.kActionDie, onEffect, 1, OnDyingDone);
     }
 
-    void FireStraight(Vector2 fromPos, Vector2 toPos, float duration, float maxHeightDelta) {
+    /// <summary>
+    /// need fromPos,toPos
+    /// </summary>
+    /// <param name="duration"></param>
+    void FireStraight(float duration) {
         m_contactedUnits.Clear();
 
-        m_fromPos = fromPos;
-        m_toPos = toPos;
-
-        m_node.position = fromPos;
+        m_node.position = m_fromPos;
 
         m_node.stopAllActions();
 
         m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.enabled && m_toUnit.OnProjectileArrive(this) == false) {
                     return;
                 }
             }
 
             Die();
         };
-        m_node.DoMoveTo(toPos, duration, onMoveToFinished);
+        m_node.DoMoveTo(m_toPos, duration, onMoveToFinished);
     }
 
     public Vector2 FromPosition {
@@ -491,6 +478,7 @@ public class SyncProjectileInfo {
     public SyncProjectileInfo() {
     }
 
+#if false
     public SyncProjectileInfo(Projectile projectile) {
         ProjectileNode node = projectile.Node;
 
@@ -510,6 +498,7 @@ public class SyncProjectileInfo {
         fromPos = projectile.FromPosition;
         toPos = projectile.ToPosition;
     }
+#endif
 
     public int id;
     public ProjectileInfo baseInfo = new ProjectileInfo();

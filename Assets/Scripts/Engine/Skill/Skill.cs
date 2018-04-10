@@ -23,7 +23,7 @@ public class Skill {
     }
 
     public bool valid {
-        get { return m_owner != null && m_owner.Valid; }
+        get { return m_owner != null && m_owner.enabled; }
     }
 
     public string name {

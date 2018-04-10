@@ -12,11 +12,10 @@ public class ModelNode : NodeWithHeight {
         cleanup();
     }
 
-    bool active = true;
-
-    public bool Active {
-        get { return active; }
-        set { active = value; }
+    public override void cleanup() {
+        m_animations.Clear();
+        m_frames.Clear();
+        base.cleanup();
     }
 
     public const int kActionMove = 0x1;
