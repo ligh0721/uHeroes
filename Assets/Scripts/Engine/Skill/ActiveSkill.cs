@@ -152,8 +152,8 @@ public class ActiveSkill : Skill {
     protected bool m_castHorizontal;
 
     public Vector2 GetAbilityEffectPoint(Projectile projectile, Unit target) {
-        Debug.Assert(m_owner != null);
         Unit o = m_owner;
+        Debug.Assert(o != null);
         if (projectile != null) {
             return projectile.Node.position;
         }

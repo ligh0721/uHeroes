@@ -23,7 +23,7 @@ public class Skill {
     }
 
     public bool valid {
-        get { return m_owner != null; }
+        get { return m_owner.Node != null; }
     }
 
     public string name {
@@ -171,15 +171,15 @@ public class Skill {
     }
 
     public void ResetCD() {
-        Debug.Assert(m_owner != null);
         Unit o = m_owner;
+        Debug.Assert(o != null);
         m_coolingDownElapsed = float.MaxValue;
         o.UpdateSkillCD(this);
     }
 
     public void StartCoolingDown(float fromPercent = 0) {
-        Debug.Assert(m_owner != null);
         Unit o = m_owner;
+        Debug.Assert(o != null);
         m_coolingDownElapsed = fromPercent * coolDown;
         o.SkillCD(this);
     }

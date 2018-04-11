@@ -38,15 +38,15 @@ public class AttackAct : ActiveSkill {
     }
 
     public override void OnUnitAddSkill() {
-        Debug.Assert(m_owner != null);
         Unit o = m_owner;
+        Debug.Assert(o != null);
         m_origin = o.AttackSkill;
         o.AttackSkill = this;
     }
 
     public override void OnUnitDelSkill() {
-        Debug.Assert(m_owner != null);
         Unit o = m_owner;
+        Debug.Assert(o != null);
         if (!m_origin.valid) {
             m_origin = null;
         }

@@ -6,7 +6,6 @@ namespace cca
 {
     public class Node : MonoBehaviour
     {
-        public GameObject m_prefab;  // use to alloc object to pool
         public ActionManager m_actionManager;
 
         SpriteRenderer _spriteRenderer;
@@ -230,7 +229,6 @@ namespace cca
             //_gameObject.transform.SetParent(null);
             //this.destroy();
             parent = null;
-            GameObjectPool.instance.Destroy(m_prefab, gameObject);
         }
 
         public void runAction(Action action)

@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(UnitNode))]
 public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
+    public GameObject uiPrefab;
+
     UnitNode m_node;
     [HideInInspector]
     public UnitForce force = new UnitForce();
@@ -69,6 +71,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
 
     void Start() {
+        Debug.Assert(uiPrefab);
         m_node = GetComponent<UnitNode>();
         Debug.Assert(m_node != null);
     }
@@ -78,24 +81,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public virtual void Cleanup() {
-        UnrefAll();
-    }
-
-    internal HashSet<UnitSafe> m_refs = new HashSet<UnitSafe>();
-
-    public void Ref(UnitSafe safe) {
-        m_refs.Add(safe);
-    }
-
-    public void Unref(UnitSafe safe) {
-        m_refs.Remove(safe);
-    }
-
-    public void UnrefAll() {
-        foreach (UnitSafe safe in m_refs) {
-            safe._ref = null;
-        }
-        m_refs.Clear();
+        m_id = -1;
     }
 
     public int Id {
@@ -1910,48 +1896,30 @@ public class UnitPath {
     protected List<Vector2> m_points;
 }
 
-public class UnitSafe {
+public struct UnitSafe {
     internal Unit _ref;
+    int _id;
 
-    public Unit Set(Unit unit) {
-        if (unit != _ref && _ref != null) {
-            _ref.Unref(this);
-        }
-        if (unit != null) {
-            unit.Ref(this);
-        }
+    public void Set(Unit unit) {
         _ref = unit;
-        return _ref;
-    }
-
-    public void Unset() {
-        Set(null);
+        if (unit != null) {
+            _id = unit.Id;
+        } else {
+            _id = -1; 
+        }
     }
 
     public Unit Unit {
-        get { return _ref; }
+        get { return (_id == -1 || _id != _ref.Id) ? null : _ref; }
     }
 
     public UnitNode Node {
-        get { return _ref != null ? _ref.Node : null; }
+        get { return (_id == -1 || _id != _ref.Id) ? null : _ref.Node; }
     }
 
+    // Unit unit = obj.safe
     public static implicit operator Unit(UnitSafe safe) {
-        return safe._ref;  // unit = safe
-    }
-
-    public static bool operator ==(UnitSafe op1, UnitSafe op2) {
-        bool a = object.Equals(op1, null);
-        bool b = object.Equals(op2, null);
-        if (a || b) {
-            return a && b;
-        } else {
-            return op1._ref == op2._ref;
-        }
-    }
-
-    public static bool operator !=(UnitSafe op1, UnitSafe op2) {
-        return !(op1 == op2);
+        return safe.Unit;
     }
 }
 
@@ -1964,7 +1932,7 @@ public class CommandTarget {
 
     public CommandTarget() {
         m_targetType = Type.kNoTarget;
-        m_targetUnit = null;
+        m_targetUnit.Set(null);
     }
 
     public CommandTarget(Unit target) {
@@ -1987,7 +1955,7 @@ public class CommandTarget {
             return m_targetPoint == target.m_targetPoint;
 
         case Type.kUnitTarget:
-            return m_targetUnit == target.m_targetUnit;
+            return m_targetUnit.Unit == target.m_targetUnit.Unit;
         }
 
         return false;

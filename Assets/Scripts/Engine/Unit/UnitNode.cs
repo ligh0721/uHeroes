@@ -3,8 +3,12 @@ using System.Collections.Generic;
 using cca;
 
 
-[RequireComponent(typeof(Unit))]
 public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
+    protected internal int m_id;
+    protected float m_halfOfWidth;
+    protected float m_halfOfHeight;
+    protected Vector2 m_fireOffset = new Vector2();
+
     void Start() {
         // TODO: delete test 删掉是否会被调用
         init();
@@ -14,11 +18,10 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
         cleanup();
     }
 
-    public override void init() {
-        base.init();
+    public override void cleanup() {
+        m_id = -1;
+        base.cleanup();
     }
-
-    protected internal int m_id;
 
     public int Id {
         get { return m_id; }
@@ -112,8 +115,4 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     public bool isServer {
         get { return localClient.isServer; }
     }
-
-    protected float m_halfOfWidth;
-    protected float m_halfOfHeight;
-    protected Vector2 m_fireOffset = new Vector2();
 }

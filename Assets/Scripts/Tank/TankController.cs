@@ -17,8 +17,8 @@ public class TankController : UnitController {
         case MouseStatus.Status.kDown:
             break;
         case MouseStatus.Status.kStartMove:
-            if (Follow.follow) {
-                Follow.follow = false;
+            if (World.Main.cameraCtrl.enabled) {
+                World.Main.SetCameraFollowedEnabled(false);
             }
             m_cameraOrg = Camera.main.transform.position;
             if (m_recoverTimer) {
@@ -39,9 +39,8 @@ public class TankController : UnitController {
             } else {
                 //Follow.enabled = true;
                 bool touchUI = (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) || EventSystem.current.IsPointerOverGameObject();
-
                 if (!touchUI) {
-                    localClient.CmdMove(m_mouse.nowWorld, true);
+                    localClient.CmdMove(m_unit.Id, m_mouse.nowWorld, true);
                     //localClient.CmdMoveTank(m_mouse.nowWorld, true);
                 }
             }

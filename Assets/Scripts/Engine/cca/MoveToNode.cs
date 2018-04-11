@@ -22,7 +22,7 @@ public class MoveToNode : ActionInterval
 
     public override Action clone()
     {
-        return new MoveToNode(_duration, _unit, _bFixRotation, _fMaxHeightDelta);
+        return new MoveToNode(_duration, _unit.Node, _bFixRotation, _fMaxHeightDelta);
     }
 
     public override Action reverse()

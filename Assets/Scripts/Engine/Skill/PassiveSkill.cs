@@ -65,7 +65,7 @@ public class SplashPas : PassiveSkill {
 
     public override void OnUnitAttackTarget(AttackData pAttack, Unit pTarget) {
         Unit o = m_owner;
-        if (!pTarget || !o) {
+        if (!pTarget || o == null) {
             return;
         }
 

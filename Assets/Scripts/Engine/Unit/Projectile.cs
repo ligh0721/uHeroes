@@ -50,7 +50,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     protected void OnEffect() {
         PlayEffectSound();
-        Unit t = (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) ? m_toUnit : null;
+        Unit t = (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) ? m_toUnit.Unit : null;
         Effect(t);
     }
 
@@ -131,7 +131,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         DecContactLeft();
 
 #if true  // FIXME: FOR TEST
-        if (m_attackData != null && m_srcUnit != null) {
+        if (m_attackData != null && s != null) {
         if (s.Attack(m_attackData, target, m_triggerMask)) {
                 target.Damaged(m_attackData, s, m_triggerMask);
             }
@@ -253,7 +253,8 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     void FireFollow(float duration) {
         //m_fromPos = fromPos;
         //m_toUnit = toUnit;
-        if (m_toUnit == null) {
+        Unit toUnit = m_toUnit.Unit;
+        if (toUnit == null) {
             return;
         }
 
@@ -264,7 +265,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit != null || m_toUnit.Unit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.Unit != null || m_toUnit.Unit.OnProjectileArrive(this) == false) {
                     // 当目标单位存活且目标单位拒绝(反射)抛射物成功，抛射物不死亡(可能被反弹)
                     return;
                 }
@@ -272,7 +273,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
             Die();
         };
-        m_node.DoMoveToUnit(m_toUnit.Node, true, m_maxHeightDelta, duration, onMoveToFinished);
+        m_node.DoMoveToUnit(toUnit.Node, true, m_maxHeightDelta, duration, onMoveToFinished);
     }
 
     /// <summary>
@@ -312,7 +313,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit != null && m_toUnit.Unit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.Unit != null && m_toUnit.Unit.OnProjectileArrive(this) == false) {
                     return;
                 }
             }

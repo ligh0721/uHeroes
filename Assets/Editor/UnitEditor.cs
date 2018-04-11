@@ -4,33 +4,33 @@ using UnityEngine;
 using UnityEditor;
 
 
-[CustomEditor(typeof(UnitController))]
+[CustomEditor(typeof(Unit))]
 public class UnitControllerEditor : Editor {
-    SerializedProperty m_uiPrefab;
+    SerializedProperty uiPrefab;
 
     TextAsset m_modelTextAsset;
 
     void OnEnable() {
-        m_uiPrefab = serializedObject.FindProperty("m_uiPrefab");
+        uiPrefab = serializedObject.FindProperty("uiPrefab");
     }
 
     public override void OnInspectorGUI() {
-        UnitController t = target as UnitController;
+        Unit t = target as Unit;
         serializedObject.Update();
-        EditorGUILayout.PropertyField(m_uiPrefab);
+        EditorGUILayout.PropertyField(uiPrefab);
 
         TextAsset textAsset = EditorGUILayout.ObjectField("Unit", m_modelTextAsset, typeof(TextAsset), true) as TextAsset;
         if (textAsset != m_modelTextAsset) {
             UnitInfo baseInfo = ResourceManager.instance.LoadUnit(null, textAsset.text);
-            UnitNode r = new UnitNode(PrefabUtility.GetPrefabParent(t.gameObject) as GameObject, t.gameObject);
-            ResourceManager.instance.AssignModelToUnitNode(baseInfo.model, r);
-            t.m_unit = new Unit(r);
+            t.Node.cleanup();
+            ResourceManager.instance.AssignModelToUnitNode(baseInfo.model, t.Node);
+            t.Node.SetFrame(ModelNode.kFrameDefault);
 
-            if (t.m_ui == null) {
-                t.m_ui = UnitHUD.Create(t);
-            } else {
-                t.m_ui.UpdateRectTransform();
-            }
+            //            if (t.m_ui == null) {
+            //                t.m_ui = UnitHUD.Create(t);
+            //            } else {
+            //                t.m_ui.UpdateRectTransform();
+            //            }
             m_modelTextAsset = textAsset;
         }
 

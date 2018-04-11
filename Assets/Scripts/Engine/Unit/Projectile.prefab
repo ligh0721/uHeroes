@@ -9,7 +9,8 @@ GameObject:
   m_Component:
   - component: {fileID: 403062}
   - component: {fileID: 21251134}
-  - component: {fileID: 11445970}
+  - component: {fileID: 114811720416113262}
+  - component: {fileID: 114302439342207890}
   m_Layer: 0
   m_Name: Projectile
   m_TagString: Untagged
@@ -30,17 +31,6 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &11445970
-MonoBehaviour:
-  m_ObjectHideFlags: 1
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 100100000}
-  m_GameObject: {fileID: 177230}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d82583bf30ee57946924ead57cffe788, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!212 &21251134
 SpriteRenderer:
   m_ObjectHideFlags: 1
@@ -87,3 +77,26 @@ Prefab:
   m_ParentPrefab: {fileID: 0}
   m_RootGameObject: {fileID: 177230}
   m_IsPrefabParent: 1
+--- !u!114 &114302439342207890
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 177230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4f8fd9ec1e0a62642ab9980ab170db3c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &114811720416113262
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 177230}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d3601603e2aafb245bbe4a692db4e346, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_actionManager: {fileID: 0}

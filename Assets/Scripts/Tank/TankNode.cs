@@ -43,12 +43,6 @@ public class TankNode : UnitNode {
         cleanup();
     }
 
-    public override void init() {
-        base.init();
-        m_unit = GetComponent<Tank>();
-        Debug.Assert(m_unit != null);
-    }
-
     public override void SetFrame(int id) {
         if (m_frames.Count == 0) {
             Texture2D texture = Resources.Load<Texture2D>(string.Format("{0}/{1}", "Tanks/body", "body16"));
@@ -59,21 +53,21 @@ public class TankNode : UnitNode {
     }
 
     public override void DoMoveTo(Vector2 pos, float duration, Function onFinished, float speed = 1.0f) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoMoveTo(m_unit.Id, pos, duration, speed));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoMoveTo(this, pos, duration, speed));
 
-        float rotation;
-        if (Node.rotation > 180.0f) {
-            rotation = Node.rotation - 360.0f;
-        } else {
-            rotation = Node.rotation;
-        }
-        rotation = Node.rotation;
-        float angle = Utils.GetAngle(pos - Node.position);
+        float rotationFix;
+//        if (rotation > 180.0f) {
+//            rotationFix = rotation - 360.0f;
+//        } else {
+//            rotationFix = rotation;
+//        }
+        rotationFix = rotation;
+        float angle = Utils.GetAngle(pos - position);
         if (angle < 0) {
             angle += 360;
         }
-        Debug.LogFormat("{0}, {1}", rotation, angle);
-        float delta = angle - rotation;
+        Debug.LogFormat("{0}, {1}", rotationFix, angle);
+        float delta = angle - rotationFix;
         if (delta > 180) {
             delta -= 360;
         } else if (delta < -180) {

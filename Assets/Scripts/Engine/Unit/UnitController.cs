@@ -6,9 +6,9 @@ using UnityEngine.EventSystems;
 [RequireComponent(typeof(Unit))]
 public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> {
     protected Unit m_unit;
-    bool m_recoverTimer = false;
-    Vector3 m_cameraOrg;
-    MouseStatus m_mouse = new MouseStatus();
+    protected bool m_recoverTimer = false;
+    protected Vector3 m_cameraOrg;
+    protected MouseStatus m_mouse = new MouseStatus();
 
     void Start() {
         m_unit = GetComponent<Unit>();
@@ -53,7 +53,6 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
             } else {
                 //Follow.enabled = true;
                 bool touchUI = (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) || EventSystem.current.IsPointerOverGameObject();
-
                 if (!touchUI) {
                     localClient.CmdMove(m_unit.Id, m_mouse.nowWorld, true);
                 }

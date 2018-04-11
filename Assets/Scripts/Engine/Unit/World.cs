@@ -352,10 +352,7 @@ public class World : MonoBehaviour {
         GameObjectPool.instance.Destroy(projectilePrefab, projectile.gameObject);
     }
 
-    public void RemovePlayerUnits(int playerId) {
-        GamePlayerController player;
-        GameManager.AllPlayers.TryGetValue(playerId, out player);
-
+    public void RemovePlayerUnits(GamePlayerController player) {
         List<Unit> toDel = new List<Unit>();
         foreach (Unit unit in units.Keys) {
             if (unit.client == player) {

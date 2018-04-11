@@ -26,9 +26,9 @@ public class GameNetworkManager : NetworkManager
     {
         Debug.Log("OnServerDisconnect.");
         base.OnServerDisconnect(conn);
-        if (WorldController.instance != null)
+        if (World.Main != null)
         {
-            WorldController.instance.StopWorld();
+            World.Main.StopWorld();
         }
         GameManager.Reset();
     }
@@ -37,9 +37,9 @@ public class GameNetworkManager : NetworkManager
     {
         Debug.Log("OnClientDisconnect.");
         base.OnClientDisconnect(conn);
-        if (WorldController.instance != null)
+        if (World.Main != null)
         {
-            WorldController.instance.StopWorld();
+            World.Main.StopWorld();
         }
 
         GameManager.Reset();
@@ -47,7 +47,7 @@ public class GameNetworkManager : NetworkManager
 
     public override void OnServerRemovePlayer(NetworkConnection conn, PlayerController player)
     {
-        WorldController.instance.RemovePlayer(player.gameObject);
+        World.Main.RemovePlayerUnits(player.gameObject.GetComponent<GamePlayerController>());
         base.OnServerRemovePlayer(conn, player);
     }
 

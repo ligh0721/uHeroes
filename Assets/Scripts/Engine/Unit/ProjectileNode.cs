@@ -2,7 +2,6 @@ using UnityEngine;
 using cca;
 
 
-[RequireComponent(typeof(Projectile))]
 public class ProjectileNode : ModelNode {
     void Start() {
         // TODO: delete test 删掉是否会被调用
