@@ -38,23 +38,27 @@ public class AttackAct : ActiveSkill {
     }
 
     public override void OnUnitAddSkill() {
-        m_origin = m_owner.AttackSkill;
-        m_owner.AttackSkill = this;
+        Debug.Assert(m_owner != null);
+        Unit o = m_owner;
+        m_origin = o.AttackSkill;
+        o.AttackSkill = this;
     }
 
     public override void OnUnitDelSkill() {
+        Debug.Assert(m_owner != null);
+        Unit o = m_owner;
         if (!m_origin.valid) {
             m_origin = null;
         }
 
-        if (m_owner.AttackSkill == this) {
-            m_owner.AttackSkill = m_origin;
+        if (o.AttackSkill == this) {
+            o.AttackSkill = m_origin;
         }
     }
 
     public override bool CheckConditions(CommandTarget rTarget) {
         Unit t = rTarget.TargetUnit;
-        if (t == null || !t.Valid || t.Dead) {
+        if (t == null || t.Dead) {
             return false;
         }
 
@@ -145,7 +149,7 @@ public class AttackAct : ActiveSkill {
         Unit o = m_owner;
         Debug.Assert(o != null);
         o.UpdateSkillCD(this);
-        UnitNode d = o.Renderer;
+        UnitNode d = o.Node;
         if (o.CastActiveSkill == o.AttackSkill) {
             d.SetActionSpeed(o.CastActionId, coolDownSpeedCoeff);
         }

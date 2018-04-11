@@ -5,8 +5,12 @@ using cca;
 public class World : MonoBehaviour {
     static World _main;
 
+    // 用于对象池分配Unit单位
     public GameObject unitPrefab;
+    // 用于对象池分配Projectile单位
     public GameObject projectilePrefab;
+    // 用于控制摄像机跟踪当前玩家操控的单位
+    public CameraFollowPlayer cameraCtrl;
 
     bool shutdown = false;
     Dictionary<Unit, int> units = new Dictionary<Unit, int>();
@@ -34,24 +38,25 @@ public class World : MonoBehaviour {
     void Start() {
         Debug.Assert(unitPrefab != null);
         Debug.Assert(projectilePrefab != null);
+        Debug.Assert(cameraCtrl != null);
 
         // unit pool
         GameObjectPool.ResetFunction unitReset = delegate (GameObject gameObject) {
             gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
-            var sr = gameObject.GetComponent<SpriteRenderer>();
+            SpriteRenderer sr = gameObject.GetComponent<SpriteRenderer>();
             sr.enabled = true;
             sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-            var node = gameObject.GetComponent<UnitNode>();
+            UnitNode node = gameObject.GetComponent<UnitNode>();
             node.enabled = true;
-            var unit = gameObject.GetComponent<Unit>();
+            Unit unit = gameObject.GetComponent<Unit>();
             unit.enabled = true;
         };
         GameObjectPool.DestroyFunction unitDestroy = delegate(GameObject obj) {
-            var node = gameObject.GetComponent<UnitNode>();
+            UnitNode node = gameObject.GetComponent<UnitNode>();
             node.cleanup();
             node.enabled = false;
-            var unit = gameObject.GetComponent<Unit>();
+            Unit unit = gameObject.GetComponent<Unit>();
             unit.Cleanup();
             unit.enabled = false;
         };
@@ -61,19 +66,19 @@ public class World : MonoBehaviour {
         GameObjectPool.ResetFunction projectileReset = delegate (GameObject gameObject) {
             gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
             gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
-            var sr = gameObject.GetComponent<SpriteRenderer>();
+            SpriteRenderer sr = gameObject.GetComponent<SpriteRenderer>();
             sr.enabled = true;
             sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-            var node = gameObject.GetComponent<ProjectileNode>();
+            ProjectileNode node = gameObject.GetComponent<ProjectileNode>();
             node.enabled = true;
-            var unit = gameObject.GetComponent<Projectile>();
+            Projectile unit = gameObject.GetComponent<Projectile>();
             unit.enabled = true;
         };
         GameObjectPool.DestroyFunction projectileDestroy = delegate (GameObject obj) {
-            var node = gameObject.GetComponent<ProjectileNode>();
+            ProjectileNode node = gameObject.GetComponent<ProjectileNode>();
             node.cleanup();
             node.enabled = false;
-            var projectile = gameObject.GetComponent<Projectile>();
+            Projectile projectile = gameObject.GetComponent<Projectile>();
             //projectile.Cleanup();
             projectile.enabled = false;
         };
@@ -123,6 +128,14 @@ public class World : MonoBehaviour {
         //m_projectilesIndex.Add(projectile.Id, projectile);
     }
 
+    public void SetCameraFollowed(GameObject gameObject) {
+        cameraCtrl.followed = gameObject;
+    }
+
+    public void SetCameraFollowedEnabled(bool enabled) {
+        cameraCtrl.enabled = enabled;
+    }
+
     /// <summary>
     /// Server发起
     /// </summary>
@@ -143,6 +156,7 @@ public class World : MonoBehaviour {
         ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
 
         unit.m_id = syncInfo.id;
+        node.m_id = syncInfo.id;
         unit.m_client = player;
         unit.m_model = syncInfo.baseInfo.model;
         if (GamePlayerController.localClient.isServer) {
@@ -155,7 +169,7 @@ public class World : MonoBehaviour {
             AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
             atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
             atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
-            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
+            foreach (string ani in syncInfo.baseInfo.attackSkill.animations) {
                 atk.AddCastAnimation(ModelNode.NameToId(ani));
             }
             atk.ProjectileTemplate = ResourceManager.instance.LoadProjectile(syncInfo.baseInfo.attackSkill.projectile);
@@ -173,7 +187,6 @@ public class World : MonoBehaviour {
 
         if (player != null) {
             // 玩家单位
-            player.unitCtrl = ctrl;
             Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unit.Id, player.playerId);
             if (player == GamePlayerController.localClient) {
                 Debug.LogFormat("That's Me, {0}.", unit.Name);
@@ -197,6 +210,7 @@ public class World : MonoBehaviour {
         }
 
         AddUnit(unit);
+        node.SetFrame(ModelNode.kFrameDefault);
         return unit;
     }
 
@@ -230,12 +244,66 @@ public class World : MonoBehaviour {
         }
 
         AddProjectile(projectile);
+        node.SetFrame(ModelNode.kFrameDefault);
         projectile.Fire();
         return projectile;
     }
 
+    public Tank CreateTank(SyncTankInfo syncInfo, int playerId = 0) {
+        GamePlayerController player;
+        GameManager.AllPlayers.TryGetValue(playerId, out player);
+
+        GameObject gameObject = GameObjectPool.instance.Instantiate(unitPrefab);
+        TankNode node = gameObject.GetComponent<TankNode>();
+        Tank unit = gameObject.GetComponent<Tank>();
+        //TankController ctrl = gameObject.GetComponent<TankController>();
+
+        ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
+        ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
+
+        unit.m_id = syncInfo.id;
+        unit.m_client = player;
+        unit.m_model = syncInfo.baseInfo.model;
+        if (GamePlayerController.localClient.isServer) {
+            unit.AI = UnitAI.instance;
+        }
+
+        unit.Name = syncInfo.baseInfo.name;
+        unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
+        if (syncInfo.baseInfo.attackSkill.valid) {
+            AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
+            atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
+            atk.CastHorizontal = syncInfo.baseInfo.attackSkill.horizontal;
+            foreach (var ani in syncInfo.baseInfo.attackSkill.animations) {
+                atk.AddCastAnimation(ModelNode.NameToId(ani));
+            }
+            atk.ProjectileTemplate = ResourceManager.instance.LoadProjectile(syncInfo.baseInfo.attackSkill.projectile);
+            atk.ProjectileTemplate.fire = "Straight";
+            unit.AddActiveSkill(atk);
+        }
+
+        node.position = syncInfo.position;
+        node.rotation = syncInfo.rotation;
+        unit.Hp = syncInfo.hp;
+        unit.force.Force = syncInfo.force;
+        unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
+        unit.Revivable = syncInfo.baseInfo.revivable;
+        unit.Fixed = syncInfo.baseInfo.isfixed;
+
+        for (int i = 0; i < syncInfo.guns.Count; ++i){
+            unit.AddGun(i);
+            unit.SetGunPosition(i, syncInfo.guns[i].position);
+            unit.SetGunRotation(i, syncInfo.guns[i].rotation);
+            //syncInfo.guns[i].rotateSpeed;
+        }
+
+        //unitCtrl.m_unit = unit;
+        AddUnit(unit);
+        return unit;
+    }
+
     public void RemoveUnit(Unit unit, bool revivalbe = false) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncRemoveUnit(unit.Id, revivalbe));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncRemoveUnit(unit, revivalbe));
         if (!units.ContainsKey(unit)) {
             return;
         }
@@ -289,22 +357,22 @@ public class World : MonoBehaviour {
         GameManager.AllPlayers.TryGetValue(playerId, out player);
 
         List<Unit> toDel = new List<Unit>();
-        foreach (var unit in units.Keys) {
+        foreach (Unit unit in units.Keys) {
             if (unit.client == player) {
                 toDel.Add(unit);
             }
         }
-        foreach (var unit in toDel) {
+        foreach (Unit unit in toDel) {
             RemoveUnit(unit);
         }
         toDel.Clear();
 
-        foreach (var unit in unitsToRevive.Keys) {
+        foreach (Unit unit in unitsToRevive.Keys) {
             if (unit.client == player) {
                 toDel.Add(unit);
             }
         }
-        foreach (var unit in toDel) {
+        foreach (Unit unit in toDel) {
             CleanAbilitiesCD(unit);
             unitsToRevive.Remove(unit);
         }
@@ -339,19 +407,19 @@ public class World : MonoBehaviour {
     }
 
     protected void CleanAbilitiesCD(Unit unit) {
-        foreach (var skill in unit.ActiveSkills) {
+        foreach (ActiveSkill skill in unit.ActiveSkills) {
             if (skill.coolingDown) {
                 m_skillsCD.Remove(skill);
             }
         }
 
-        foreach (var skill in unit.PassiveSkills) {
+        foreach (PassiveSkill skill in unit.PassiveSkills) {
             if (skill.coolingDown) {
                 m_skillsCD.Remove(skill);
             }
         }
 
-        foreach (var skill in unit.BuffSkills) {
+        foreach (BuffSkill skill in unit.BuffSkills) {
             if (skill.coolingDown) {
                 m_skillsCD.Remove(skill);
             }
@@ -363,7 +431,7 @@ public class World : MonoBehaviour {
     protected void SkillReady(Skill skill) {
         // 由于技能的所有者可能在等待重生，所以主世界可能不存在该单位，但是单位仍未被释放
         Unit o = skill.owner;
-        if (o != null && o.enabled && !o.Dead) {
+        if (o != null && !o.Dead) {
             // 存在于主世界中，则触发事件
             o.OnSkillReady(skill);
         }
@@ -392,8 +460,7 @@ public class World : MonoBehaviour {
         }
         delayToDel.Clear();
 
-        foreach (var kv in units) {
-            var unit = kv.Key;
+        foreach (Unit unit in units.Keys) {
             unit.Step(dt);
 
             if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying)) {  // terrible code
@@ -402,8 +469,7 @@ public class World : MonoBehaviour {
             }
         }
 
-        foreach (var kv in projectiles) {
-            var projectile = kv.Key;
+        foreach (Projectile projectile in projectiles.Keys) {
             projectile.Step(dt);
         }
 

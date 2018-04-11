@@ -9,7 +9,6 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     void Start() {
         m_node = GetComponent<ProjectileNode>();
         Debug.Assert(m_node != null);
-        m_node.SetFrame(ModelNode.kFrameDefault);
     }
 
     ProjectileNode m_node;
@@ -86,11 +85,11 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     protected void OnTick(float dt) {
         if (HasEffectFlag(kEffectOnContact)) {
             Unit s = m_srcUnit;
-            if (s == null || !s.enabled) {
+            if (s == null) {
                 return;
             }
 
-            foreach (var u in m_world.Units.Keys) {
+            foreach (Unit u in m_world.Units.Keys) {
                 if (u.Ghost || !s.force.CanEffect(u.force, m_effectiveTypeFlags)) {
                     continue;
                 }
@@ -125,16 +124,16 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     protected void Effect(Unit target) {
         Unit s = m_srcUnit;
-        if (m_srcUnit == null || !s.enabled) {
+        if (s == null) {
             return;
         }
 
         DecContactLeft();
 
-#if true  // FOR TEST
+#if true  // FIXME: FOR TEST
         if (m_attackData != null && m_srcUnit != null) {
-            if (m_srcUnit.Attack(m_attackData, target, m_triggerMask)) {
-                target.Damaged(m_attackData, m_srcUnit, m_triggerMask);
+        if (s.Attack(m_attackData, target, m_triggerMask)) {
+                target.Damaged(m_attackData, s, m_triggerMask);
             }
         }
 #endif
@@ -254,7 +253,9 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     void FireFollow(float duration) {
         //m_fromPos = fromPos;
         //m_toUnit = toUnit;
-        Debug.Assert(m_toUnit.enabled);
+        if (m_toUnit == null) {
+            return;
+        }
 
         m_node.position = m_fromPos;
 
@@ -263,7 +264,8 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.enabled && m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit != null || m_toUnit.Unit.OnProjectileArrive(this) == false) {
+                    // 当目标单位存活且目标单位拒绝(反射)抛射物成功，抛射物不死亡(可能被反弹)
                     return;
                 }
             }
@@ -310,7 +312,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.enabled && m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit != null && m_toUnit.Unit.OnProjectileArrive(this) == false) {
                     return;
                 }
             }
@@ -335,13 +337,13 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     public Unit FromUnit {
         get { return m_fromUnit; }
 
-        set { m_fromUnit = value; }
+        set { m_fromUnit.Set(value); }
     }
 
     public Unit ToUnit {
         get { return m_toUnit; }
 
-        set { m_toUnit = value; }
+        set { m_toUnit.Set(value); }
     }
 
     public AttackData AttackData {
@@ -359,7 +361,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     public Unit SourceUnit {
         get { return m_srcUnit; }
 
-        set { m_srcUnit = value; }
+        set { m_srcUnit.Set(value); }
     }
 
     public Skill SourceSkill {
@@ -427,9 +429,9 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     protected Vector2 m_fromPos;
     protected Vector2 m_toPos;
-    protected Unit m_fromUnit;
-    protected Unit m_toUnit;
-    protected Unit m_srcUnit;
+    protected UnitSafe m_fromUnit;
+    protected UnitSafe m_toUnit;
+    protected UnitSafe m_srcUnit;
     protected bool m_usingFirePoint = true;
     protected AttackData m_attackData;
     protected uint m_triggerMask = Unit.kTriggerMaskNoMasked;

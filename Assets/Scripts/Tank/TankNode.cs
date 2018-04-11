@@ -3,12 +3,18 @@ using System.Collections.Generic;
 using cca;
 
 
-public class TankGunRenderer : UnitNode {
-    public TankGunRenderer() {
+public class TankGunNode : UnitNode {
+    void Start() {
+        // TODO: delete test 删掉是否会被调用
+        init();
     }
 
-    public TankGunRenderer(GameObject prefab, GameObject gameObject)
-        : base(prefab, gameObject) {
+    void OnDestroy() {
+        cleanup();
+    }
+
+    public override void init() {
+        base.init();
     }
 
     public override void SetFrame(int id) {
@@ -18,21 +24,29 @@ public class TankGunRenderer : UnitNode {
             m_frames.Add(kFrameDefault, sprite);
         }
 
-        Sprite frame;
-        if (!m_frames.TryGetValue(id, out frame)) {
+        Sprite frameSprite;
+        if (!m_frames.TryGetValue(id, out frameSprite)) {
             return;
         }
-        m_node.frame = frame;
+        frame = frameSprite;
     }
 }
 
-
-public class TankRenderer : UnitNode {
-    public TankRenderer() {
+[RequireComponent(typeof(Tank))]
+public class TankNode : UnitNode {
+    void Start() {
+        // TODO: delete test 删掉是否会被调用
+        init();
     }
 
-    public TankRenderer(GameObject prefab, GameObject gameObject)
-        : base(prefab, gameObject) {
+    void OnDestroy() {
+        cleanup();
+    }
+
+    public override void init() {
+        base.init();
+        m_unit = GetComponent<Tank>();
+        Debug.Assert(m_unit != null);
     }
 
     public override void SetFrame(int id) {
@@ -67,6 +81,6 @@ public class TankRenderer : UnitNode {
         }
         var action = new Speed(new Sequence(new RotateBy(Mathf.Abs(delta / 500.0f), delta), new MoveTo(duration, pos), new CallFunc(onFinished)), speed);
         action.tag = kActionMoveTo;
-        m_node.runAction(action);
+        runAction(action);
     }
 }

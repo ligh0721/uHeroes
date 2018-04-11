@@ -9,11 +9,11 @@ public class MoveToNode : ActionInterval
     public const int kTypeUnit = 2;
     public const int kTypeProjectile = 3;
 
-    public MoveToNode(float duration, UnitNode unit, bool fixRotation = true, float maxHeightDelta = 0.0f)
+    public MoveToNode(float duration, UnitNode node, bool fixRotation = true, float maxHeightDelta = 0.0f)
         : base(duration)
     {
         _eToType = kTypeUnit;
-        _unit = unit;
+        _unit.Set(node.GetComponent<Unit>());
 
         _bFixRotation = fixRotation;
         _fMaxHeightDelta = maxHeightDelta;
@@ -52,10 +52,11 @@ public class MoveToNode : ActionInterval
             return;
         }
 
-        if (_unit.Valid)
+        Unit _u = _unit;
+        if (_u != null)
         {
-            _oEndPos = _unit.Node.position;
-            _fToHeight = _unit.Node.height + _unit.HalfOfHeight;
+            _oEndPos = _u.Node.position;
+            _fToHeight = _u.Node.height + _u.Node.HalfOfHeight;
         }
 
         _oDeltaPos = _oEndPos - _oStartPos;
@@ -84,13 +85,18 @@ public class MoveToNode : ActionInterval
                 ) * Mathf.Rad2Deg;
         }
     }
+
+    public override void stop() {
+        base.stop();
+        _unit.Set(null);
+    }
     
     protected Vector2 _oStartPos;
     protected Vector2 _oEndPos;
     protected Vector2 _oDeltaPos;
 
     //protected RendererNode _endNode;
-    protected UnitNode _unit;
+    protected UnitSafe _unit = new UnitSafe();
     protected int _eFromType;
     protected int _eToType;
     protected float _fMinSpeed;

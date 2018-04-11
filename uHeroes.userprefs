@@ -1,19 +1,18 @@
 ﻿<Properties StartupItem="Assembly-CSharp.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Engine/Unit/Projectile.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Engine/Unit/World.cs">
     <Files>
-      <File FileName="Assets/Scripts/Engine/Unit/UnitNode.cs" Line="67" Column="24" />
-      <File FileName="Assets/Scripts/Engine/Unit/ProjectileController.cs" Line="65" Column="18" />
-      <File FileName="Assets/Scripts/Engine/Unit/UnitController.cs" Line="3" Column="32" />
-      <File FileName="Assets/Scripts/Engine/Unit/World.cs" Line="173" Column="51" />
-      <File FileName="Assets/Scripts/Engine/Unit/Unit.cs" Line="1973" Column="28" />
+      <File FileName="Assets/Scripts/Engine/Unit/Unit.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Engine/Unit/UnitNode.cs" Line="7" Column="31" />
+      <File FileName="Assets/Scripts/Engine/Unit/UnitController.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Engine/Unit/World.cs" Line="264" Column="9" />
       <File FileName="Assets/Scripts/Engine/Unit/Projectile.cs" Line="190" Column="19" />
-      <File FileName="Assets/Scripts/Engine/Skill/ActiveSkill.cs" Line="86" Column="25" />
-      <File FileName="Assets/Scripts/Engine/Unit/ProjectileNode.cs" Line="19" Column="44" />
-      <File FileName="Assets/Scripts/Engine/ResourceManager.cs" Line="83" Column="28" />
-      <File FileName="Assets/Scripts/Engine/cca/NodeWithHeight.cs" Line="16" Column="5" />
-      <File FileName="Assets/Scripts/Engine/SyncGameAction.cs" Line="48" Column="20" />
-      <File FileName="Assets/Scripts/Engine/Unit/ModelNode.cs" Line="114" Column="5" />
+      <File FileName="Assets/Scripts/Engine/Skill/ActiveSkill.cs" Line="135" Column="5" />
+      <File FileName="Assets/Scripts/Engine/Unit/ProjectileNode.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Engine/ResourceManager.cs" Line="68" Column="5" />
+      <File FileName="Assets/Scripts/Engine/cca/NodeWithHeight.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Engine/SyncGameAction.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Engine/Unit/ModelNode.cs" Line="18" Column="31" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>

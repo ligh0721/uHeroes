@@ -16,55 +16,48 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
 
     public override void init() {
         base.init();
-        m_unit = GetComponent<Unit>();
-        Debug.Assert(m_unit != null);
     }
 
-    Unit m_unit;
+    protected internal int m_id;
 
-    public Unit Unit {
-        get { return m_unit; }
+    public int Id {
+        get { return m_id; }
     }
 
     public override void StopAction(int tag) {
 
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncStopAction(m_unit.Id, tag));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncStopAction(this, tag));
         base.StopAction(tag);
     }
 
     public override void StopAllActions() {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncStopAllActions(m_unit.Id));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncStopAllActions(this));
         base.StopAllActions();
     }
 
     public override void SetActionSpeed(int tag, float speed) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetActionSpeed(m_unit.Id, tag, speed));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetActionSpeed(this, tag, speed));
         base.SetActionSpeed(tag, speed);
     }
 
     public override void SetFrame(int id) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetFrame(m_unit.Id, id));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetFrame(this, id));
         base.SetFrame(id);
     }
 
     public override void SetFlippedX(bool flippedX) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetFlippedX(m_unit.Id, flippedX));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetFlippedX(this, flippedX));
         base.SetFlippedX(flippedX);
     }
 
     public override void DoMoveTo(Vector2 pos, float duration, Function onFinished, float speed = 1.0f) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoMoveTo(m_unit.Id, pos, duration, speed));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoMoveTo(this, pos, duration, speed));
         base.DoMoveTo(pos, duration, onFinished, speed);
     }
 
     public override void DoAnimate(int id, Function onSpecial, int loop, Function onFinished, float speed = 1.0f) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoAnimate(m_unit.Id, id, loop, speed));
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoAnimate(this, id, loop, speed));
         base.DoAnimate(id, onSpecial, loop, onFinished, speed);
-    }
-
-    public void SetHp(float hp) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetHp(m_unit.Id, hp));
-        m_unit.Hp = hp;
     }
 
     public void AddBattleTip(string tip, string font, float fontSize, Color color) {

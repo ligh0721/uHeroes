@@ -79,7 +79,7 @@ public class ActiveSkill : Skill {
                     syncInfo.fromUnit = o.Id;
                     syncInfo.toUnit = t.Id;
 
-                    Projectile projectile = World.Main.CreateProjectile(syncInfo, this);
+                    World.Main.CreateProjectile(syncInfo, this);
 
                     //UnitNode td = t.Node;
                     //Debug.Assert(td != null);
@@ -99,7 +99,7 @@ public class ActiveSkill : Skill {
                 syncInfo.srcUnit = o.Id;
                 syncInfo.fromUnit = o.Id;
                 syncInfo.toPos = Utils.GetForwardPoint(d.position, o.CastTarget.TargetPoint, m_castRange);
-                Projectile projectile = World.Main.CreateProjectile(syncInfo, this);
+                World.Main.CreateProjectile(syncInfo, this);
             } else {
                 PlayEffectSound();
                 OnUnitSkillEffect(null, null);
@@ -151,9 +151,11 @@ public class ActiveSkill : Skill {
     protected ProjectileInfo m_projectileTemplate;
     protected bool m_castHorizontal;
 
-    public Vector2 GetAbilityEffectPoint(Projectile pProjectile, Unit target) {
-        if (pProjectile != null) {
-            return pProjectile.Node.position;
+    public Vector2 GetAbilityEffectPoint(Projectile projectile, Unit target) {
+        Debug.Assert(m_owner != null);
+        Unit o = m_owner;
+        if (projectile != null) {
+            return projectile.Node.position;
         }
 
         if (target != null) {
@@ -168,10 +170,10 @@ public class ActiveSkill : Skill {
             return od.position;
 
         case CommandTarget.Type.kPointTarget:
-            return m_owner.CastTarget.TargetPoint;
+            return o.CastTarget.TargetPoint;
         }
 
-        Unit u = m_owner.CastTarget.TargetUnit;
+        Unit u = o.CastTarget.TargetUnit;
         if (u == null) {
             Debug.LogError("GetAbilityEffectPoint() err.");
             return od.position;

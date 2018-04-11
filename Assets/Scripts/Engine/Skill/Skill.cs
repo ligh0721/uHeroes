@@ -19,11 +19,11 @@ public class Skill {
     public Unit owner {
         get { return m_owner; }
 
-        set { m_owner = value; }
+        set { m_owner.Set(value); }
     }
 
     public bool valid {
-        get { return m_owner != null && m_owner.enabled; }
+        get { return m_owner != null; }
     }
 
     public string name {
@@ -118,13 +118,13 @@ public class Skill {
     }
 
     public void OnAddToUnit(Unit pOwner) {
-        m_owner = pOwner;
+        m_owner.Set(pOwner);
         OnUnitAddSkill();
     }
 
     public void OnDelFromUnit() {
         OnUnitDelSkill();
-        m_owner = null;
+        m_owner.Set(null);
     }
 
     public void PlayEffectSound() {
@@ -171,13 +171,17 @@ public class Skill {
     }
 
     public void ResetCD() {
+        Debug.Assert(m_owner != null);
+        Unit o = m_owner;
         m_coolingDownElapsed = float.MaxValue;
-        m_owner.UpdateSkillCD(this);
+        o.UpdateSkillCD(this);
     }
 
     public void StartCoolingDown(float fromPercent = 0) {
+        Debug.Assert(m_owner != null);
+        Unit o = m_owner;
         m_coolingDownElapsed = fromPercent * coolDown;
-        m_owner.SkillCD(this);
+        o.SkillCD(this);
     }
 
     public float interval {
@@ -239,7 +243,7 @@ public class Skill {
     }
 
     protected string m_name;
-    protected Unit m_owner;
+    protected UnitSafe m_owner;
     protected Value m_coolDown;
     protected float m_coolingDownElapsed = float.MaxValue;
     protected float m_interval = 0;

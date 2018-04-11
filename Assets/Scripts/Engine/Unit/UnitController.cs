@@ -3,20 +3,21 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 
+[RequireComponent(typeof(Unit))]
 public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> {
+    protected Unit m_unit;
+    bool m_recoverTimer = false;
+    Vector3 m_cameraOrg;
+    MouseStatus m_mouse = new MouseStatus();
+
     void Start() {
-        
+        m_unit = GetComponent<Unit>();
+        Debug.Assert(m_unit != null);
     }
 
-    protected MouseStatus m_mouse = new MouseStatus();
-    CameraFollowPlayer m_cameraFollow;
-
-    protected CameraFollowPlayer Follow {
-        get { return m_cameraFollow ?? (m_cameraFollow = Camera.main.GetComponent<CameraFollowPlayer>()); }
+    public Unit Unit {
+        get { return m_unit; }
     }
-
-    protected bool m_recoverTimer = false;
-    protected Vector3 m_cameraOrg;
 
     void LateUpdate() {
         if (client == null || !client.isLocalPlayer) {
@@ -30,8 +31,8 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
         case MouseStatus.Status.kDown:
             break;
         case MouseStatus.Status.kStartMove:
-            if (Follow.follow) {
-                Follow.follow = false;
+            if (World.Main.cameraCtrl.enabled) {
+                World.Main.SetCameraFollowedEnabled(false);
             }
             m_cameraOrg = Camera.main.transform.position;
             if (m_recoverTimer) {
@@ -54,7 +55,7 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
                 bool touchUI = (Input.touchCount > 0 && EventSystem.current.IsPointerOverGameObject(Input.GetTouch(0).fingerId)) || EventSystem.current.IsPointerOverGameObject();
 
                 if (!touchUI) {
-                    localClient.CmdMove(m_mouse.nowWorld, true);
+                    localClient.CmdMove(m_unit.Id, m_mouse.nowWorld, true);
                 }
             }
             break;
@@ -64,7 +65,7 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
     }
 
     protected void RecoveryCameraFollow() {
-        Follow.follow = true;
+        World.Main.SetCameraFollowedEnabled(true);
         m_recoverTimer = false;
     }
 

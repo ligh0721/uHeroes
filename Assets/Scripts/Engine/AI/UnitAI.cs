@@ -30,7 +30,7 @@ public class UnitAI : IUnitEvent
         if (unit.CastActiveSkill == atk && unit.CastTarget.TargetType == CommandTarget.Type.kUnitTarget)
         {
             Unit tt = unit.CastTarget.TargetUnit;
-            if (tt != null && tt.enabled)
+            if (tt != null)
             {
                 UnitNode ttd = tt.Node;
                 if (ttd != null && unit.IsDoingAnd(Unit.kDoingCasting | Unit.kDoingMoving) && Vector2.Distance(d.position, ttd.position) < unit.HostilityRange)
@@ -42,7 +42,7 @@ public class UnitAI : IUnitEvent
         }
 
         Unit t = UnitGroup.getNearestUnitInRange(unit.World, d.position, unit.HostilityRange, UnitGroup.MatchFunctionLivingEnemy, unit.force);
-        if (t == null || !t.enabled || t.Dead)
+        if (t == null || t.Dead)
         {
             // 搜不到仇恨区内的目标，有没有必要设置为doNothing？
             return;
@@ -57,12 +57,12 @@ public class UnitAI : IUnitEvent
 
     public virtual void OnUnitDamagedDone(Unit unit, float fDamage, Unit source)
     {
-        if (!unit.enabled || unit.Suspended || unit.IsDoingOr(Unit.kDoingObstinate))
+        if (unit == null || unit.Suspended || unit.IsDoingOr(Unit.kDoingObstinate))
         {
             return;
         }
         //Debug.LogErrorFormat("{0}.", u.isDoingAnd(Unit.kDoingObstinate) ? "Obs" : "NOT");
-        if (source == null || !source.enabled || source.Dead || source.force.IsMyAlly(unit.force))
+        if (source == null || source.Dead || source.force.IsMyAlly(unit.force))
         {
             return;
         }
@@ -105,7 +105,7 @@ public class UnitAI : IUnitEvent
 
         // 当前目标存在！   如果能打到之前的目标 或 之前的目标在仇视范围内    (目标非建筑  或(是建筑，且源也是建筑))
         // 果伤害源
-        if (t != null && t.enabled && (Vector2.Distance(d.position, t.Node.position) < unit.HostilityRange || unit.CheckCastTargetDistance(atking, d.position, unit.CastTarget, t)))
+        if (t != null && (Vector2.Distance(d.position, t.Node.position) < unit.HostilityRange || unit.CheckCastTargetDistance(atking, d.position, unit.CastTarget, t)))
         {
             // 如果能打到之前的目标，不改变攻击目标
             return;

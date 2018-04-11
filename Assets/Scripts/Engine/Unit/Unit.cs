@@ -5,25 +5,84 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(UnitNode))]
 public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
+    UnitNode m_node;
+    [HideInInspector]
+    public UnitForce force = new UnitForce();
+    protected World m_world;
+    protected string m_name;
+    protected internal int m_id;
+    protected internal string m_model;
+
+    // 用来累加伤害/治疗数字ff
+    protected Dictionary<int, float> m_hpChanged = new Dictionary<int, float>();
+    protected HashSet<Skill> m_onAttackTargetTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onAttackedTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onDamagedSurfaceTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onDamagedInnerTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onDamagedDoneTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onDamageTargetDoneTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onHpChangedTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onReviveTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onDyingTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onDeadTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onTickTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onProjectileEffectTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onProjectileArriveTriggerSkills = new HashSet<Skill>();
+    protected HashSet<Skill> m_onCalcDamageTargetTriggerSkills = new HashSet<Skill>();
+
+    protected HashSet<Skill> m_triggerSkillsToAdd = new HashSet<Skill>();
+    protected HashSet<Skill> m_triggerSkillsToDel = new HashSet<Skill>();
+
+    // trigger之间是有可能存在嵌套关系的
+    // 为了安全增删trigger，需要维护一个引用计数
+    protected int m_triggerRefCount;
+
+    protected HashSet<ActiveSkill> m_activeSkills = new HashSet<ActiveSkill>();
+    protected HashSet<PassiveSkill> m_passiveSkills = new HashSet<PassiveSkill>();
+    protected HashSet<BuffSkill> m_buffSkills = new HashSet<BuffSkill>();
+    protected HashSet<PassiveSkill> m_systemSkills = new HashSet<PassiveSkill>();
+    protected ActiveSkill m_attackSkill;
+
+    protected float m_hp = 1;
+    protected Value m_maxHp = new Value(1);
+    protected bool m_revivable = false;
+
+    protected Unit m_killer;
+
+    protected UnitPath m_movePath;
+    protected int m_pathCurPos;
+    protected float m_pathBufArrive = 0.1f;
+    protected bool m_pathObstinate;
+
+    protected Vector2 m_lastMoveTo;
+    protected internal int m_moveActionId;
+    protected internal int m_moveToActionId;
+
+    // 护甲
+    protected ArmorValue m_armorValue = new ArmorValue(global::ArmorValue.Type.kHeavy, 0);
+    // 暴击率
+    protected Value m_critRate = new Value(0.2f);
+    // 暴击伤害
+    protected Value m_critDmg = new Value(0.5f);
+    // 移动速度
+    protected Value m_moveSpeed = new Value(1.0f);
+
+
     void Start() {
         m_node = GetComponent<UnitNode>();
         Debug.Assert(m_node != null);
-        m_node.SetFrame(ModelNode.kFrameDefault);
     }
-
-    UnitNode m_node;
 
     public UnitNode Node {
         get { return m_node; }
     }
-
-    public UnitForce force = new UnitForce();
 
     public virtual void Cleanup() {
         UnrefAll();
     }
 
     internal HashSet<UnitSafe> m_refs = new HashSet<UnitSafe>();
+
     public void Ref(UnitSafe safe) {
         m_refs.Add(safe);
     }
@@ -33,7 +92,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public void UnrefAll() {
-        foreach (var safe in m_refs) {
+        foreach (UnitSafe safe in m_refs) {
             safe._ref = null;
         }
         m_refs.Clear();
@@ -49,18 +108,13 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public World World {
-        get { return m_world;  }
+        get { return m_world; }
         set { m_world = value; }
     }
 
     public string Model {
         get { return m_model; }
     }
-
-    protected World m_world;
-    protected string m_name;
-    protected internal int m_id;
-    protected internal string m_model;
 
     // Networkable
     protected internal GamePlayerController m_client;
@@ -174,9 +228,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         m_hpChanged.Clear();
     }
 
-    protected Dictionary<int, float> m_hpChanged = new Dictionary<int, float>();
-    // 用来累加伤害/治疗数字ff
-
     protected void OnTick(float dt) {
         if (!Dead) {
             OnCommandTick(dt);
@@ -238,7 +289,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
                 if (bUnitTarget) {
                     // 如果是以单位为目标的技能
                     t = m_castTarget.TargetUnit;
-                    if (t != null && t.enabled && !t.Dead) {
+                    if (t != null && !t.Dead) {
                         // 单位存在且单位没有死亡
                         td = t.Node;
                         Debug.Assert(td != null);
@@ -368,6 +419,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         }
     }
 
+    // 抛射物到达目标单位
     public bool OnProjectileArrive(Projectile projectile) {
         if (!isServer) {
             return true;
@@ -487,24 +539,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     public const uint kTriggerMaskNoMasked = 0;
     public const uint kTriggerMaskAll = 0xFFFFFFFF;
     public const uint kTriggerMaskActiveTrigger = kTriggerOnAttackTargetTrigger | kTriggerOnDamageTargetDoneTrigger;
-
-    protected HashSet<Skill> m_onAttackTargetTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onAttackedTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onDamagedSurfaceTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onDamagedInnerTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onDamagedDoneTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onDamageTargetDoneTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onHpChangedTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onReviveTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onDyingTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onDeadTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onTickTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onProjectileEffectTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onProjectileArriveTriggerSkills = new HashSet<Skill>();
-    protected HashSet<Skill> m_onCalcDamageTargetTriggerSkills = new HashSet<Skill>();
-
-    protected HashSet<Skill> m_triggerSkillsToAdd = new HashSet<Skill>();
-    protected HashSet<Skill> m_triggerSkillsToDel = new HashSet<Skill>();
 
     // 添加触发器
     public void AddSkillToTriggers(Skill skill) {
@@ -661,10 +695,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         m_triggerSkillsToAdd.Clear();
         m_triggerSkillsToDel.Clear();
     }
-
-    // trigger之间是有可能存在嵌套关系的
-    // 为了安全增删trigger，需要维护一个引用计数
-    protected int m_triggerRefCount;
 
     protected void BeginTrigger() {
         ++m_triggerRefCount;
@@ -1009,18 +1039,11 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         delayToDel.Clear();
     }
 
-    protected HashSet<ActiveSkill> m_activeSkills = new HashSet<ActiveSkill>();
-    protected HashSet<PassiveSkill> m_passiveSkills = new HashSet<PassiveSkill>();
-    protected HashSet<BuffSkill> m_buffSkills = new HashSet<BuffSkill>();
-    protected HashSet<PassiveSkill> m_systemSkills = new HashSet<PassiveSkill>();
-
     public ActiveSkill AttackSkill {
         get { return m_attackSkill; }
 
         set { m_attackSkill = value; }
     }
-
-    protected ActiveSkill m_attackSkill;
 
     // Hp
     public float Hp {
@@ -1132,10 +1155,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         set { m_revivable = value; }
     }
 
-    protected float m_hp = 1;
-    protected Value m_maxHp = new Value(1);
-    protected bool m_revivable = false;
-
     public void CommandStop() {
         if (Dead || Suspended || Fixed) {
             return;
@@ -1165,8 +1184,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
         set { m_killer = value; }
     }
-
-    protected Unit m_killer;
 
     //////////////////// attack & damaged ////////////////////////
 
@@ -1257,9 +1274,9 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
         if (fDamage >= m_hp) {
             m_killer = source;
-            m_node.SetHp(0);
+            SetHp(0);
         } else {
-            m_node.SetHp(m_hp - fDamage);
+            SetHp(m_hp - fDamage);
         }
 
         OnDamagedDone(fDamage, source, triggerMask);
@@ -1699,7 +1716,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
         m_lastMoveTo = pos;
 
-        var here = m_node.position;
+        Vector2 here = m_node.position;
 
         if (pos.x != here.x) {
             m_node.SetFlippedX(pos.x < here.x);
@@ -1737,14 +1754,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         EndDoing(kDoingObstinate);  // 移动自行停止后，需要去除固执状态
         StopMove();
     }
-
-    protected UnitPath m_movePath;
-    protected int m_pathCurPos;
-    protected float m_pathBufArrive = 0.1f;
-    protected bool m_pathObstinate;
-
-    // 移动速度
-    protected Value m_moveSpeed = new Value(1.0f);
 
     public float MoveSpeed {
         get {
@@ -1805,15 +1814,8 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     protected const float CONST_MIN_MOVE_SPEED = 0.1f;
     protected static readonly float CONST_MAX_MOVE_SPEED = 3.0f;
-    protected const float CONST_MIN_MOVE_SPEED_MULRIPLE = 0.2f;
     // 最小变为基础速度的20%
-
-    protected Vector2 m_lastMoveTo;
-    protected internal int m_moveActionId;
-    protected internal int m_moveToActionId;
-
-    // 护甲
-    protected ArmorValue m_armorValue = new ArmorValue(global::ArmorValue.Type.kHeavy, 0);
+    protected const float CONST_MIN_MOVE_SPEED_MULRIPLE = 0.2f;
 
     public float ArmorValue {
         get { return m_armorValue.v; }
@@ -1837,9 +1839,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         set { m_armorValue.coeff = value; }
     }
 
-    // 暴击率
-    protected Value m_critRate = new Value(0.2f);
-
     public float CriticalRate {
         get { return m_critRate.v; }
     }
@@ -1856,9 +1855,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         set { m_critRate.coeff = value; }
     }
 
-    // 暴击伤害
-    protected Value m_critDmg = new Value(0.5f);
-
     public float CriticalDamage {
         get { return m_critDmg.v; }
     }
@@ -1873,6 +1869,12 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         get { return m_critDmg.coeff; }
 
         set { m_critDmg.coeff = value; }
+    }
+
+    // Networking
+    public void SetHp(float hp) {
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncSetHp(this, hp));
+        Hp = hp;
     }
 }
 
@@ -1910,9 +1912,6 @@ public class UnitPath {
 
 public class UnitSafe {
     internal Unit _ref;
-    ~UnitSafe() {
-        Unset();
-    }
 
     public Unit Set(Unit unit) {
         if (unit != _ref && _ref != null) {
@@ -1939,6 +1938,20 @@ public class UnitSafe {
 
     public static implicit operator Unit(UnitSafe safe) {
         return safe._ref;  // unit = safe
+    }
+
+    public static bool operator ==(UnitSafe op1, UnitSafe op2) {
+        bool a = object.Equals(op1, null);
+        bool b = object.Equals(op2, null);
+        if (a || b) {
+            return a && b;
+        } else {
+            return op1._ref == op2._ref;
+        }
+    }
+
+    public static bool operator !=(UnitSafe op1, UnitSafe op2) {
+        return !(op1 == op2);
     }
 }
 
@@ -1997,23 +2010,23 @@ public class CommandTarget {
         m_targetPoint = m_targetUnit.Node.position;
     }
 
-    protected Type m_targetType;
-    protected Vector2 m_targetPoint;
-    protected UnitSafe m_targetUnit = new UnitSafe();
+    Type m_targetType;
+    Vector2 m_targetPoint;
+    UnitSafe m_targetUnit = new UnitSafe();
 
-    public void setTarget() {
+    public void setTargetAsNone() {
         m_targetType = Type.kNoTarget;
         m_targetUnit.Set(null);
         m_targetPoint.x = m_targetPoint.y = 0;
     }
 
-    public void setTarget(Unit target) {
+    public void setTargetAsUnit(Unit target) {
         m_targetType = Type.kUnitTarget;
         m_targetUnit.Set(target);
         m_targetPoint.x = m_targetPoint.y = 0;
     }
 
-    public void setTarget(Vector2 target) {
+    public void setTargetAsPoint(Vector2 target) {
         m_targetType = Type.kPointTarget;
         m_targetUnit.Set(null);
         m_targetPoint = target;
@@ -2040,7 +2053,7 @@ public class SyncUnitInfo {
             baseInfo.attackSkill.value = attack.AttackValueBase;
             baseInfo.attackSkill.range = attack.CastRange;
             baseInfo.attackSkill.horizontal = attack.CastHorizontal;
-            var castAnimations = attack.castAnimations;
+            List<int> castAnimations = attack.castAnimations;
             baseInfo.attackSkill.animations = new string[castAnimations.Count];
             for (int i = 0; i < castAnimations.Count; ++i) {
                 baseInfo.attackSkill.animations[i] = ModelNode.IdToName(castAnimations[i]);

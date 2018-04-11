@@ -28,12 +28,12 @@ public class UnitGroup
                 continue;
             }
 
-            UnitNode d = u.Renderer;
+            UnitNode d = u.Node;
             if (m_units.Count >= iMaxCount)
             {
                 return;
             }
-            if (Vector2.Distance(d.Node.position, roPos) - d.HalfOfWidth < fRadius && (match == null || (match(u, force))))
+            if (Vector2.Distance(d.position, roPos) - d.HalfOfWidth < fRadius && (match == null || (match(u, force))))
             {
                 m_units.Add(u);
             }
@@ -92,8 +92,8 @@ public class UnitGroup
                 continue;
             }
 
-            UnitNode d = u.Renderer;
-            if ((fDis = Vector2.Distance(d.Node.position, roPos) - d.HalfOfWidth) < fRadius && fMinDis > fDis && (match == null || (match(u, force))))
+            UnitNode d = u.Node;
+            if ((fDis = Vector2.Distance(d.position, roPos) - d.HalfOfWidth) < fRadius && fMinDis > fDis && (match == null || (match(u, force))))
             {
                 target = u;
                 fMinDis = fDis;
@@ -123,8 +123,8 @@ public class UnitGroup
                 continue;
             }
 
-            UnitNode d = u.Renderer;
-            if ((fDis = Vector2.Distance(d.Node.position, roPos) - d.HalfOfWidth) < fRadius && fMinDis > fDis && (match == null || (match(u, force))))
+            UnitNode d = u.Node;
+            if ((fDis = Vector2.Distance(d.position, roPos) - d.HalfOfWidth) < fRadius && fMinDis > fDis && (match == null || (match(u, force))))
             {
                 target = u;
                 fMinDis = fDis;
@@ -161,11 +161,11 @@ public class UnitGroup
 
     public static bool MatchFunctionLivingAlly(Unit unit, UnitForce force)
     {
-        return !unit.Dead && unit.IsMyAlly(force);
+        return !unit.Dead && unit.force.IsMyAlly(force);
     }
 
     public static bool MatchFunctionLivingEnemy(Unit unit, UnitForce force)
     {
-        return !unit.Dead && force.IsMyEnemy(unit);
+        return !unit.Dead && force.IsMyEnemy(unit.force);
     }
 }
