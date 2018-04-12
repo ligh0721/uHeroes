@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections.Generic;
-using cca;
 using System;
 
 
@@ -27,8 +26,6 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
 
     public World World {
         get { return m_world; }
-
-        set { m_world = value; }
     }
 
     // Effect Flags
@@ -462,7 +459,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     protected float m_moveSpeed = 1;
     protected float m_maxHeightDelta;
 
-    protected World m_world;
+    protected internal World m_world;
     protected internal int m_id;
     protected internal string m_model;
 

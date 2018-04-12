@@ -5,13 +5,14 @@ using cca;
 public class World : MonoBehaviour {
     static World _main;
 
-    // 用于对象池分配Unit单位
+    // 用于对象池分配Unit对象
     public GameObject unitPrefab;
-    // 用于对象池分配Projectile单位
+    // 用于对象池分配Projectile对象
     public GameObject projectilePrefab;
+    // 用于对象池分配UnitHUD对象
+    public GameObject unitHUDPrefab;
     // 用于控制摄像机跟踪当前玩家操控的单位
     public CameraFollowPlayer cameraCtrl;
-    public UnitHUD unitHUD;
     // Unit HUD parent
     public GameObject hudCanvas;
 
@@ -41,6 +42,7 @@ public class World : MonoBehaviour {
     void Start() {
         Debug.Assert(unitPrefab != null);
         Debug.Assert(projectilePrefab != null);
+        Debug.Assert(unitHUDPrefab != null);
         Debug.Assert(cameraCtrl != null);
         Debug.Assert(hudCanvas != null);
 
@@ -133,13 +135,13 @@ public class World : MonoBehaviour {
     }
 
     public void AddUnit(Unit unit) {
-        unit.World = this;
+        unit.m_world = this;
         units.Add(unit, unit.Id);
         unitsIndex.Add(unit.Id, unit);
     }
 
     public void AddProjectile(Projectile projectile) {
-        projectile.World = this;
+        projectile.m_world = this;
         projectiles.Add(projectile, projectile.Id);
         //m_projectilesIndex.Add(projectile.Id, projectile);
     }
@@ -228,7 +230,7 @@ public class World : MonoBehaviour {
         }
 
         node.SetFrame(ModelNode.kFrameDefault);
-        unit.CreateUnitHUD();
+        CreateUnitHUD(unit);
         return unit;
     }
 
@@ -247,12 +249,27 @@ public class World : MonoBehaviour {
             unitsToRevive.Add(unit, id);
         } else {
             // 如果不可以复活，该单位将不再拥有世界，清除该单位的所有CD中的技能
-            unit.World = null;
+            unit.m_world = null;
             CleanAbilitiesCD(unit);
             GameObjectPool.instance.Destroy(unitPrefab, unit.gameObject);
         }
         unitsIndex.Remove(id);
         units.Remove(unit);
+    }
+
+    public UnitHUD CreateUnitHUD(Unit unit) {
+        GameObject obj = GameObjectPool.instance.Instantiate(unitHUDPrefab);
+        obj.transform.SetParent(hudCanvas.transform);
+        UnitHUD unitHUD = obj.GetComponent<UnitHUD>();
+        unitHUD.m_unit.Set(unit);
+        unitHUD.UpdateRectTransform();
+        return unitHUD;
+    }
+
+    public void RemoveUnitHUD(Unit unit) {
+
+        GameObjectPool.instance.Destroy(unitHUDPrefab, unit.m_unitHUD.gameObject);
+        unit.m_unitHUD = null;
     }
 
     public Projectile CreateProjectile(SyncProjectileInfo syncInfo, Skill sourceSkill = null) {
@@ -363,10 +380,9 @@ public class World : MonoBehaviour {
 
         OnDelProjectile(projectile);
 
-        projectile.World = null;
+        projectile.m_world = null;
         //int id = m_projectiles[projectile];
         //m_projectilesIndex.Remove(id);
-        projectile.World = null;
         projectiles.Remove(projectile);
         GameObjectPool.instance.Destroy(projectilePrefab, projectile.gameObject);
     }
@@ -482,7 +498,7 @@ public class World : MonoBehaviour {
             if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying)) {  // terrible code
                 // 刚死，计划最后移除该单位
                 unit.OnDying();
-                RemoveUnitHUD(
+                RemoveUnitHUD(unit);
             }
         }
 

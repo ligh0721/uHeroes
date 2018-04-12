@@ -5,12 +5,10 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(UnitNode))]
 public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
-    public GameObject unitHUDPrefab;
-
     UnitNode m_node;
     [HideInInspector]
     public UnitForce force = new UnitForce();
-    protected World m_world;
+    protected internal World m_world;
     protected string m_name;
     protected internal int m_id;
     protected internal string m_model;
@@ -69,10 +67,9 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // 移动速度
     protected Value m_moveSpeed = new Value(1.0f);
 
-    protected UnitHUD m_unitHUD;
+    protected internal UnitHUD m_unitHUD;
 
     void Awake() {
-        Debug.Assert(unitHUDPrefab);
         m_node = GetComponent<UnitNode>();
         Debug.Assert(m_node != null);
     }
@@ -96,7 +93,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     public World World {
         get { return m_world; }
-        set { m_world = value; }
     }
 
     public string Model {
@@ -1858,17 +1854,8 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         set { m_critDmg.coeff = value; }
     }
 
-    public void CreateUnitHUD() {
-        GameObject obj = GameObjectPool.instance.Instantiate(unitHUDPrefab);
-        obj.transform.SetParent(m_world.hudCanvas.transform);
-        m_unitHUD = obj.GetComponent<UnitHUD>();
-        m_unitHUD.m_unit = this;
-        m_unitHUD.UpdateRectTransform();
-    }
-
-    public void RemoveUnitHUD() {
-        GameObjectPool.instance.Destroy(unitHUDPrefab, m_unitHUD.gameObject);
-        m_unitHUD = null;
+    public UnitHUD UnitHUD {
+        get { return m_unitHUD;  }
     }
 
     // Networking

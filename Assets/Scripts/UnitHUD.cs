@@ -12,16 +12,6 @@ public class UnitHUD : MonoBehaviour {
 
     RectTransform m_rt;
 
-    public static UnitHUD Create(Unit unit) {
-        GameObject obj = Instantiate(unit.uiPrefab);
-        obj.transform.SetParent(GameObject.Find("HUDCanvas").transform);
-        UnitHUD unitui = obj.GetComponent<UnitHUD>();
-        unitui.m_unit = unit;
-
-        unitui.UpdateRectTransform();
-        return unitui;
-    }
-
     // Use this for initialization
     void Awake() {
         if (m_rt == null) {
