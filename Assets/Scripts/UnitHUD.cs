@@ -6,7 +6,7 @@ using UnityEngine.UI;
 [ExecuteInEditMode]
 public class UnitHUD : MonoBehaviour {
     [HideInInspector]
-    public UnitSafe m_unit = new UnitSafe();
+    public UnitSafe m_unit;
     public Slider m_hpSlider;
     public Image m_hpFill;
 

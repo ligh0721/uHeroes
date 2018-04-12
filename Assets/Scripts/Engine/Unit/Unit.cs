@@ -43,7 +43,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     protected HashSet<PassiveSkill> m_systemSkills = new HashSet<PassiveSkill>();
     protected ActiveSkill m_attackSkill;
 
-    protected float m_hp = 1;
+    protected internal float m_hp = 1;
     protected Value m_maxHp = new Value(1);
     protected bool m_revivable = false;
 
@@ -69,6 +69,12 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     protected internal UnitHUD m_unitHUD;
 
+#if UNITY_EDITOR
+    void Reset() {
+        Awake();
+    }
+#endif
+
     void Awake() {
         m_node = GetComponent<UnitNode>();
         Debug.Assert(m_node != null);
@@ -79,7 +85,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public virtual void Cleanup() {
-        m_id = -1;
+        m_id = 0;
     }
 
     public int Id {
@@ -1050,6 +1056,13 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         }
     }
 
+    protected internal void InitHp(float hp, float maxHp) {
+        m_hp = hp;
+        m_maxHp.a = 1.0f;
+        m_maxHp.b = 0.0f;
+        m_maxHp.x = maxHp;
+    }
+
     public float MaxHp {
         get { return m_maxHp.v; }
     }
@@ -1906,16 +1919,16 @@ public struct UnitSafe {
         if (unit != null) {
             _id = unit.Id;
         } else {
-            _id = -1; 
+            _id = 0; 
         }
     }
 
     public Unit Unit {
-        get { return (_id == -1 || _id != _ref.Id) ? null : _ref; }
+        get { return (_id == 0 || _id != _ref.Id) ? null : _ref; }
     }
 
     public UnitNode Node {
-        get { return (_id == -1 || _id != _ref.Id) ? null : _ref.Node; }
+        get { return (_id == 0 || _id != _ref.Id) ? null : _ref.Node; }
     }
 
     // Unit unit = obj.safe
@@ -1930,6 +1943,10 @@ public class CommandTarget {
         kUnitTarget,
         kPointTarget
     }
+
+    Type m_targetType;
+    Vector2 m_targetPoint;
+    UnitSafe m_targetUnit;
 
     public CommandTarget() {
         m_targetType = Type.kNoTarget;
@@ -1978,10 +1995,6 @@ public class CommandTarget {
         Debug.Assert(m_targetUnit.Unit != null && m_targetType == Type.kUnitTarget);
         m_targetPoint = m_targetUnit.Node.position;
     }
-
-    Type m_targetType;
-    Vector2 m_targetPoint;
-    UnitSafe m_targetUnit = new UnitSafe();
 
     public void setTargetAsNone() {
         m_targetType = Type.kNoTarget;

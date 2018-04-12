@@ -6,6 +6,12 @@ using cca;
 public class NodeWithHeight : Node {
     protected float _height;
 
+#if UNITY_EDITOR
+    void Reset() {
+        Awake();
+    }
+#endif
+
     void Awake() {
         // TODO: delete test 删掉是否会被调用
         init();

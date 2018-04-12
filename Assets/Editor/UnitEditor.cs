@@ -6,18 +6,14 @@ using UnityEditor;
 
 [CustomEditor(typeof(Unit))]
 public class UnitControllerEditor : Editor {
-    SerializedProperty uiPrefab;
-
     TextAsset m_modelTextAsset;
 
     void OnEnable() {
-        uiPrefab = serializedObject.FindProperty("uiPrefab");
     }
 
     public override void OnInspectorGUI() {
         Unit t = target as Unit;
         serializedObject.Update();
-        EditorGUILayout.PropertyField(uiPrefab);
 
         TextAsset textAsset = EditorGUILayout.ObjectField("Unit", m_modelTextAsset, typeof(TextAsset), true) as TextAsset;
         if (textAsset != m_modelTextAsset) {

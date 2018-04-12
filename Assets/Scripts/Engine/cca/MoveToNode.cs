@@ -87,7 +87,7 @@ public class MoveToNode : ActionInterval {
     protected Vector2 _oDeltaPos;
 
     //protected RendererNode _endNode;
-    protected UnitSafe _unit = new UnitSafe();
+    protected UnitSafe _unit;
     protected int _eFromType;
     protected int _eToType;
     protected float _fMinSpeed;

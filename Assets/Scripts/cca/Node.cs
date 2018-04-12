@@ -7,6 +7,11 @@ namespace cca {
         ActionManager m_actionManager;
         SpriteRenderer _spriteRenderer;
 
+#if UNITY_EDITOR
+        void Reset() {
+            Awake();
+        }
+#endif
         void Awake() {
             init();
         }
@@ -24,7 +29,9 @@ namespace cca {
         }
 
         public virtual void cleanup() {
-            m_actionManager.removeAllActions(this);
+            if (m_actionManager != null) {
+                m_actionManager.removeAllActions(this);
+            }
         }
 
         public virtual float positionZ {

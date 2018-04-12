@@ -111,6 +111,7 @@ public class GamePlayerController : NetworkBehaviour {
     /// <param name="sync"></param>
     //[Server]  // 防止warning，注释掉此处attr
     public void ServerAddSyncAction(SyncGameAction sync) {
+        // FIXME: remove valid, init unitId = 0
         if (!isServer || !sync.valid) {
             // sync不合法
             return;

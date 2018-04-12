@@ -5,6 +5,13 @@ using System;
 
 [RequireComponent(typeof(ProjectileNode))]
 public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
+
+#if UNITY_EDITOR
+    void Reset() {
+        Awake();
+    }
+#endif
+
     void Awake() {
         m_node = GetComponent<ProjectileNode>();
         Debug.Assert(m_node != null);

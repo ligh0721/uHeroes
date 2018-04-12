@@ -10,6 +10,10 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
     protected Vector3 m_cameraOrg;
     protected MouseStatus m_mouse = new MouseStatus();
 
+    void Reset() {
+        Awake();
+    }
+
     void Awake() {
         m_unit = GetComponent<Unit>();
         Debug.Assert(m_unit != null);

@@ -54,9 +54,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   unitPrefab: {fileID: 143558, guid: 3d364c9284b30014d8336c9ebb93ef09, type: 2}
   projectilePrefab: {fileID: 177230, guid: c64156eaabef27243970eb21ba49eefc, type: 2}
-  cameraCtrl: {fileID: 0}
-  unitHUDPrefab: {fileID: 114610118069961764, guid: 9fba8227c15fd44a990b26031e1afe47,
+  unitHUDPrefab: {fileID: 1707061617933080, guid: 864009a4deecdc34eba3d776ef0b68e8,
     type: 2}
+  cameraCtrl: {fileID: 0}
+  hudCanvas: {fileID: 0}
 --- !u!114 &114865375757077112
 MonoBehaviour:
   m_ObjectHideFlags: 1

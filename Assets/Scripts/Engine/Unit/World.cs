@@ -184,7 +184,7 @@ public class World : MonoBehaviour {
         }
 
         unit.Name = syncInfo.baseInfo.name;
-        unit.MaxHpBase = (float)syncInfo.baseInfo.maxHp;
+        unit.InitHp(syncInfo.hp +100000, (float)syncInfo.baseInfo.maxHp+100000);
         if (syncInfo.baseInfo.attackSkill.valid) {
             AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
             atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
@@ -197,7 +197,6 @@ public class World : MonoBehaviour {
         }
         node.position = syncInfo.position;
         node.SetFlippedX(syncInfo.flippedX);
-        unit.Hp = syncInfo.hp;
         unit.force.Force = syncInfo.force;
         unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
         unit.Revivable = syncInfo.baseInfo.revivable;
@@ -213,9 +212,9 @@ public class World : MonoBehaviour {
             }
 
             // TEST !!!!
-            unit.MaxHpBase = 10000;  // test
+            unit.MaxHpBase = 100000;  // test
             unit.Hp = unit.MaxHp;
-            unit.AttackSkill.coolDownBase = 0;
+            unit.AttackSkill.coolDownBase = 2.0f;
             unit.AttackSkill.coolDownSpeedCoeff = 2;
             unit.CriticalRateBase = 0.2f;
             unit.CriticalDamageBase = 20.0f;
@@ -263,6 +262,7 @@ public class World : MonoBehaviour {
         UnitHUD unitHUD = obj.GetComponent<UnitHUD>();
         unitHUD.m_unit.Set(unit);
         unitHUD.UpdateRectTransform();
+        unit.m_unitHUD = unitHUD;
         return unitHUD;
     }
 

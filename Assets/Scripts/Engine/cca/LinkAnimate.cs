@@ -7,12 +7,12 @@ class LinkAnimate : Animate {
     public LinkAnimate(cca.Animation animation, Animate.Function onSpecial, UnitNode from, UnitNode to)
         : base(animation, onSpecial) {
         m_fromToType = Projectile.FromToType.kUnitToUnit;
-        m_from = from;
-        m_to = to;
+        m_from.Set(from.GetComponent<Unit>());
+        m_to.Set(to.GetComponent<Unit>());
     }
 
     public override Action clone() {
-        return new LinkAnimate(_animation.clone(), _onSpecial, m_from, m_to);
+        return new LinkAnimate(_animation.clone(), _onSpecial, m_from.Node, m_to.Node);
     }
 
     public override Action reverse() {
@@ -21,7 +21,7 @@ class LinkAnimate : Animate {
 
         cca.Animation newAnim = new cca.Animation(frames, _animation.DelayPerUnit);
         newAnim.RestoreOriginalFrame = _animation.RestoreOriginalFrame;
-        return new LinkAnimate(newAnim, _onSpecial, m_from, m_to);
+        return new LinkAnimate(newAnim, _onSpecial, m_from.Node, m_to.Node);
     }
 
     public override void startWithTarget(Node target) {
@@ -29,7 +29,7 @@ class LinkAnimate : Animate {
 
         ProjectileNode r = target as ProjectileNode;
         Projectile p = r.Projectile;
-        m_fireFrom = m_fromToType == Projectile.FromToType.kUnitToUnit && p.SourceUnit != null && m_from == p.SourceUnit.Node;
+        m_fireFrom = m_fromToType == Projectile.FromToType.kUnitToUnit && p.SourceUnit != null && m_from.Node == p.SourceUnit.Node;
         //target.visible = false;
     }
 
@@ -45,26 +45,32 @@ class LinkAnimate : Animate {
     }
 
     protected void fixTargetPosition() {
-        m_fromPos = m_from.position;
+        UnitNode from = m_from.Node;
+        UnitNode to = m_to.Node;
+        if (from == null || to == null) {
+            return;
+        }
+
+        m_fromPos = from.position;
 
         float fFromOffsetX = 0.0f;
         float fFromHeight = 0.0f;
         if (m_fireFrom) {
             bool useFireOffset = (_target as ProjectileNode).Projectile.UseFireOffset;
-            float offsetX = useFireOffset ? m_from.FireOffset.x : m_from.HalfOfWidth;
-            float offsetY = useFireOffset ? m_from.FireOffset.y : m_from.HalfOfHeight;
+            float offsetX = useFireOffset ? from.FireOffset.x : from.HalfOfWidth;
+            float offsetY = useFireOffset ? from.FireOffset.y : from.HalfOfHeight;
             bool bFlipX = m_fromPos.x > m_toPos.x;
             fFromOffsetX = (bFlipX ? -offsetX : offsetX);
-            fFromHeight = m_from.height + offsetY;
+            fFromHeight = from.height + offsetY;
         } else {
-            fFromHeight = m_from.height + m_from.HalfOfHeight;
+            fFromHeight = from.height + from.HalfOfHeight;
         }
 
         m_fromPos.x += fFromOffsetX;
         m_fromPos.y += fFromHeight;
 
-        m_toPos = m_to.position;
-        float fToHeight = m_to.height + m_to.HalfOfHeight;
+        m_toPos = to.position;
+        float fToHeight = to.height + to.HalfOfHeight;
         m_toPos.y += fToHeight;
 
         //RendererNode rendererTarget = _target as RendererNode;
@@ -82,9 +88,9 @@ class LinkAnimate : Animate {
     }
 
     protected Projectile.FromToType m_fromToType;
-    protected UnitNode m_from;
+    protected UnitSafe m_from;
     protected Vector2 m_fromPos;
-    protected UnitNode m_to;
+    protected UnitSafe m_to;
     protected Vector2 m_toPos;
     protected bool m_fireFrom;
     // 用来区分这段link是刚发射的，还是传递中的，他们的出发点位置不同

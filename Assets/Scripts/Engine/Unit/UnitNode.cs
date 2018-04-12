@@ -9,6 +9,12 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     protected float m_halfOfHeight;
     protected Vector2 m_fireOffset = new Vector2();
 
+#if UNITY_EDITOR
+    void Reset() {
+        Awake();
+    }
+#endif
+
     void Awake() {
         // TODO: delete test 删掉是否会被调用
         init();
@@ -19,7 +25,7 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     }
 
     public override void cleanup() {
-        m_id = -1;
+        m_id = 0;
         base.cleanup();
     }
 
