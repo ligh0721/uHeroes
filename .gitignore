@@ -16,3 +16,6 @@ uHeroes.csproj
 Assembly-CSharp.csproj
 obj/Debug
 Library/il2cpp*
+Assembly-CSharp-Editor.csproj
+MergeTypeInfo.5.9.0p4.asset
+CrashedAssetImports.txt

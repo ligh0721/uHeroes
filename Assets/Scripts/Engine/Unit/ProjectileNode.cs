@@ -3,7 +3,7 @@ using cca;
 
 
 public class ProjectileNode : ModelNode {
-    void Start() {
+    void Awake() {
         // TODO: delete test 删掉是否会被调用
         init();
     }

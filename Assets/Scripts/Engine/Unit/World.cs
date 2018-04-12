@@ -11,6 +11,9 @@ public class World : MonoBehaviour {
     public GameObject projectilePrefab;
     // 用于控制摄像机跟踪当前玩家操控的单位
     public CameraFollowPlayer cameraCtrl;
+    public UnitHUD unitHUD;
+    // Unit HUD parent
+    public GameObject hudCanvas;
 
     bool shutdown = false;
     Dictionary<Unit, int> units = new Dictionary<Unit, int>();
@@ -39,50 +42,63 @@ public class World : MonoBehaviour {
         Debug.Assert(unitPrefab != null);
         Debug.Assert(projectilePrefab != null);
         Debug.Assert(cameraCtrl != null);
+        Debug.Assert(hudCanvas != null);
 
         // unit pool
-        GameObjectPool.ResetFunction unitReset = delegate (GameObject gameObject) {
-            gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-            gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
-            SpriteRenderer sr = gameObject.GetComponent<SpriteRenderer>();
+        GameObjectPool.ResetFunction unitReset = delegate (GameObject obj) {
+            obj.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            obj.transform.rotation = Quaternion.Euler(0, 0, 0);
+            SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
             sr.enabled = true;
             sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-            UnitNode node = gameObject.GetComponent<UnitNode>();
+            UnitNode node = obj.GetComponent<UnitNode>();
             node.enabled = true;
-            Unit unit = gameObject.GetComponent<Unit>();
+            Unit unit = obj.GetComponent<Unit>();
             unit.enabled = true;
         };
         GameObjectPool.DestroyFunction unitDestroy = delegate(GameObject obj) {
-            UnitNode node = gameObject.GetComponent<UnitNode>();
+            UnitNode node = obj.GetComponent<UnitNode>();
             node.cleanup();
             node.enabled = false;
-            Unit unit = gameObject.GetComponent<Unit>();
+            Unit unit = obj.GetComponent<Unit>();
             unit.Cleanup();
             unit.enabled = false;
         };
         GameObjectPool.instance.Alloc(unitPrefab, 50, unitReset, unitDestroy);
 
         // projectile pool
-        GameObjectPool.ResetFunction projectileReset = delegate (GameObject gameObject) {
-            gameObject.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
-            gameObject.transform.rotation = Quaternion.Euler(0, 0, 0);
-            SpriteRenderer sr = gameObject.GetComponent<SpriteRenderer>();
+        GameObjectPool.ResetFunction projectileReset = delegate (GameObject obj) {
+            obj.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+            obj.transform.rotation = Quaternion.Euler(0, 0, 0);
+            SpriteRenderer sr = obj.GetComponent<SpriteRenderer>();
             sr.enabled = true;
             sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
-            ProjectileNode node = gameObject.GetComponent<ProjectileNode>();
+            ProjectileNode node = obj.GetComponent<ProjectileNode>();
             node.enabled = true;
-            Projectile unit = gameObject.GetComponent<Projectile>();
+            Projectile unit = obj.GetComponent<Projectile>();
             unit.enabled = true;
         };
         GameObjectPool.DestroyFunction projectileDestroy = delegate (GameObject obj) {
-            ProjectileNode node = gameObject.GetComponent<ProjectileNode>();
+            ProjectileNode node = obj.GetComponent<ProjectileNode>();
             node.cleanup();
             node.enabled = false;
-            Projectile projectile = gameObject.GetComponent<Projectile>();
+            Projectile projectile = obj.GetComponent<Projectile>();
             //projectile.Cleanup();
             projectile.enabled = false;
         };
         GameObjectPool.instance.Alloc(projectilePrefab, 50, projectileReset, projectileDestroy);
+
+        // unit hud pool
+        GameObjectPool.ResetFunction unitHUDReset = delegate (GameObject obj) {
+            UnitHUD unitHUD = obj.GetComponent<UnitHUD>();
+            unitHUD.enabled = true;
+        };
+        GameObjectPool.DestroyFunction unitHUDDestroy = delegate(GameObject obj) {
+            UnitHUD unitHUD = obj.GetComponent<UnitHUD>();
+            unitHUD.m_unit. Set(null);
+            unitHUD.enabled = false;
+        };
+        GameObjectPool.instance.Alloc(unitHUDPrefab, 50, unitHUDReset, unitHUDDestroy);
     }
 
     void FixedUpdate() {
@@ -128,8 +144,8 @@ public class World : MonoBehaviour {
         //m_projectilesIndex.Add(projectile.Id, projectile);
     }
 
-    public void SetCameraFollowed(GameObject gameObject) {
-        cameraCtrl.followed = gameObject;
+    public void SetCameraFollowed(GameObject obj) {
+        cameraCtrl.followed = obj;
     }
 
     public void SetCameraFollowedEnabled(bool enabled) {
@@ -147,16 +163,18 @@ public class World : MonoBehaviour {
         GamePlayerController player;
         GameManager.AllPlayers.TryGetValue(playerId, out player);
 
-        GameObject gameObject = GameObjectPool.instance.Instantiate(unitPrefab);
-        UnitNode node = gameObject.GetComponent<UnitNode>();
-        Unit unit = gameObject.GetComponent<Unit>();
-        UnitController ctrl = gameObject.GetComponent<UnitController>();
+        GameObject obj = GameObjectPool.instance.Instantiate(unitPrefab);
+        UnitNode node = obj.GetComponent<UnitNode>();
+        Unit unit = obj.GetComponent<Unit>();
+        UnitController ctrl = obj.GetComponent<UnitController>();
 
         ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
         ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
 
         unit.m_id = syncInfo.id;
         node.m_id = syncInfo.id;
+        AddUnit(unit);
+
         unit.m_client = player;
         unit.m_model = syncInfo.baseInfo.model;
         if (GamePlayerController.localClient.isServer) {
@@ -209,17 +227,40 @@ public class World : MonoBehaviour {
             }
         }
 
-        AddUnit(unit);
         node.SetFrame(ModelNode.kFrameDefault);
+        unit.CreateUnitHUD();
         return unit;
+    }
+
+    public void RemoveUnit(Unit unit, bool revivalbe = false) {
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncRemoveUnit(unit, revivalbe));
+        if (!units.ContainsKey(unit)) {
+            return;
+        }
+
+        int id = units[unit];
+
+        OnDelUnit(unit);
+
+        if (revivalbe) {
+            // 如果单位可以复活，拖进灵魂域
+            unitsToRevive.Add(unit, id);
+        } else {
+            // 如果不可以复活，该单位将不再拥有世界，清除该单位的所有CD中的技能
+            unit.World = null;
+            CleanAbilitiesCD(unit);
+            GameObjectPool.instance.Destroy(unitPrefab, unit.gameObject);
+        }
+        unitsIndex.Remove(id);
+        units.Remove(unit);
     }
 
     public Projectile CreateProjectile(SyncProjectileInfo syncInfo, Skill sourceSkill = null) {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateProjectile(syncInfo));
 
-        GameObject gameObject = GameObjectPool.instance.Instantiate(projectilePrefab);
-        ProjectileNode node = gameObject.GetComponent<ProjectileNode>();
-        Projectile projectile = gameObject.GetComponent<Projectile>();
+        GameObject obj = GameObjectPool.instance.Instantiate(projectilePrefab);
+        ProjectileNode node = obj.GetComponent<ProjectileNode>();
+        Projectile projectile = obj.GetComponent<Projectile>();
 
         ResourceManager.instance.LoadProjectileModel(syncInfo.baseInfo.model);  // high time cost
         ResourceManager.instance.AssignModelToProjectileNode(syncInfo.baseInfo.model, node);
@@ -253,15 +294,18 @@ public class World : MonoBehaviour {
         GamePlayerController player;
         GameManager.AllPlayers.TryGetValue(playerId, out player);
 
-        GameObject gameObject = GameObjectPool.instance.Instantiate(unitPrefab);
-        TankNode node = gameObject.GetComponent<TankNode>();
-        Tank unit = gameObject.GetComponent<Tank>();
-        //TankController ctrl = gameObject.GetComponent<TankController>();
+        GameObject obj = GameObjectPool.instance.Instantiate(unitPrefab);
+        TankNode node = obj.GetComponent<TankNode>();
+        Tank unit = obj.GetComponent<Tank>();
+        //TankController ctrl = obj.GetComponent<TankController>();
 
         ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
         ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
 
         unit.m_id = syncInfo.id;
+        node.m_id = syncInfo.id;
+        AddUnit(unit);
+
         unit.m_client = player;
         unit.m_model = syncInfo.baseInfo.model;
         if (GamePlayerController.localClient.isServer) {
@@ -297,32 +341,7 @@ public class World : MonoBehaviour {
             //syncInfo.guns[i].rotateSpeed;
         }
 
-        //unitCtrl.m_unit = unit;
-        AddUnit(unit);
         return unit;
-    }
-
-    public void RemoveUnit(Unit unit, bool revivalbe = false) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncRemoveUnit(unit, revivalbe));
-        if (!units.ContainsKey(unit)) {
-            return;
-        }
-
-        int id = units[unit];
-
-        OnDelUnit(unit);
-
-        if (revivalbe) {
-            // 如果单位可以复活，拖进灵魂域
-            unitsToRevive.Add(unit, id);
-        } else {
-            // 如果不可以复活，该单位将不再拥有世界，清除该单位的所有CD中的技能
-            unit.World = null;
-            CleanAbilitiesCD(unit);
-            GameObjectPool.instance.Destroy(unitPrefab, unit.gameObject);
-        }
-        unitsIndex.Remove(id);
-        units.Remove(unit);
     }
 
     protected void ReviveUnit(Unit unit, float hp) {
@@ -463,6 +482,7 @@ public class World : MonoBehaviour {
             if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying)) {  // terrible code
                 // 刚死，计划最后移除该单位
                 unit.OnDying();
+                RemoveUnitHUD(
             }
         }
 

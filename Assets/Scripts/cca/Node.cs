@@ -2,26 +2,22 @@ using UnityEngine;
 using System.Collections.Generic;
 
 
-namespace cca
-{
-    public class Node : MonoBehaviour
-    {
-        public ActionManager m_actionManager;
-
+namespace cca {
+    public class Node : MonoBehaviour {
+        ActionManager m_actionManager;
         SpriteRenderer _spriteRenderer;
-        void Start() {
+
+        void Awake() {
             init();
         }
 
-        // detach and destroy gameObject
-        void OnDestroy()
-        {
+        void OnDestroy() {
             cleanup();
         }
 
         public virtual void init() {
             if (m_actionManager == null) {
-                Debug.LogWarning("Action Manager is not set");
+                //Debug.LogWarning("Action Manager is not set");
                 m_actionManager = ActionManager.Main;
             }
             _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -31,45 +27,30 @@ namespace cca
             m_actionManager.removeAllActions(this);
         }
 
-        public virtual float positionZ
-        {
-            get
-            {
-                return transform.localPosition.z;
-            }
+        public virtual float positionZ {
+            get { return transform.localPosition.z; }
 
-            set
-            {
+            set {
                 Vector3 pos = transform.localPosition;
                 pos.z = value;
                 transform.localPosition = pos;
             }
         }
 
-        public virtual float worldPositionZ
-        {
-            get
-            {
-                return transform.position.z;
-            }
+        public virtual float worldPositionZ {
+            get { return transform.position.z; }
 
-            set
-            {
+            set {
                 Vector3 pos = transform.position;
                 pos.z = value;
                 transform.position = pos;
             }
         }
 
-        public virtual Vector2 position
-        {
-            get
-            {
-                return transform.localPosition;
-            }
+        public virtual Vector2 position {
+            get { return transform.localPosition; }
 
-            set
-            {
+            set {
                 Vector3 pos = transform.localPosition;
                 pos.x = value.x;
                 pos.y = value.y;
@@ -77,15 +58,10 @@ namespace cca
             }
         }
 
-        public virtual Vector2 worldPosition
-        {
-            get
-            {
-                return transform.position;
-            }
+        public virtual Vector2 worldPosition {
+            get { return transform.position; }
 
-            set
-            {
+            set {
                 Vector3 pos = transform.position;
                 pos.x = value.x;
                 pos.y = value.y;
@@ -93,55 +69,35 @@ namespace cca
             }
         }
 
-        public virtual float rotation
-        {
-            get
-            {
-                return transform.localRotation.eulerAngles.z;
-            }
+        public virtual float rotation {
+            get { return transform.localRotation.eulerAngles.z; }
 
-            set
-            {
+            set {
                 Vector3 rotation = transform.localRotation.eulerAngles;
                 rotation.z = value;
                 transform.localRotation = Quaternion.Euler(rotation);
             }
         }
 
-        public virtual Vector2 boundsSize
-        {
-            get
-            {
-                return _spriteRenderer.sprite.bounds.size;
-            }
+        public virtual Vector2 boundsSize {
+            get { return _spriteRenderer.sprite.bounds.size; }
         }
 
-        public virtual Vector2 size
-        {
-            get
-            {
+        public virtual Vector2 size {
+            get {
                 Sprite sprite = _spriteRenderer.sprite;
                 return sprite.rect.size / sprite.pixelsPerUnit;
             }
         }
 
-        public virtual Vector2 sizePixel
-        {
-            get
-            {
-                return _spriteRenderer.sprite.rect.size;
-            }
+        public virtual Vector2 sizePixel {
+            get { return _spriteRenderer.sprite.rect.size; }
         }
 
-        public virtual Vector2 scale
-        {
-            get
-            {
-                return transform.localScale;
-            }
+        public virtual Vector2 scale {
+            get { return transform.localScale; }
 
-            set
-            {
+            set {
                 Vector3 scale = transform.localScale;
                 scale.x = value.x;
                 scale.y = value.y;
@@ -149,64 +105,37 @@ namespace cca
             }
         }
 
-        public bool flippedX
-        {
-            get
-            {
-                return _spriteRenderer.flipX;
-            }
+        public bool flippedX {
+            get { return _spriteRenderer.flipX; }
 
-            set
-            {
-                _spriteRenderer.flipX = value;
-            }
+            set { _spriteRenderer.flipX = value; }
         }
 
-        public Sprite frame
-        {
-            get
-            {
-                return _spriteRenderer.sprite;
-            }
+        public Sprite frame {
+            get { return _spriteRenderer.sprite; }
 
-            set
-            {
-                _spriteRenderer.sprite = value;
-            }
+            set { _spriteRenderer.sprite = value; }
         }
 
-		public bool visible
-		{
-			get {
-				return _spriteRenderer.enabled;
-			}
+        public bool visible {
+            get { return _spriteRenderer.enabled; }
 
-			set {
-                _spriteRenderer.enabled = value;
-			}
-		}
+            set { _spriteRenderer.enabled = value; }
+        }
 
-        public float opacity
-        {
-            get
-            {
-                return _spriteRenderer.color.a;
-            }
+        public float opacity {
+            get { return _spriteRenderer.color.a; }
 
-            set
-            {
+            set {
                 Color color = _spriteRenderer.color;
                 color.a = value;
                 _spriteRenderer.color = color;
             }
         }
 
-        public Node parent
-        {
-            get
-            {
-                if (transform.parent == null)
-                {
+        public Node parent {
+            get {
+                if (transform.parent == null) {
                     return null;
                 }
 
@@ -214,8 +143,7 @@ namespace cca
                 return parentNode;
             }
 
-            set
-            {
+            set {
                 if (value != null) {
                     transform.SetParent(value.transform);
                 } else {
@@ -224,30 +152,25 @@ namespace cca
             }
         }
 
-        public void removeFromParentAndCleanup()
-        {
+        public void removeFromParentAndCleanup() {
             //_gameObject.transform.SetParent(null);
             //this.destroy();
             parent = null;
         }
 
-        public void runAction(Action action)
-        {
+        public void runAction(Action action) {
             m_actionManager.addAction(this, action);
         }
 
-        public cca.Action getActionByTag(int tag)
-        {
+        public cca.Action getActionByTag(int tag) {
             return m_actionManager.getActionByTag(this, tag);
         }
 
-        public void stopActionByTag(int tag)
-        {
+        public void stopActionByTag(int tag) {
             m_actionManager.removeActionByTag(this, tag);
         }
 
-        public void stopAllActions()
-        {
+        public void stopAllActions() {
             m_actionManager.removeAllActions(this);
         }
     }

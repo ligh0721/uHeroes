@@ -6,16 +6,16 @@ using UnityEngine.UI;
 [ExecuteInEditMode]
 public class UnitHUD : MonoBehaviour {
     [HideInInspector]
-    public Unit m_unit;
+    public UnitSafe m_unit = new UnitSafe();
     public Slider m_hpSlider;
     public Image m_hpFill;
 
     RectTransform m_rt;
 
     public static UnitHUD Create(Unit unit) {
-        GameObject gameObject = Instantiate(unit.uiPrefab);
-        gameObject.transform.SetParent(GameObject.Find("HUDCanvas").transform);
-        UnitHUD unitui = gameObject.GetComponent<UnitHUD>();
+        GameObject obj = Instantiate(unit.uiPrefab);
+        obj.transform.SetParent(GameObject.Find("HUDCanvas").transform);
+        UnitHUD unitui = obj.GetComponent<UnitHUD>();
         unitui.m_unit = unit;
 
         unitui.UpdateRectTransform();
@@ -23,20 +23,21 @@ public class UnitHUD : MonoBehaviour {
     }
 
     // Use this for initialization
-    void Start () {
+    void Awake() {
         if (m_rt == null) {
             m_rt = GetComponent<RectTransform>();
         }
     }
 	
 	// Update is called once per frame
-	void Update () {
-        if (m_unit != null) {
-            var pos = m_unit.transform.position;
+	void Update() {
+        Unit u = m_unit;
+        if (u != null) {
+            var pos = u.transform.position;
             pos.z -= 0.001f;
             m_rt.position = pos;
 
-            float hpPer = m_unit.Hp / m_unit.MaxHp;
+            float hpPer = u.Hp / u.MaxHp;
             if (hpPer != m_hpSlider.value) {
                 m_hpSlider.value = hpPer;
             }
@@ -68,5 +69,7 @@ public class UnitHUD : MonoBehaviour {
         var pos = rt.anchoredPosition;
         pos.y = size.y * (pivot.y - 0.5f) + m_unit.Node.HalfOfHeight * 2.0f + 0.2f;
         rt.anchoredPosition = pos;
+
+        Update();
     }
 }

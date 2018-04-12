@@ -4,7 +4,9 @@ using cca;
 
 
 public class NodeWithHeight : Node {
-    void Start() {
+    protected float _height;
+
+    void Awake() {
         // TODO: delete test 删掉是否会被调用
         init();
     }
@@ -13,23 +15,17 @@ public class NodeWithHeight : Node {
         cleanup();
     }
 
-    public override void init()
-    {
+    public override void init() {
         base.init();
         height = 0;
     }
 
     public const float CONST_BASE_Z = -100.0f;
 
-    public float height
-    {
-        get
-        {
-            return _height;
-        }
+    public float height {
+        get { return _height; }
 
-        set
-        {
+        set {
             Vector3 pos = transform.localPosition;
             pos.y -= height;
             pos.z = CONST_BASE_Z + pos.y;
@@ -40,20 +36,13 @@ public class NodeWithHeight : Node {
         }
     }
 
-    public override Vector2 position
-    {
-        get
-        {
+    public override Vector2 position {
+        get {
             Vector2 pos = transform.localPosition;
             pos.y -= _height;
             return pos;
         }
 
-        set
-        {
-            transform.localPosition = new Vector3(value.x, value.y + _height, CONST_BASE_Z + value.y);
-        }
+        set { transform.localPosition = new Vector3(value.x, value.y + _height, CONST_BASE_Z + value.y); }
     }
-
-    protected float _height;
 }

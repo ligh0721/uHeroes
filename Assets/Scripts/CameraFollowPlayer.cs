@@ -2,7 +2,6 @@
 using System.Collections;
 
 public class CameraFollowPlayer : MonoBehaviour {
-    public Camera m_camera;
     public float elastic = 0.05f;
     public float CONST_MAX_ELASTIC = 0.3f;
     public const float CONST_SLOW = 0.6f;

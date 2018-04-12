@@ -6,7 +6,7 @@ using System;
 
 [RequireComponent(typeof(ProjectileNode))]
 public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
-    void Start() {
+    void Awake() {
         m_node = GetComponent<ProjectileNode>();
         Debug.Assert(m_node != null);
     }
@@ -265,7 +265,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.Unit != null || m_toUnit.Unit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.Unit != null && m_toUnit.Unit.OnProjectileArrive(this) == false) {
                     // 当目标单位存活且目标单位拒绝(反射)抛射物成功，抛射物不死亡(可能被反弹)
                     return;
                 }

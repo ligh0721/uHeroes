@@ -4,7 +4,10 @@ using cca;
 
 
 public class ModelNode : NodeWithHeight {
-    void Start() {
+    protected Dictionary<int, cca.Animation> m_animations = new Dictionary<int, cca.Animation>();
+    protected Dictionary<int, Sprite> m_frames = new Dictionary<int, Sprite>();
+
+    void Awake() {
         // TODO: delete test 删掉是否会被调用
         init();
     }
@@ -189,7 +192,4 @@ public class ModelNode : NodeWithHeight {
         action.tag = id;
         runAction(action);
     }
-
-    protected Dictionary<int, cca.Animation> m_animations = new Dictionary<int, cca.Animation>();
-    protected Dictionary<int, Sprite> m_frames = new Dictionary<int, Sprite>();
 }

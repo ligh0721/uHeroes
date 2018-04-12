@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 [RequireComponent(typeof(UnitNode))]
 public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
-    public GameObject uiPrefab;
+    public GameObject unitHUDPrefab;
 
     UnitNode m_node;
     [HideInInspector]
@@ -69,9 +69,10 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // 移动速度
     protected Value m_moveSpeed = new Value(1.0f);
 
+    protected UnitHUD m_unitHUD;
 
-    void Start() {
-        Debug.Assert(uiPrefab);
+    void Awake() {
+        Debug.Assert(unitHUDPrefab);
         m_node = GetComponent<UnitNode>();
         Debug.Assert(m_node != null);
     }
@@ -1855,6 +1856,19 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         get { return m_critDmg.coeff; }
 
         set { m_critDmg.coeff = value; }
+    }
+
+    public void CreateUnitHUD() {
+        GameObject obj = GameObjectPool.instance.Instantiate(unitHUDPrefab);
+        obj.transform.SetParent(m_world.hudCanvas.transform);
+        m_unitHUD = obj.GetComponent<UnitHUD>();
+        m_unitHUD.m_unit = this;
+        m_unitHUD.UpdateRectTransform();
+    }
+
+    public void RemoveUnitHUD() {
+        GameObjectPool.instance.Destroy(unitHUDPrefab, m_unitHUD.gameObject);
+        m_unitHUD = null;
     }
 
     // Networking

@@ -4,7 +4,7 @@ using cca;
 
 
 public class TankGunNode : UnitNode {
-    void Start() {
+    void Awake() {
         // TODO: delete test 删掉是否会被调用
         init();
     }
@@ -71,8 +71,8 @@ public class TankNode : UnitNode {
         if (delta > 180) {
             delta -= 360;
         } else if (delta < -180) {
-            delta += 360;
-        }
+                delta += 360;
+            }
         var action = new Speed(new Sequence(new RotateBy(Mathf.Abs(delta / 500.0f), delta), new MoveTo(duration, pos), new CallFunc(onFinished)), speed);
         action.tag = kActionMoveTo;
         runAction(action);

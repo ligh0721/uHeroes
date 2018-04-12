@@ -9,7 +9,7 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
     protected float m_halfOfHeight;
     protected Vector2 m_fireOffset = new Vector2();
 
-    void Start() {
+    void Awake() {
         // TODO: delete test 删掉是否会被调用
         init();
     }

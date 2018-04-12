@@ -89,7 +89,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9756eadc15a94d048884e0de0082939c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiPrefab: {fileID: 1263894025827900, guid: 864009a4deecdc34eba3d776ef0b68e8, type: 2}
+  uiPrefab: {fileID: 1263894025827900, guid: 9fba8227c15fd44a990b26031e1afe47, type: 2}
 --- !u!114 &114554851366404520
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -98,10 +98,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 143558}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5df5d4c9ab25e1740b2202954cb41cab, type: 3}
+  m_Script: {fileID: 11500000, guid: 369bfac7af0bd4fa9ad635dd4ad1fa7e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_actionManager: {fileID: 0}
 --- !u!114 &114969969198260346
 MonoBehaviour:
   m_ObjectHideFlags: 1

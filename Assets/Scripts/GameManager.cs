@@ -157,8 +157,8 @@ public class GameManager {
     /// </summary>
     /// <param name="playerId"></param>
     /// <param name="gameObject"></param>
-    public static void ClientAddPlayer(int playerId, GameObject gameObject) {
-        m_allPlayers.Add(playerId, gameObject.GetComponent<GamePlayerController>());
+    public static void ClientAddPlayer(int playerId, GameObject obj) {
+        m_allPlayers.Add(playerId, obj.GetComponent<GamePlayerController>());
     }
 
     /// <summary>
