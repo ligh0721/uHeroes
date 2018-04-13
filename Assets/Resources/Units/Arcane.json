@@ -1,0 +1,19 @@
+{
+  "model": "Models/Units/Arcane",
+  "name": "Arcane Tower",
+  "maxHp": 5000,
+  "revivable": false,
+  "attackSkill": {
+    "cd": 1.0,
+    "type": "Magical",
+    "value": 150,
+    "vrange": 0.2,
+    "range": 3,
+    "horizontal": false,
+    "animations": [
+      "act1"
+    ],
+    "projectile": "Projectiles/ArcaneRay"
+  },
+  "isfixed": true
+}

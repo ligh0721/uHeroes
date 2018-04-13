@@ -1,0 +1,17 @@
+{
+  "default": "default",
+  "actions": {
+    "move": {
+      "frames": 2,
+      "delay": 0.1
+    },
+    "die": {
+      "frames": 4,
+      "delay": 0.1,
+      "special": 0
+    }
+  },
+  "frames": [
+    "default"
+  ]
+}

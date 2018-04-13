@@ -1,0 +1,19 @@
+{
+  "model": "Models/Units/Archer",
+  "name": "Archer",
+  "maxHp": 500,
+  "move": 2.5,
+  "revivable": false,
+  "attackSkill": {
+    "cd": 1.3,
+    "type": "Physical",
+    "value": 60,
+    "vrange": 0.2,
+    "range": 3,
+    "horizontal": false,
+    "animations": [
+      "act1"
+    ],
+    "projectile": "Projectiles/ArcherArrow"
+  }
+}
