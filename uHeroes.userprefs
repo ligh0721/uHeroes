@@ -1,35 +1,14 @@
-﻿<Properties StartupItem="Assembly-CSharp.csproj">
+﻿<Properties StartupItem="uHeroes.csproj">
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" PreferredExecutionTarget="Unity.Instance.Unity Editor" />
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/UnitHUD.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Engine/Unit/World.cs">
     <Files>
-      <File FileName="Assets/Scripts/Engine/Unit/Unit.cs" Line="868" Column="1" />
-      <File FileName="Assets/Scripts/Engine/Unit/UnitNode.cs" Line="14" Column="1" />
-      <File FileName="Assets/Scripts/Engine/Unit/UnitController.cs" Line="13" Column="15" />
-      <File FileName="Assets/Scripts/Engine/Unit/World.cs" Line="268" Column="9" />
-      <File FileName="Assets/Scripts/Engine/Unit/Projectile.cs" Line="9" Column="15" />
-      <File FileName="Assets/Scripts/Engine/Skill/ActiveSkill.cs" Line="126" Column="4" />
-      <File FileName="Assets/Scripts/Engine/Unit/ProjectileNode.cs" Line="5" Column="33" />
-      <File FileName="Assets/Scripts/Engine/ResourceManager.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/Engine/cca/NodeWithHeight.cs" Line="8" Column="5" />
-      <File FileName="Assets/Scripts/Engine/SyncGameAction.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/Engine/Unit/ModelNode.cs" Line="6" Column="30" />
-      <File FileName="Assets/Scripts/Engine/GamePlayerController.cs" Line="181" Column="7" />
-      <File FileName="Assets/Scripts/CameraFollowPlayer.cs" Line="22" Column="44" />
-      <File FileName="Assets/Scripts/cca/Node.cs" Line="25" Column="1" />
-      <File FileName="Assets/Scripts/RoomUI.cs" Line="9" Column="5" />
-      <File FileName="Assets/Scripts/Engine/cca/LinkAnimate.cs" Line="8" Column="27" />
-      <File FileName="Assets/Scripts/Engine/cca/MoveToNode.cs" Line="9" Column="21" />
-      <File FileName="Assets/Scripts/Engine/AI/UnitAI.cs" Line="6" Column="58" />
-      <File FileName="Assets/Scripts/Engine/Skill/Skill.cs" Line="13" Column="5" />
-      <File FileName="Assets/Scripts/Engine/Skill/PassiveSkill.cs" Line="16" Column="1" />
-      <File FileName="Assets/Scripts/Engine/Skill/BuffSkill.cs" Line="15" Column="6" />
-      <File FileName="Assets/Scripts/Engine/Skill/AttackAct.cs" Line="144" Column="21" />
-      <File FileName="Assets/Scripts/cca/Action.cs" Line="7" Column="25" />
-      <File FileName="Assets/Scripts/cca/ActionManager.cs" Line="14" Column="14" />
-      <File FileName="Assets/Scripts/Tank/Tank.cs" Line="9" Column="5" />
-      <File FileName="Assets/Scripts/Tank/TankController.cs" Line="27" Column="14" />
-      <File FileName="Assets/Scripts/Tank/TankNode.cs" Line="8" Column="20" />
-      <File FileName="Assets/Scripts/UnitHUD.cs" Line="45" Column="1" />
+      <File FileName="Assets/Scripts/Engine/Unit/World.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/UnitHUD.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Engine/Unit/Unit.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/Engine/ObjectPool.cs" Line="345" Column="5" />
+      <File FileName="Assets/Scripts/Engine/GamePlayerController.cs" Line="1" Column="1" />
+      <File FileName="Assets/Scripts/GameManager.cs" Line="161" Column="39" />
+      <File FileName="Assets/Scripts/cca/Node.cs" Line="1" Column="1" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.DebuggingService.Breakpoints>
