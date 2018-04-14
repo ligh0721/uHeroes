@@ -454,7 +454,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 2008186142}
+      - m_Target: {fileID: 0}
         m_MethodName: OnTestBtn
         m_Mode: 1
         m_Arguments:
@@ -835,6 +835,7 @@ GameObject:
   - component: {fileID: 1261445687}
   - component: {fileID: 1261445686}
   - component: {fileID: 1261445691}
+  - component: {fileID: 1261445692}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -921,10 +922,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e7666644963305c48b76ceb39c3a0472, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_camera: {fileID: 1261445689}
   elastic: 0.05
   CONST_MAX_ELASTIC: 0.3
-  follow: 1
+  followed: {fileID: 0}
+--- !u!114 &1261445692
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1261445685}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05c0c670a2bae4b008271bcebd6d5186, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1294382651
 GameObject:
   m_ObjectHideFlags: 0
@@ -1223,12 +1234,6 @@ Prefab:
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e66b23567c4186f40acd5fa231b86706, type: 2}
   m_IsPrefabParent: 0
---- !u!114 &2008186142 stripped
-MonoBehaviour:
-  m_PrefabParentObject: {fileID: 11441696, guid: e66b23567c4186f40acd5fa231b86706,
-    type: 2}
-  m_PrefabInternal: {fileID: 2008186141}
-  m_Script: {fileID: 11500000, guid: 565c21f60b520e74f993ae767756adbd, type: 3}
 --- !u!1 &2025733916
 GameObject:
   m_ObjectHideFlags: 0

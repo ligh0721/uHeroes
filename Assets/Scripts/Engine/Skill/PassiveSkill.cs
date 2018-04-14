@@ -65,11 +65,11 @@ public class SplashPas : PassiveSkill {
 
     public override void OnUnitAttackTarget(AttackData pAttack, Unit pTarget) {
         Unit o = m_owner;
-        if (!pTarget || !o) {
+        if (!pTarget || o == null) {
             return;
         }
 
-        UnitRenderer td = pTarget.Renderer;
+        UnitNode td = pTarget.Node;
         float fDis;
         World w = o.World;
         var units = w.Units;
@@ -78,13 +78,13 @@ public class SplashPas : PassiveSkill {
                 continue;
             }
 
-            UnitRenderer pDraw = pUnit.Renderer;
-            if (!pUnit || pUnit.Ghost) {
+            UnitNode pDraw = pUnit.Node;
+            if (pUnit.Ghost) {
                 continue;
             }
 
-            fDis = Mathf.Max(0.0f, Vector2.Distance(pDraw.Node.position, td.Node.position) - pDraw.HalfOfWidth);
-            if (fDis <= m_fFarRange && o.CanEffect(pUnit, m_dwEffectiveTypeFlags)) {
+            fDis = Mathf.Max(0.0f, Vector2.Distance(pDraw.position, td.position) - pDraw.HalfOfWidth);
+            if (fDis <= m_fFarRange && o.force.CanEffect(pUnit.force, m_dwEffectiveTypeFlags)) {
                 AttackData ad = pAttack.Clone();
                 AttackValue av = ad.attackValue;
 

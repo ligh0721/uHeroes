@@ -33,59 +33,37 @@ public class BuffSkill : Skill {
     }
 
     public float Duration {
-        get {
-            return m_duration;
-        }
+        get { return m_duration; }
 
-        set {
-            m_duration = value;
-        }
+        set { m_duration = value; }
     }
 
     public float Elapsed {
-        get {
-            return m_elapsed;
-        }
+        get { return m_elapsed; }
 
-        set {
-            m_elapsed = value;
-        }
+        set { m_elapsed = value; }
     }
 
     public virtual bool Done {
-        get {
-            return m_elapsed >= m_duration;
-        }
+        get { return m_elapsed >= m_duration; }
     }
 
     public bool Stackable {
-        get {
-            return m_stackable;
-        }
+        get { return m_stackable; }
 
-        set {
-            m_stackable = value;
-        }
+        set { m_stackable = value; }
     }
 
     public Unit SourceUnit {
-        get {
-            return m_sourceUnit;
-        }
+        get { return m_sourceUnit; }
 
-        set {
-            m_sourceUnit = value;
-        }
+        set { m_sourceUnit = value; }
     }
 
     public BuffSkill AppendBuff {
-        get {
-            return m_appendBuff;
-        }
+        get { return m_appendBuff; }
 
-        set {
-            m_appendBuff = value;
-        }
+        set { m_appendBuff = value; }
     }
 
     protected float m_duration;

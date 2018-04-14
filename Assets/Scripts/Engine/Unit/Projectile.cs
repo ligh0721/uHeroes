@@ -1,66 +1,38 @@
 using UnityEngine;
 using System.Collections.Generic;
-using cca;
 using System;
 
-public class Projectile : INetworkable<GamePlayerController> {
-    public Projectile() {
+
+[RequireComponent(typeof(ProjectileNode))]
+public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
+
+#if UNITY_EDITOR
+    void Reset() {
+        Awake();
+    }
+#endif
+
+    void Awake() {
+        m_node = GetComponent<ProjectileNode>();
+        Debug.Assert(m_node != null);
     }
 
-    public Projectile(ProjectileRenderer renderer) {
-        Init(renderer);
-    }
+    ProjectileNode m_node;
 
-    public void Init(ProjectileRenderer renderer) {
-        m_renderer = renderer;
-        renderer.m_projectile = this;
-        m_renderer.SetFrame(ObjectRenderer.kFrameDefault);
+    public ProjectileNode Node {
+        get { return m_node; }
     }
 
     public int Id {
-        get {
-            return m_id;
-        }
-    }
-
-    public ProjectileRenderer Renderer {
-        get {
-            return m_renderer;
-        }
+        get { return m_id; }
     }
 
     public string Model {
-        get {
-            return m_model;
-        }
+        get { return m_model; }
     }
 
     public World World {
-        get {
-            return m_world;
-        }
-
-        set {
-            m_world = value;
-        }
-    }
-
-    public virtual Projectile Clone() {
-        Projectile ret = ProjectileController.Create(m_model).projectile;
-        CopyDataTo(ret);
-        return ret;
-    }
-
-    protected virtual void CopyDataTo(Projectile to) {
-        to.m_moveSpeed = m_moveSpeed;
-        to.m_maxHeightDelta = m_maxHeightDelta;
-        to.m_srcUnit = m_srcUnit;
-        to.m_effectiveTypeFlags = m_effectiveTypeFlags;
-        to.m_effectFlags = m_effectFlags;
-        to.m_fromToType = m_fromToType;
-        to.m_fireType = m_fireType;
-        to.m_fireSounds.AddRange(m_fireSounds);
-        to.m_effectSounds.AddRange(m_effectSounds);
+        get { return m_world; }
     }
 
     // Effect Flags
@@ -69,13 +41,9 @@ public class Projectile : INetworkable<GamePlayerController> {
 
     // 抛射物作用时机
     public uint EffectFlags {
-        get {
-            return m_effectFlags;
-        }
+        get { return m_effectFlags; }
 
-        set {
-            m_effectFlags = value;
-        }
+        set { m_effectFlags = value; }
     }
 
     bool HasEffectFlag(uint effectFlag) {
@@ -86,12 +54,12 @@ public class Projectile : INetworkable<GamePlayerController> {
 
     protected void OnEffect() {
         PlayEffectSound();
-        Unit t = (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) ? m_toUnit : null;
+        Unit t = (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) ? m_toUnit.Unit : null;
         Effect(t);
     }
 
     protected void OnDyingDone() {
-        m_renderer.Node.stopAllActions();
+        m_node.stopAllActions();
         m_world.RemoveProjectile(this);
     }
 
@@ -121,18 +89,17 @@ public class Projectile : INetworkable<GamePlayerController> {
     protected void OnTick(float dt) {
         if (HasEffectFlag(kEffectOnContact)) {
             Unit s = m_srcUnit;
-            if (s == null || !s.Valid) {
+            if (s == null) {
                 return;
             }
 
-            foreach (var kv in s.World.Units) {
-                var u = kv.Key;
-                if (u.Ghost || !s.CanEffect(u, m_effectiveTypeFlags)) {
+            foreach (Unit u in m_world.Units.Keys) {
+                if (u.Ghost || !s.force.CanEffect(u.force, m_effectiveTypeFlags)) {
                     continue;
                 }
 
-                UnitRenderer d = u.Renderer;
-                if (Vector2.Distance(d.Node.position, m_renderer.Node.position) - d.HalfOfWidth - Radius <= 0 && !m_contactedUnits.Contains(u)) {
+                UnitNode d = u.Node;
+                if (Vector2.Distance(d.position, m_node.position) - d.HalfOfWidth - Radius <= 0 && !m_contactedUnits.Contains(u)) {
                     if (u.OnProjectileArrive(this) == false) {
                         continue;
                     }
@@ -151,26 +118,26 @@ public class Projectile : INetworkable<GamePlayerController> {
     }
 
     protected void Die() {
-        m_renderer.Node.stopAllActions();
+        m_node.stopAllActions();
         cca.Function onEffect = null;
         if (HasEffectFlag(kEffectOnDying)) {
             onEffect = OnEffect;
         }
-        m_renderer.DoAnimate(ObjectRenderer.kActionDie, onEffect, 1, OnDyingDone);
+        m_node.DoAnimate(ModelNode.kActionDie, onEffect, 1, OnDyingDone);
     }
 
     protected void Effect(Unit target) {
         Unit s = m_srcUnit;
-        if (m_srcUnit == null || !s.Valid) {
+        if (s == null) {
             return;
         }
 
         DecContactLeft();
 
-#if true  // FOR TEST
-        if (m_attackData != null && m_srcUnit != null && m_srcUnit.Valid) {
-            if (m_srcUnit.Attack(m_attackData, target, m_triggerMask)) {
-                target.Damaged(m_attackData, m_srcUnit, m_triggerMask);
+#if true  // FIXME: FOR TEST
+        if (m_attackData != null && s != null) {
+        if (s.Attack(m_attackData, target, m_triggerMask)) {
+                target.Damaged(m_attackData, s, m_triggerMask);
             }
         }
 #endif
@@ -195,13 +162,9 @@ public class Projectile : INetworkable<GamePlayerController> {
 
     // 决定能影响的势力群组
     public uint EffectiveTypeFlags {
-        get {
-            return m_effectiveTypeFlags;
-        }
+        get { return m_effectiveTypeFlags; }
 
-        set {
-            m_effectiveTypeFlags = value;
-        }
+        set { m_effectiveTypeFlags = value; }
     }
 
     protected uint m_effectiveTypeFlags = UnitForce.kEnemy;
@@ -209,8 +172,6 @@ public class Projectile : INetworkable<GamePlayerController> {
     // fire
     // you need to set m_fireType, m_fromToType, m_toUnit or m_toPos, m_fromUnit or m_fromPos before call me
     public void Fire() {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncFireProjectile(SyncProjectileInfo.Create(this)));
-
         PlayFireSound();
 
         switch (m_fireType) {
@@ -223,20 +184,20 @@ public class Projectile : INetworkable<GamePlayerController> {
 
                 if (m_fromToType == FromToType.kUnitToUnit) {
                     Unit u = m_fromUnit;
-                    UnitRenderer d = u.Renderer;
+                    UnitNode d = u.Node;
 
-                    m_renderer.Node.height = m_usingFirePoint ?
-                            d.Node.height + d.FireOffset.y :
-                            d.Node.height + d.HalfOfHeight;
+                    m_node.height = m_usingFirePoint ?
+                            d.height + d.FireOffset.y :
+                            d.height + d.HalfOfHeight;
                     m_fromPos = m_usingFirePoint ?
-                            d.Node.position + new Vector2(d.Node.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
-                            d.Node.position;
+                            d.position + new Vector2(d.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
+                            d.position;
                 }
 
                 Unit t = m_toUnit;
-                UnitRenderer td = t.Renderer;
+                UnitNode td = t.Node;
 
-                float fDis = Vector2.Distance(m_fromPos, td.Node.position + new Vector2(0, td.HalfOfHeight));
+                float fDis = Vector2.Distance(m_fromPos, td.position + new Vector2(0, td.HalfOfHeight));
                 FireFollow(fDis / Mathf.Max(float.Epsilon, m_moveSpeed));
             }
 
@@ -246,7 +207,7 @@ public class Projectile : INetworkable<GamePlayerController> {
             {
                 switch (m_fromToType) {
                 case FromToType.kUnitToUnit:
-                    FireLink(m_fromUnit, m_toUnit);
+                    FireLink();
                     break;
 
                 default:
@@ -267,174 +228,151 @@ public class Projectile : INetworkable<GamePlayerController> {
 
                 if (m_fromToType == FromToType.kUnitToPoint || m_fromToType == FromToType.kUnitToUnit) {
                     Unit u = m_fromUnit;
-                    UnitRenderer d = u.Renderer;
+                    UnitNode d = u.Node;
 
-                    m_renderer.Node.height = m_usingFirePoint ?
-                            d.Node.height + d.FireOffset.y :
-                            d.Node.height + d.HalfOfHeight;
+                    m_node.height = m_usingFirePoint ?
+                            d.height + d.FireOffset.y :
+                            d.height + d.HalfOfHeight;
                     m_fromPos = m_usingFirePoint ?
-                            d.Node.position + new Vector2(d.Node.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
-                            d.Node.position;
+                            d.position + new Vector2(d.flippedX ? -d.FireOffset.x : d.FireOffset.x, 0) :
+                            d.position;
                 }
 
                 if (m_fromToType == FromToType.kUnitToUnit) {
-                    m_toPos = m_toUnit.Renderer.Node.position;
+                    m_toPos = m_toUnit.Node.position;
                 }
 
                 float fDis = Vector2.Distance(m_fromPos, m_toPos);
-                FireStraight(m_fromPos, m_toPos, fDis / Mathf.Max(float.Epsilon, m_moveSpeed), m_maxHeightDelta);
+                FireStraight(fDis / Mathf.Max(float.Epsilon, m_moveSpeed));
             }
 
             break;
         }
     }
 
+    /// <summary>
+    /// need fromPos,toUnit
+    /// </summary>
+    /// <param name="duration"></param>
     void FireFollow(float duration) {
         //m_fromPos = fromPos;
         //m_toUnit = toUnit;
-        Debug.Assert(m_toUnit.Valid);
+        Unit toUnit = m_toUnit.Unit;
+        if (toUnit == null) {
+            return;
+        }
 
-        m_renderer.Node.position = m_fromPos;
+        m_node.position = m_fromPos;
 
-        m_renderer.Node.stopAllActions();
+        m_node.stopAllActions();
 
-        m_renderer.DoAnimate(ObjectRenderer.kActionMove, null, ObjectRenderer.CONST_LOOP_FOREVER, null);
+        m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.Valid && m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.Unit != null && m_toUnit.Unit.OnProjectileArrive(this) == false) {
+                    // 当目标单位存活且目标单位拒绝(反射)抛射物成功，抛射物不死亡(可能被反弹)
                     return;
                 }
             }
 
             Die();
         };
-        m_renderer.DoMoveToUnit(m_toUnit.Renderer, true, m_maxHeightDelta, duration, onMoveToFinished);
+        m_node.DoMoveToUnit(toUnit.Node, true, m_maxHeightDelta, duration, onMoveToFinished);
     }
 
-    void FireLink(Unit fromUint, Unit toUnit) {
-        m_fromUnit = fromUint;
-        m_toUnit = toUnit;
+    /// <summary>
+    /// need fromUnit,toUnit
+    /// </summary>
+    void FireLink() {
+        Unit u = m_fromUnit;
+        UnitNode d = u.Node;
 
-        Unit u = fromUint;
-        UnitRenderer d = u.Renderer;
-
-        Unit t = toUnit;
-        UnitRenderer td = t.Renderer;
+        Unit t = m_toUnit;
+        UnitNode td = t.Node;
 
         Debug.Assert(u != null && t != null && d != null && td != null);
 
-        m_fromPos = d.Node.position;
-        m_toPos = td.Node.position;
-        m_renderer.Node.stopAllActions();
+        m_fromPos = d.position;
+        m_toPos = td.position;
+        m_node.stopAllActions();
 
         cca.Function onEffect = null;
         if (HasEffectFlag(kEffectOnDying)) {
             onEffect = OnEffect;
         }
-        m_renderer.DoLinkUnitToUnit(d, td, ObjectRenderer.kActionDie, onEffect, 1, OnDyingDone);
+        m_node.DoLinkUnitToUnit(d, td, ModelNode.kActionDie, onEffect, 1, OnDyingDone);
     }
 
-    void FireStraight(Vector2 fromPos, Vector2 toPos, float duration, float maxHeightDelta) {
+    /// <summary>
+    /// need fromPos,toPos
+    /// </summary>
+    /// <param name="duration"></param>
+    void FireStraight(float duration) {
         m_contactedUnits.Clear();
 
-        m_fromPos = fromPos;
-        m_toPos = toPos;
+        m_node.position = m_fromPos;
 
-        m_renderer.Node.position = fromPos;
+        m_node.stopAllActions();
 
-        m_renderer.Node.stopAllActions();
-
-        m_renderer.DoAnimate(ObjectRenderer.kActionMove, null, ObjectRenderer.CONST_LOOP_FOREVER, null);
+        m_node.DoAnimate(ModelNode.kActionMove, null, ModelNode.CONST_LOOP_FOREVER, null);
         cca.Function onMoveToFinished = delegate {
             if (m_fromToType == FromToType.kPointToUnit || m_fromToType == FromToType.kUnitToUnit) {
-                if (m_toUnit.Valid && m_toUnit.OnProjectileArrive(this) == false) {
+                if (m_toUnit.Unit != null && m_toUnit.Unit.OnProjectileArrive(this) == false) {
                     return;
                 }
             }
 
             Die();
         };
-        m_renderer.DoMoveTo(toPos, duration, onMoveToFinished);
+        m_node.DoMoveTo(m_toPos, duration, onMoveToFinished);
     }
 
     public Vector2 FromPosition {
-        get {
-            return m_fromPos;
-        }
+        get { return m_fromPos; }
 
-        set {
-            m_fromPos = value;
-        }
+        set { m_fromPos = value; }
     }
 
     public Vector2 ToPosition {
-        get {
-            return m_toPos;
-        }
+        get { return m_toPos; }
 
-        set {
-            m_toPos = value;
-        }
+        set { m_toPos = value; }
     }
 
     public Unit FromUnit {
-        get {
-            return m_fromUnit;
-        }
+        get { return m_fromUnit; }
 
-        set {
-            m_fromUnit = value;
-        }
+        set { m_fromUnit.Set(value); }
     }
 
     public Unit ToUnit {
-        get {
-            return m_toUnit;
-        }
+        get { return m_toUnit; }
 
-        set {
-            m_toUnit = value;
-        }
+        set { m_toUnit.Set(value); }
     }
 
     public AttackData AttackData {
-        get {
-            return m_attackData;
-        }
+        get { return m_attackData; }
 
-        set {
-            m_attackData = value;
-        }
+        set { m_attackData = value; }
     }
 
     public uint TriggerMask {
-        get {
-            return m_triggerMask;
-        }
+        get { return m_triggerMask; }
 
-        set {
-            m_triggerMask = value;
-        }
+        set { m_triggerMask = value; }
     }
 
     public Unit SourceUnit {
-        get {
-            return m_srcUnit;
-        }
+        get { return m_srcUnit; }
 
-        set {
-            m_srcUnit = value;
-        }
+        set { m_srcUnit.Set(value); }
     }
 
     public Skill SourceSkill {
-        get {
-            return m_srcSkill;
-        }
+        get { return m_srcSkill; }
 
-        set {
-            m_srcSkill = value;
-        }
+        set { m_srcSkill = value; }
     }
 
     public enum FromToType {
@@ -477,40 +415,28 @@ public class Projectile : INetworkable<GamePlayerController> {
     }
 
     public FromToType TypeOfFromTo {
-        get {
-            return m_fromToType;
-        }
+        get { return m_fromToType; }
 
-        set {
-            m_fromToType = value;
-        }
+        set { m_fromToType = value; }
     }
 
     public FireType TypeOfFire {
-        get {
-            return m_fireType;
-        }
+        get { return m_fireType; }
 
-        set {
-            m_fireType = value;
-        }
+        set { m_fireType = value; }
     }
 
     public bool UseFireOffset {
-        get {
-            return m_usingFirePoint;
-        }
+        get { return m_usingFirePoint; }
 
-        set {
-            m_usingFirePoint = value;
-        }
+        set { m_usingFirePoint = value; }
     }
 
     protected Vector2 m_fromPos;
     protected Vector2 m_toPos;
-    protected Unit m_fromUnit;
-    protected Unit m_toUnit;
-    protected Unit m_srcUnit;
+    protected UnitSafe m_fromUnit;
+    protected UnitSafe m_toUnit;
+    protected UnitSafe m_srcUnit;
     protected bool m_usingFirePoint = true;
     protected AttackData m_attackData;
     protected uint m_triggerMask = Unit.kTriggerMaskNoMasked;
@@ -519,28 +445,20 @@ public class Projectile : INetworkable<GamePlayerController> {
     protected FireType m_fireType = FireType.kFollow;
 
     public float MoveSpeed {
-        get {
-            return m_moveSpeed;
-        }
+        get { return m_moveSpeed; }
 
-        set {
-            m_moveSpeed = value;
-        }
+        set { m_moveSpeed = value; }
     }
 
     public float MaxHeightDelta {
-        get {
-            return m_maxHeightDelta;
-        }
+        get { return m_maxHeightDelta; }
 
-        set {
-            m_maxHeightDelta = value;
-        }
+        set { m_maxHeightDelta = value; }
     }
 
     public float Radius {
         get {
-            Vector2 size = m_renderer.Node.size;
+            Vector2 size = m_node.size;
             return (size.x + size.y) / 2;
         }
     }
@@ -548,21 +466,56 @@ public class Projectile : INetworkable<GamePlayerController> {
     protected float m_moveSpeed = 1;
     protected float m_maxHeightDelta;
 
-    protected ProjectileRenderer m_renderer;
-    protected World m_world;
+    protected internal World m_world;
     protected internal int m_id;
     protected internal string m_model;
 
     // Networkable
     public GamePlayerController localClient {
-        get {
-            return GamePlayerController.localClient;
-        }
+        get { return GamePlayerController.localClient; }
     }
 
     public bool isServer {
-        get {
-            return localClient.isServer;
-        }
+        get { return localClient.isServer; }
     }
+}
+
+[Serializable]
+public class SyncProjectileInfo {
+    public SyncProjectileInfo() {
+    }
+
+#if false
+    public SyncProjectileInfo(Projectile projectile) {
+        ProjectileNode node = projectile.Node;
+
+        baseInfo.model = projectile.Model;
+        baseInfo.move = projectile.MoveSpeed;
+        baseInfo.height = projectile.MaxHeightDelta;
+        baseInfo.fire = Projectile.FireTypeToName(projectile.TypeOfFire);
+        baseInfo.effect = (int)projectile.EffectFlags;
+
+        //position = node.position;
+        //visible = node.visible;
+        fromTo = projectile.TypeOfFromTo;
+        useFireOffset = projectile.UseFireOffset;
+        srcUnit = projectile.SourceUnit != null ? projectile.SourceUnit.Id : 0;
+        fromUnit = projectile.FromUnit != null ? projectile.FromUnit.Id : 0;
+        toUnit = projectile.ToUnit != null ? projectile.ToUnit.Id : 0;
+        fromPos = projectile.FromPosition;
+        toPos = projectile.ToPosition;
+    }
+#endif
+
+    public int id;
+    public ProjectileInfo baseInfo = new ProjectileInfo();
+    //public Vector2Serializable position;
+    //public bool visible;
+    public Projectile.FromToType fromTo;
+    public bool useFireOffset;
+    public int srcUnit;
+    public int fromUnit;
+    public int toUnit;
+    public Vector2Serializable fromPos;
+    public Vector2Serializable toPos;
 }

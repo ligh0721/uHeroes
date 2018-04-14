@@ -42,7 +42,7 @@ public class LoadingUI : MonoBehaviour, INetworkable<GamePlayerController> {
 
     public bool isServer {
         get {
-            return GameController.isServer;
+            return GameManager.isServer;
         }
     }
 }

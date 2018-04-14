@@ -2,316 +2,183 @@ using UnityEngine;
 using System.Collections.Generic;
 
 
-namespace cca
-{
-    public class Node
-    {
-        public Node()
-        {
+namespace cca {
+    public class Node : MonoBehaviour {
+        ActionManager m_actionManager;
+        SpriteRenderer _spriteRenderer;
+
+#if UNITY_EDITOR
+        void Reset() {
+            Awake();
+        }
+#endif
+        void Awake() {
+            init();
         }
 
-        public Node(GameObject prefab, GameObject gameObject)
-        {
-            init(prefab, gameObject);
-        }
-
-        public virtual void init(GameObject prefab, GameObject gameObject)
-        {
-            Debug.Assert(!_nodeMapper.ContainsKey(gameObject));
-            _nodeMapper.Add(gameObject, this);
-            _prefab = prefab;
-            _gameObject = gameObject;
-        }
-
-        public GameObject gameObject
-        {
-            get
-            {
-                return _gameObject;
-            }
-        }
-
-        public bool valid
-        {
-            get
-            {
-                return _gameObject != null;
-            }
-        }
-
-        public static Node mapped(GameObject prefab, GameObject gameObject)
-        {
-            Node node;
-            if (!_nodeMapper.TryGetValue(gameObject, out node))
-            {
-                node = new Node(prefab, gameObject);
-                //node = ObjectPool<Node>.instance.Instantiate(); node.init(prefab, gameObject);
-            }
-            return node;
-        }
-
-        // detach and destroy gameObject
-        public virtual void destroy()
-        {
+        void OnDestroy() {
             cleanup();
-            _nodeMapper.Remove(_gameObject);
-            GameObjectPool.instance.Destroy(_prefab, _gameObject);
-            _gameObject = null;
         }
 
-        public static void destroyAll()
-        {
-            var copy = new Dictionary<GameObject, Node>(_nodeMapper);
-            foreach (Node node in copy.Values)
-            {
-                node.destroy();
+        public virtual void init() {
+            if (m_actionManager == null) {
+                //Debug.LogWarning("Action Manager is not set");
+                m_actionManager = ActionManager.Main;
+            }
+            _spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+
+        public virtual void cleanup() {
+            if (m_actionManager != null) {
+                m_actionManager.removeAllActions(this);
             }
         }
 
-        public static implicit operator bool(Node node)
-        {
-            return node != null && node.valid;
-        }
+        public virtual float positionZ {
+            get { return transform.localPosition.z; }
 
-        public virtual float positionZ
-        {
-            get
-            {
-                return _gameObject.transform.localPosition.z;
-            }
-
-            set
-            {
-                Vector3 pos = _gameObject.transform.localPosition;
+            set {
+                Vector3 pos = transform.localPosition;
                 pos.z = value;
-                _gameObject.transform.localPosition = pos;
+                transform.localPosition = pos;
             }
         }
 
-        public virtual float worldPositionZ
-        {
-            get
-            {
-                return _gameObject.transform.position.z;
-            }
+        public virtual float worldPositionZ {
+            get { return transform.position.z; }
 
-            set
-            {
-                Vector3 pos = _gameObject.transform.position;
+            set {
+                Vector3 pos = transform.position;
                 pos.z = value;
-                _gameObject.transform.position = pos;
+                transform.position = pos;
             }
         }
 
-        public virtual Vector2 position
-        {
-            get
-            {
-                return _gameObject.transform.localPosition;
-            }
+        public virtual Vector2 position {
+            get { return transform.localPosition; }
 
-            set
-            {
-                Vector3 pos = _gameObject.transform.localPosition;
+            set {
+                Vector3 pos = transform.localPosition;
                 pos.x = value.x;
                 pos.y = value.y;
-                _gameObject.transform.localPosition = pos;
+                transform.localPosition = pos;
             }
         }
 
-        public virtual Vector2 worldPosition
-        {
-            get
-            {
-                return _gameObject.transform.position;
-            }
+        public virtual Vector2 worldPosition {
+            get { return transform.position; }
 
-            set
-            {
-                Vector3 pos = _gameObject.transform.position;
+            set {
+                Vector3 pos = transform.position;
                 pos.x = value.x;
                 pos.y = value.y;
-                _gameObject.transform.position = pos;
+                transform.position = pos;
             }
         }
 
-        public virtual float rotation
-        {
-            get
-            {
-                return _gameObject.transform.localRotation.eulerAngles.z;
-            }
+        public virtual float rotation {
+            get { return transform.localRotation.eulerAngles.z; }
 
-            set
-            {
-                Vector3 rotation = _gameObject.transform.localRotation.eulerAngles;
+            set {
+                Vector3 rotation = transform.localRotation.eulerAngles;
                 rotation.z = value;
-                _gameObject.transform.localRotation = Quaternion.Euler(rotation);
+                transform.localRotation = Quaternion.Euler(rotation);
             }
         }
 
-        public virtual Vector2 boundsSize
-        {
-            get
-            {
-                return _gameObject.GetComponent<SpriteRenderer>().sprite.bounds.size;
-            }
+        public virtual Vector2 boundsSize {
+            get { return _spriteRenderer.sprite.bounds.size; }
         }
 
-        public virtual Vector2 size
-        {
-            get
-            {
-                Sprite sprite = _gameObject.GetComponent<SpriteRenderer>().sprite;
+        public virtual Vector2 size {
+            get {
+                Sprite sprite = _spriteRenderer.sprite;
                 return sprite.rect.size / sprite.pixelsPerUnit;
             }
         }
 
-        public virtual Vector2 sizePixel
-        {
-            get
-            {
-                return _gameObject.GetComponent<SpriteRenderer>().sprite.rect.size;
-            }
+        public virtual Vector2 sizePixel {
+            get { return _spriteRenderer.sprite.rect.size; }
         }
 
-        public virtual Vector2 scale
-        {
-            get
-            {
-                return _gameObject.transform.localScale;
-            }
+        public virtual Vector2 scale {
+            get { return transform.localScale; }
 
-            set
-            {
-                Vector3 scale = _gameObject.transform.localScale;
+            set {
+                Vector3 scale = transform.localScale;
                 scale.x = value.x;
                 scale.y = value.y;
-                _gameObject.transform.localScale = scale;
+                transform.localScale = scale;
             }
         }
 
-        public bool flippedX
-        {
-            get
-            {
-                return _gameObject.GetComponent<SpriteRenderer>().flipX;
-            }
+        public bool flippedX {
+            get { return _spriteRenderer.flipX; }
 
-            set
-            {
-                _gameObject.GetComponent<SpriteRenderer>().flipX = value;
-            }
+            set { _spriteRenderer.flipX = value; }
         }
 
-        public Sprite frame
-        {
-            get
-            {
-                return _gameObject.GetComponent<SpriteRenderer>().sprite;
-            }
+        public Sprite frame {
+            get { return _spriteRenderer.sprite; }
 
-            set
-            {
-                _gameObject.GetComponent<SpriteRenderer>().sprite = value;
-            }
+            set { _spriteRenderer.sprite = value; }
         }
 
-		public bool visible
-		{
-			get {
-				return _gameObject.GetComponent<SpriteRenderer> ().enabled;
-			}
+        public bool visible {
+            get { return _spriteRenderer.enabled; }
 
-			set {
-				_gameObject.GetComponent<SpriteRenderer> ().enabled = value;
-			}
-		}
+            set { _spriteRenderer.enabled = value; }
+        }
 
-        public float opacity
-        {
-            get
-            {
-                return _gameObject.GetComponent<SpriteRenderer>().color.a;
-            }
+        public float opacity {
+            get { return _spriteRenderer.color.a; }
 
-            set
-            {
-                Color color = _gameObject.GetComponent<SpriteRenderer>().color;
+            set {
+                Color color = _spriteRenderer.color;
                 color.a = value;
-                _gameObject.GetComponent<SpriteRenderer>().color = color;
+                _spriteRenderer.color = color;
             }
         }
 
-        public Node parent
-        {
-            get
-            {
-                if (_gameObject.transform.parent == null)
-                {
+        public Node parent {
+            get {
+                if (transform.parent == null) {
                     return null;
                 }
 
-                Node node;
-                if (_nodeMapper.TryGetValue(_gameObject.transform.parent.gameObject, out node))
-                {
-                    return node;
-                }
-                else
-                {
-                    Debug.LogWarning("parent is not assigned to a node");
-                    //node = ObjectPool<Node>.instance.Instantiate(); node.init(_prefab, _gameObject.transform.parent.gameObject);
-                    //return node;
-                    return new Node(_prefab, _gameObject.transform.parent.gameObject);
-                }
+                Node parentNode = transform.parent.GetComponent<Node>();
+                return parentNode;
             }
 
-            set
-            {
-                _gameObject.transform.SetParent(value.gameObject.transform);
+            set {
+                if (value != null) {
+                    transform.SetParent(value.transform);
+                } else {
+                    transform.SetParent(null);
+                }
             }
         }
 
-        public void removeFromParentAndCleanup()
-        {
-            Debug.Assert(_gameObject);
+        public void removeFromParentAndCleanup() {
             //_gameObject.transform.SetParent(null);
-            this.destroy();
+            //this.destroy();
+            parent = null;
         }
 
-        public void cleanup()
-        {
-            Debug.Assert(_gameObject);
-            _actionManager.removeAllActions(this);
+        public void runAction(Action action) {
+            m_actionManager.addAction(this, action);
         }
 
-        public void runAction(Action action)
-        {
-            Debug.Assert(_gameObject);
-            _actionManager.addAction(this, action);
+        public cca.Action getActionByTag(int tag) {
+            return m_actionManager.getActionByTag(this, tag);
         }
 
-        public cca.Action getActionByTag(int tag)
-        {
-            Debug.Assert(_gameObject);
-            return _actionManager.getActionByTag(this, tag);
+        public void stopActionByTag(int tag) {
+            m_actionManager.removeActionByTag(this, tag);
         }
 
-        public void stopActionByTag(int tag)
-        {
-            Debug.Assert(_gameObject);
-            _actionManager.removeActionByTag(this, tag);
+        public void stopAllActions() {
+            m_actionManager.removeAllActions(this);
         }
-
-        public void stopAllActions()
-        {
-            Debug.Assert(_gameObject);
-            _actionManager.removeAllActions(this);
-        }
-
-        protected GameObject _gameObject;
-        protected GameObject _prefab;
-        protected static Dictionary<GameObject, Node> _nodeMapper = new Dictionary<GameObject, Node>();
-        protected ActionManager _actionManager = ActionManager.instance;
     }
 }

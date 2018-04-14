@@ -51,7 +51,7 @@ public class ActiveSkill : Skill {
     /// </summary>
     public void Effect() {
         Unit o = m_owner;
-        UnitRenderer d = o.Renderer;
+        UnitNode d = o.Node;
 
         StartCoolingDown();
         OnUnitCastSkill();
@@ -71,19 +71,18 @@ public class ActiveSkill : Skill {
                 }
 
                 if (m_projectileTemplate != null && t != o) {
-                    Projectile p = m_projectileTemplate.Clone();
-                    p.SourceUnit = o;
-                    p.SourceSkill = this;
-                    p.EffectiveTypeFlags = m_effectiveTypeFlags;
+                    SyncProjectileInfo syncInfo = new SyncProjectileInfo();
+                    syncInfo.baseInfo = m_projectileTemplate;
+                    syncInfo.fromTo = Projectile.FromToType.kUnitToUnit;
+                    syncInfo.useFireOffset = true;
+                    syncInfo.srcUnit = o.Id;
+                    syncInfo.fromUnit = o.Id;
+                    syncInfo.toUnit = t.Id;
 
-                    UnitRenderer td = t.Renderer;
-                    Debug.Assert(td != null);
+                    World.Main.CreateProjectile(syncInfo, this);
 
-                    p.TypeOfFromTo = Projectile.FromToType.kUnitToUnit;
-                    p.FromUnit = o;
-                    p.ToUnit = t;
-
-                    p.Fire();
+                    //UnitNode td = t.Node;
+                    //Debug.Assert(td != null);
                 } else {
                     PlayEffectSound();
                     OnUnitSkillEffect(null, t);
@@ -93,119 +92,94 @@ public class ActiveSkill : Skill {
 
         case CommandTarget.Type.kPointTarget:
             if (m_projectileTemplate != null) {
-                Projectile p = m_projectileTemplate.Clone();
-                p.SourceUnit = o;
-                p.SourceSkill = this;
-                p.EffectiveTypeFlags = m_effectiveTypeFlags;
-
-                p.TypeOfFromTo = Projectile.FromToType.kUnitToPoint;
-                p.FromUnit = o;
-                p.ToPosition = Utils.GetForwardPoint(d.Node.position, o.CastTarget.TargetPoint, m_castRange);
-
-                p.Fire();
+                SyncProjectileInfo syncInfo = new SyncProjectileInfo();
+                syncInfo.baseInfo = m_projectileTemplate;
+                syncInfo.fromTo = Projectile.FromToType.kUnitToPoint;
+                syncInfo.useFireOffset = true;
+                syncInfo.srcUnit = o.Id;
+                syncInfo.fromUnit = o.Id;
+                syncInfo.toPos = Utils.GetForwardPoint(d.position, o.CastTarget.TargetPoint, m_castRange);
+                World.Main.CreateProjectile(syncInfo, this);
             } else {
                 PlayEffectSound();
                 OnUnitSkillEffect(null, null);
             }
-
             break;
         }
     }
 
     public CommandTarget.Type CastTargetType {
-        get {
-            return m_castTargetType;
-        }
+        get { return m_castTargetType; }
 
-        set {
-            m_castTargetType = value;
-        }
+        set { m_castTargetType = value; }
     }
 
     public float CastMinRange {
-        get {
-            return m_castMinRange;
-        }
+        get { return m_castMinRange; }
 
-        set {
-            m_castMinRange = value;
-        }
+        set { m_castMinRange = value; }
     }
 
     public float CastRange {
-        get {
-            return m_castRange;
-        }
+        get { return m_castRange; }
 
-        set {
-            m_castRange = value;
-        }
+        set { m_castRange = value; }
     }
 
     public float CastTargetRadius {
-        get {
-            return m_castTargetRadius;
-        }
+        get { return m_castTargetRadius; }
 
-        set {
-            m_castTargetRadius = value;
-        }
+        set { m_castTargetRadius = value; }
     }
 
-    public Projectile ProjectileTemplate {
-        get {
-            return m_projectileTemplate;
-        }
+    public ProjectileInfo ProjectileTemplate {
+        get { return m_projectileTemplate; }
 
-        set {
-            m_projectileTemplate = value;
-        }
+        set { m_projectileTemplate = value; }
     }
 
     public bool CastHorizontal {
-        get {
-            return m_castHorizontal;
-        }
+        get { return m_castHorizontal; }
 
-        set {
-            m_castHorizontal = value;
-        }
+        set { m_castHorizontal = value; }
     }
 
     protected CommandTarget.Type m_castTargetType;
     protected float m_castMinRange;
     protected float m_castRange;
     protected float m_castTargetRadius;
-    protected Projectile m_projectileTemplate;
+    protected ProjectileInfo m_projectileTemplate;
     protected bool m_castHorizontal;
 
-    public Vector2 GetAbilityEffectPoint(Projectile pProjectile, Unit target) {
-        if (pProjectile != null) {
-            return pProjectile.Renderer.Node.position;
+    public Vector2 GetAbilityEffectPoint(Projectile projectile, Unit target) {
+        Unit o = m_owner;
+        Debug.Assert(o != null);
+        if (projectile != null) {
+            return projectile.Node.position;
         }
 
         if (target != null) {
-            UnitRenderer td = target.Renderer;
-            return td.Node.position;
+            UnitNode td = target.Node;
+            return td.position;
         }
 
-        UnitRenderer od = m_owner.Renderer;
+        UnitNode od = m_owner.Node;
 
         switch (m_castTargetType) {
         case CommandTarget.Type.kNoTarget:
-            return od.Node.position;
+            return od.position;
 
         case CommandTarget.Type.kPointTarget:
-            return m_owner.CastTarget.TargetPoint;
+            return o.CastTarget.TargetPoint;
         }
 
-        Unit u = m_owner.CastTarget.TargetUnit;
+        Unit u = o.CastTarget.TargetUnit;
         if (u == null) {
             Debug.LogError("GetAbilityEffectPoint() err.");
-            return od.Node.position;
+            return od.position;
         }
 
-        UnitRenderer ud = u.Renderer;
-        return ud.Node.position;
+        UnitNode ud = u.Node;
+        return ud.position;
     }
 }

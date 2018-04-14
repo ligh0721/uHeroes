@@ -37,12 +37,13 @@ public struct Vector2Serializable {
     public static implicit operator Vector2(Vector2Serializable v) {
         return new Vector2(v.x, v.y);
     }
-    public static implicit operator Vector3(Vector2Serializable v) {
-        return new Vector3(v.x, v.y, 0.0f);
-    }
     public static implicit operator Vector2Serializable(Vector2 v) {
         return new Vector2Serializable(v.x, v.y);
     }
+    public static implicit operator Vector3(Vector2Serializable v) {
+        return new Vector3(v.x, v.y, 0.0f);
+    }
+    
 }
 
 public class Utils {
