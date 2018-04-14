@@ -24,10 +24,10 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
     }
 
     void LateUpdate() {
-        if (client == null || !client.isLocalPlayer) {
+//        if (client == null || !client.isLocalPlayer) {
             // exit from update if this is not the local player
-            return;
-        }
+//            return;
+//        }
 
         m_mouse.update();
 
@@ -73,12 +73,6 @@ public class UnitController : MonoBehaviour, INetworkable<GamePlayerController> 
     }
 
     // Networkable
-    internal GamePlayerController m_client;
-
-    public GamePlayerController client {
-        get { return m_client; }
-    }
-
     public GamePlayerController localClient {
         get { return GamePlayerController.localClient; }
     }

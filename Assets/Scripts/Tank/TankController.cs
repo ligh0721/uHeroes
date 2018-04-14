@@ -6,10 +6,10 @@ using UnityEngine.EventSystems;
 
 public class TankController : UnitController {
     void LateUpdate() {
-        if (client == null || !client.isLocalPlayer) {
-            // exit from update if this is not the local player
-            return;
-        }
+//        if (client == null || !client.isLocalPlayer) {
+//            // exit from update if this is not the local player
+//            return;
+//        }
 
         m_mouse.update();
 

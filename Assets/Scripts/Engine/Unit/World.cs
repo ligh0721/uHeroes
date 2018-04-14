@@ -63,12 +63,16 @@ public class World : MonoBehaviour {
             unit.enabled = true;
         };
         GameObjectPool.DestroyFunction unitDestroy = delegate(GameObject obj) {
-            UnitNode node = obj.GetComponent<UnitNode>();
-            node.enabled = false;
-            node.cleanup();
+            UnitController ctrl = obj.GetComponent<UnitController>();
+            if (ctrl != null) {
+                Destroy(ctrl);
+            }
             Unit unit = obj.GetComponent<Unit>();
             unit.enabled = false;
             unit.Cleanup();
+            UnitNode node = obj.GetComponent<UnitNode>();
+            node.enabled = false;
+            node.cleanup();
         };
         GameObjectPool.instance.Alloc(unitPrefab, 50, unitReset, unitDestroy);
 
@@ -86,12 +90,12 @@ public class World : MonoBehaviour {
             projectile.enabled = true;
         };
         GameObjectPool.DestroyFunction projectileDestroy = delegate (GameObject obj) {
-            ProjectileNode node = obj.GetComponent<ProjectileNode>();
-            node.enabled = false;
-            node.cleanup();
             Projectile projectile = obj.GetComponent<Projectile>();
             projectile.enabled = false;
             //projectile.Cleanup();
+            ProjectileNode node = obj.GetComponent<ProjectileNode>();
+            node.enabled = false;
+            node.cleanup();
         };
         GameObjectPool.instance.Alloc(projectilePrefab, 50, projectileReset, projectileDestroy);
 
@@ -173,7 +177,6 @@ public class World : MonoBehaviour {
         GameObject obj = GameObjectPool.instance.Instantiate(unitPrefab);
         UnitNode node = obj.GetComponent<UnitNode>();
         Unit unit = obj.GetComponent<Unit>();
-        UnitController ctrl = obj.GetComponent<UnitController>();
 
         ResourceManager.instance.LoadUnitModel(syncInfo.baseInfo.model);  // high time cost
         ResourceManager.instance.AssignModelToUnitNode(syncInfo.baseInfo.model, node);
@@ -182,7 +185,6 @@ public class World : MonoBehaviour {
         node.m_id = syncInfo.id;
         AddUnit(unit);
 
-        unit.m_client = player;
         unit.m_model = syncInfo.baseInfo.model;
         if (GamePlayerController.localClient.isServer) {
             unit.AI = UnitAI.instance;
@@ -207,10 +209,12 @@ public class World : MonoBehaviour {
         unit.Revivable = syncInfo.baseInfo.revivable;
         unit.Fixed = syncInfo.baseInfo.isfixed;
 
-        ctrl.m_client = player;
-
         if (player != null) {
             // 玩家单位
+            if (player.isLocalPlayer) {
+                obj.AddComponent<UnitController>();
+            }
+
             Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unit.Id, player.playerId);
             if (player == GamePlayerController.localClient) {
                 Debug.LogFormat("That's Me, {0}.", unit.Name);
@@ -236,6 +240,10 @@ public class World : MonoBehaviour {
         node.SetFrame(ModelNode.kFrameDefault);
         CreateUnitHUD(unit);
         return unit;
+    }
+
+    public void CreatePlayerUnit(SyncUnitInfo syncInfo, int playerId = 0) {
+
     }
 
     public void RemoveUnit(Unit unit, bool revivalbe = false) {
@@ -328,7 +336,7 @@ public class World : MonoBehaviour {
         node.m_id = syncInfo.id;
         AddUnit(unit);
 
-        unit.m_client = player;
+        //unit.m_client = player;
         unit.m_model = syncInfo.baseInfo.model;
         if (GamePlayerController.localClient.isServer) {
             unit.AI = UnitAI.instance;
@@ -393,6 +401,7 @@ public class World : MonoBehaviour {
     }
 
     public void RemovePlayerUnits(GamePlayerController player) {
+#if false
         List<Unit> toDel = new List<Unit>();
         foreach (Unit unit in units.Keys) {
             if (unit.client == player) {
@@ -413,6 +422,7 @@ public class World : MonoBehaviour {
             CleanAbilitiesCD(unit);
             unitsToRevive.Remove(unit);
         }
+#endif
     }
 
     // Skill

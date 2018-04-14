@@ -106,12 +106,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // Networkable
-    protected internal GamePlayerController m_client;
-
-    public GamePlayerController client {
-        get { return m_client; }
-    }
-
     public GamePlayerController localClient {
         get { return GamePlayerController.localClient; }
     }
@@ -1118,11 +1112,11 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         m_node.DoAnimate(ModelNode.kActionDie, null, 1, OnDyingDone, 1.0f);
 
         if (isServer) {
-            if (client != null) {
+            //if (client != null) {
                 //client.RpcDie(0, m_doingFlags, m_node.position, m_node.flippedX, ObjectNode.kActionDie, 1.0f);
-            } else {
+            //} else {
                 //localClient.RpcDie(m_id, m_doingFlags, m_node.position, m_node.flippedX, ObjectNode.kActionDie, 1.0f);
-            }
+            //}
         }
     }
 
