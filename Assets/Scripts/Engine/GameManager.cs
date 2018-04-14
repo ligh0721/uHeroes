@@ -32,7 +32,7 @@ public class SyncObjectSender<SyncObject> {
     public byte[][] Serialize() {
         byte[][] data = null;
         if (m_syncObjsSend.Count > 0) {
-            var arr = m_syncObjsSend.ToArray();
+            SyncObject[] arr = m_syncObjsSend.ToArray();
             int total;
             data = Utils.Serialize(arr, out total);
             m_syncObjsSend.Clear();

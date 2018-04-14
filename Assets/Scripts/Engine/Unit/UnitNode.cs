@@ -49,9 +49,9 @@ public class UnitNode : ModelNode, INetworkable<GamePlayerController> {
         base.DoMoveTo(pos, duration, onFinished, speed);
     }
 
-    public override void DoAnimate(int id, Function onSpecial, int loop, Function onFinished, float speed = 1.0f) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoAnimate(this, id, loop, speed));
-        base.DoAnimate(id, onSpecial, loop, onFinished, speed);
+    public override void DoAnimate(int id, Function onSpecial, int loop, Function onFinished, float speed = 1.0f, bool stopAllFirst = false) {
+        GamePlayerController.localClient.ServerAddSyncAction(new SyncDoAnimate(this, id, loop, speed, stopAllFirst));
+        base.DoAnimate(id, onSpecial, loop, onFinished, speed, stopAllFirst);
     }
 
     public void AddBattleTip(string tip, string font, float fontSize, Color color) {

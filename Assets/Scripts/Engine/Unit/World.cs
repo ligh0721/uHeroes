@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using cca;
 
-public class World : MonoBehaviour {
+public class World : MonoBehaviour, INetworkable<GamePlayerController> {
     static World _main;
 
     //public Dictionary<string, GameObject> dbgPosPrefabs = new Dictionary<string, GameObject>();
@@ -113,8 +113,8 @@ public class World : MonoBehaviour {
     }
 
     void Update() {
-        if (GamePlayerController.localClient && GamePlayerController.localClient.isServer) {
-            GamePlayerController.localClient.ServerSyncActions();
+        if (localClient != null && isServer) {
+            localClient.ServerSyncActions();
         }
     }
 
@@ -165,7 +165,7 @@ public class World : MonoBehaviour {
     /// <param name="syncInfo"></param>
     /// <param name="playerId"></param>
     public Unit CreateUnit(SyncUnitInfo syncInfo, int playerId = 0) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
+        localClient.ServerAddSyncAction(new SyncCreateUnit(syncInfo, playerId));
 
         GamePlayerController player;
         GameManager.AllPlayers.TryGetValue(playerId, out player);
@@ -182,7 +182,7 @@ public class World : MonoBehaviour {
         AddUnit(unit);
 
         unit.m_model = syncInfo.baseInfo.model;
-        if (GamePlayerController.localClient.isServer) {
+        if (isServer) {
             unit.AI = UnitAI.instance;
         }
 
@@ -208,7 +208,7 @@ public class World : MonoBehaviour {
         if (player != null) {
             // 玩家单位
             Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unit.Id, player.playerId);
-            if (player == GamePlayerController.localClient) {
+            if (player == localClient) {
                 Debug.LogFormat("That's Me, {0}.", unit.Name);
             }
 
@@ -222,7 +222,7 @@ public class World : MonoBehaviour {
             SplashPas splash = new SplashPas("SplashAttack", 0.5f, new Coeff(0.75f, 0), 1f, new Coeff(0.25f, 0));
             unit.AddPassiveSkill(splash);
 
-            if (player == GamePlayerController.localClient) {
+            if (player == localClient) {
                 BattleWorldUI.Current.portraitGroup.AddPortrait(unit);
             }
         }
@@ -237,7 +237,7 @@ public class World : MonoBehaviour {
     }
 
     public void RemoveUnit(Unit unit, bool revivalbe = false) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncRemoveUnit(unit, revivalbe));
+        localClient.ServerAddSyncAction(new SyncRemoveUnit(unit, revivalbe));
         if (!units.ContainsKey(unit)) {
             return;
         }
@@ -270,13 +270,13 @@ public class World : MonoBehaviour {
     }
 
     public void RemoveUnitHUD(Unit unit) {
-
+        localClient.ServerAddSyncAction(new SyncRemoveUnitHUD(unit));
         GameObjectPool.instance.Destroy(unitHUDPrefab, unit.m_unitHUD.gameObject);
         unit.m_unitHUD = null;
     }
 
     public Projectile CreateProjectile(ProjectileSyncInfo syncInfo, Skill sourceSkill = null) {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateProjectile(syncInfo));
+        localClient.ServerAddSyncAction(new SyncCreateProjectile(syncInfo));
 
         GameObject obj = GameObjectPool.instance.Instantiate(projectilePrefab);
         ProjectileNode node = obj.GetComponent<ProjectileNode>();
@@ -328,7 +328,7 @@ public class World : MonoBehaviour {
 
         //unit.m_client = player;
         unit.m_model = syncInfo.baseInfo.model;
-        if (GamePlayerController.localClient.isServer) {
+        if (localClient.isServer) {
             unit.AI = UnitAI.instance;
         }
 
@@ -497,25 +497,26 @@ public class World : MonoBehaviour {
         }
         delayToDel.Clear();
 
-        foreach (Unit unit in units.Keys) {
-            unit.Step(dt);
-
-            if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying)) {  // terrible code
-                // 刚死，计划最后移除该单位
-                unit.OnDying();
-                RemoveUnitHUD(unit);
+        if (isServer) {
+            foreach (Unit unit in units.Keys) {
+                unit.Step(dt);
+                if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying)) {
+                    // 刚死，计划最后移除该单位
+                    unit.OnDying();
+                    RemoveUnitHUD(unit);
+                }
             }
-        }
 
-        foreach (Projectile projectile in projectiles.Keys) {
-            projectile.Step(dt);
+            foreach (Projectile projectile in projectiles.Keys) {
+                projectile.Step(dt);
+            }
         }
 
         OnTick(dt);
     }
 
     public void StartWorld() {
-        GamePlayerController.localClient.ServerAddSyncAction(new SyncStartWorld());
+        localClient.ServerAddSyncAction(new SyncStartWorld());
         shutdown = false;
     }
 
@@ -563,5 +564,11 @@ public class World : MonoBehaviour {
         get { return units; }
     }
 
-    
+    public GamePlayerController localClient {
+        get { return GamePlayerController.localClient; }
+    }
+
+    public bool isServer {
+        get { return GamePlayerController.localClient.isServer; }
+    }
 }

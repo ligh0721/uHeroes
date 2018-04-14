@@ -153,7 +153,10 @@ public class ModelNode : NodeWithHeight {
         runAction(action);
     }
 
-    public virtual void DoAnimate(int id, Function onSpecial, int loop, Function onFinished, float speed = 1.0f) {
+    public virtual void DoAnimate(int id, Function onSpecial, int loop, Function onFinished, float speed = 1.0f, bool stopAllFirst = false) {
+        if (stopAllFirst) {
+            stopAllActions();
+        }
         ActionInterval act;
         cca.Animation ani;
         if (!m_animations.TryGetValue(id, out ani)) {

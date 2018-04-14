@@ -136,20 +136,22 @@ public class SyncDoMoveTo : SyncGameAction {
 
 [Serializable]
 public class SyncDoAnimate : SyncGameAction {
-    public SyncDoAnimate(UnitNode node, int id, int loop, float speed)
+    public SyncDoAnimate(UnitNode node, int id, int loop, float speed, bool stopAllFirst)
         : base(node) {
         this.id = id;
         this.loop = loop;
         this.speed = speed;
+        this.stopAllFirst = stopAllFirst;
     }
 
     public override void Play() {
-        Node.DoAnimate(id, null, loop, null, speed);
+        Node.DoAnimate(id, null, loop, null, speed, stopAllFirst);
     }
 
     int id;
     int loop;
     float speed;
+    bool stopAllFirst;
 }
 
 [Serializable]
@@ -220,6 +222,17 @@ public class SyncRemoveUnit : SyncGameAction {
     bool revivalbe;
 }
 
+[Serializable]
+public class SyncRemoveUnitHUD : SyncGameAction {
+    public SyncRemoveUnitHUD(Unit unit)
+        : base(unit) {
+    }
+
+    public override void Play() {
+        Unit u = Unit;
+        u.World.RemoveUnitHUD(u);
+    }
+}
 
 
 

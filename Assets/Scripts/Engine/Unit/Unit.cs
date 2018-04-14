@@ -1108,8 +1108,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     void Die() {
         Stop();
         StartDoing(kDoingDying);
-        m_node.StopAllActions();
-        m_node.DoAnimate(ModelNode.kActionDie, null, 1, OnDyingDone, 1.0f);
+        m_node.DoAnimate(ModelNode.kActionDie, null, 1, OnDyingDone, 1.0f, true);
 
         if (isServer) {
             //if (client != null) {
