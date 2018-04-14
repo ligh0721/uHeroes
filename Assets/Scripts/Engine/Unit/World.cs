@@ -26,7 +26,7 @@ public class World : MonoBehaviour {
     Dictionary<int, Unit> unitsIndex = new Dictionary<int, Unit>();
     //protected Dictionary<int, Projectile> projectilesIndex = new Dictionary<int, Projectile>();
 
-    public static World Main {
+    public static World Current {
         get { return _main; }
     }
 
@@ -63,10 +63,6 @@ public class World : MonoBehaviour {
             unit.enabled = true;
         };
         GameObjectPool.DestroyFunction unitDestroy = delegate(GameObject obj) {
-            UnitController ctrl = obj.GetComponent<UnitController>();
-            if (ctrl != null) {
-                Destroy(ctrl);
-            }
             Unit unit = obj.GetComponent<Unit>();
             unit.enabled = false;
             unit.Cleanup();
@@ -191,7 +187,7 @@ public class World : MonoBehaviour {
         }
 
         unit.Name = syncInfo.baseInfo.name;
-        unit.InitHp(syncInfo.hp +100000, (float)syncInfo.baseInfo.maxHp+100000);
+        unit.InitHp(syncInfo.hp, (float)syncInfo.baseInfo.maxHp);
         if (syncInfo.baseInfo.attackSkill.valid) {
             AttackAct atk = new AttackAct(syncInfo.baseInfo.attackSkill.name, (float)syncInfo.baseInfo.attackSkill.cd, new AttackValue(AttackValue.NameToType(syncInfo.baseInfo.attackSkill.type), (float)syncInfo.baseInfo.attackSkill.value), (float)syncInfo.baseInfo.attackSkill.vrange);
             atk.CastRange = (float)syncInfo.baseInfo.attackSkill.range;
@@ -211,18 +207,13 @@ public class World : MonoBehaviour {
 
         if (player != null) {
             // 玩家单位
-            if (player.isLocalPlayer) {
-                obj.AddComponent<UnitController>();
-            }
-
             Debug.LogFormat("CreateUnit, unitId({0}) <-> playerId({1}).", unit.Id, player.playerId);
             if (player == GamePlayerController.localClient) {
                 Debug.LogFormat("That's Me, {0}.", unit.Name);
             }
 
             // TEST !!!!
-            unit.MaxHpBase = 100000;  // test
-            unit.Hp = unit.MaxHp;
+            unit.InitHp(1000, 1000);
             unit.AttackSkill.coolDownBase = 2.0f;
             unit.AttackSkill.coolDownSpeedCoeff = 2;
             unit.CriticalRateBase = 0.2f;
@@ -232,8 +223,7 @@ public class World : MonoBehaviour {
             unit.AddPassiveSkill(splash);
 
             if (player == GamePlayerController.localClient) {
-                PortraitGroupUI portraitui = GameObject.Find("Canvas/Panel/UI_PortraitGroup").GetComponent<PortraitGroupUI>();
-                portraitui.AddPortrait(unit);
+                BattleWorldUI.Current.portraitGroup.AddPortrait(unit);
             }
         }
 
@@ -285,7 +275,7 @@ public class World : MonoBehaviour {
         unit.m_unitHUD = null;
     }
 
-    public Projectile CreateProjectile(SyncProjectileInfo syncInfo, Skill sourceSkill = null) {
+    public Projectile CreateProjectile(ProjectileSyncInfo syncInfo, Skill sourceSkill = null) {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncCreateProjectile(syncInfo));
 
         GameObject obj = GameObjectPool.instance.Instantiate(projectilePrefab);
@@ -320,7 +310,7 @@ public class World : MonoBehaviour {
         return projectile;
     }
 
-    public Tank CreateTank(SyncTankInfo syncInfo, int playerId = 0) {
+    public Tank CreateTank(TankSyncInfo syncInfo, int playerId = 0) {
         GamePlayerController player;
         GameManager.AllPlayers.TryGetValue(playerId, out player);
 

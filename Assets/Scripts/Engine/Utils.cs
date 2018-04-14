@@ -1,9 +1,9 @@
 using UnityEngine;
-using System.Collections;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System;
+
 
 [Serializable]
 public struct Vector3Serializable {
@@ -47,7 +47,7 @@ public struct Vector2Serializable {
 }
 
 public class Utils {
-    public class IdGenerator {
+    public class IdGen {
         public static int nextId {
             get {
                 if (m_id == 0) {
@@ -85,7 +85,7 @@ public class Utils {
         }
     }
 
-    public static Vector2 halfCameraSize {
+    public static Vector2 HalfCameraSize {
         get {
             float aspectRatio = Screen.width * 1.0f / Screen.height;
             float hy = Camera.main.orthographicSize;

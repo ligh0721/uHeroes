@@ -10,6 +10,7 @@ GameObject:
   - component: {fileID: 441752}
   - component: {fileID: 114298511222778990}
   - component: {fileID: 114865375757077112}
+  - component: {fileID: 114599339365285968}
   m_Layer: 0
   m_Name: World
   m_TagString: Untagged
@@ -52,13 +53,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c67867b9f3230ae488a677880b414a3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dbgPosPrefabs: []
+  dbgPos:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
   unitPrefab: {fileID: 143558, guid: 3d364c9284b30014d8336c9ebb93ef09, type: 2}
   projectilePrefab: {fileID: 177230, guid: c64156eaabef27243970eb21ba49eefc, type: 2}
   unitHUDPrefab: {fileID: 1707061617933080, guid: 9fba8227c15fd44a990b26031e1afe47,
     type: 2}
   cameraCtrl: {fileID: 0}
   hudCanvas: {fileID: 0}
+--- !u!114 &114599339365285968
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 167458}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92dc1a9430bd0e04284ff6e10501ac87, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &114865375757077112
 MonoBehaviour:
   m_ObjectHideFlags: 1

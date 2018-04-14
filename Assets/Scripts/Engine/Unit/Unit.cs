@@ -41,7 +41,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     protected HashSet<PassiveSkill> m_passiveSkills = new HashSet<PassiveSkill>();
     protected HashSet<BuffSkill> m_buffSkills = new HashSet<BuffSkill>();
     protected HashSet<PassiveSkill> m_systemSkills = new HashSet<PassiveSkill>();
-    protected ActiveSkill m_attackSkill;
+    protected AttackAct m_attackSkill;
 
     protected internal float m_hp = 1;
     protected Value m_maxHp = new Value(1);
@@ -866,8 +866,8 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         m_world.UpdateSkillCD(skill);
     }
 
-    public void AddActiveSkill(ActiveSkill skill, bool notify = true) {
-        ActiveSkill copySkill = skill.Clone() as ActiveSkill;
+    public void AddActiveSkill(AttackAct skill, bool notify = true) {
+        AttackAct copySkill = skill.Clone() as AttackAct;
         m_activeSkills.Add(copySkill);
         copySkill.OnAddToUnit(this);  // 消息传递
         AddSkillToTriggers(copySkill);
@@ -1022,7 +1022,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         delayToDel.Clear();
     }
 
-    public ActiveSkill AttackSkill {
+    public AttackAct AttackSkill {
         get { return m_attackSkill; }
 
         set { m_attackSkill = value; }
@@ -2007,50 +2007,4 @@ public class CommandTarget {
         m_targetUnit.Set(null);
         m_targetPoint = target;
     }
-}
-
-[Serializable]
-public class SyncUnitInfo {
-    public SyncUnitInfo() {
-    }
-
-#if false
-    public SyncUnitInfo(Unit unit) {
-        UnitNode node = unit.Node;
-
-        baseInfo.model = unit.Model;
-        baseInfo.name = unit.Name;
-        baseInfo.maxHp = unit.MaxHpBase;
-        AttackAct attack = unit.AttackSkill as AttackAct;
-        if (attack != null) {
-            baseInfo.attackSkill = new AttackInfo();
-            baseInfo.attackSkill.cd = attack.coolDownBase;
-            baseInfo.attackSkill.type = AttackValue.TypeToName(attack.AttackType);
-            baseInfo.attackSkill.value = attack.AttackValueBase;
-            baseInfo.attackSkill.range = attack.CastRange;
-            baseInfo.attackSkill.horizontal = attack.CastHorizontal;
-            List<int> castAnimations = attack.castAnimations;
-            baseInfo.attackSkill.animations = new string[castAnimations.Count];
-            for (int i = 0; i < castAnimations.Count; ++i) {
-                baseInfo.attackSkill.animations[i] = ModelNode.IdToName(castAnimations[i]);
-            }
-            baseInfo.attackSkill.projectile = attack.ProjectileTemplate.Model;
-        }
-
-        position = node.position;
-        flippedX = node.flippedX;
-        hp = unit.Hp;
-        force = unit.force.Force;
-        baseInfo.move = unit.MoveSpeedBase;
-        baseInfo.revivable = unit.Revivable;
-        baseInfo.isfixed = unit.Fixed;
-    }
-#endif
-
-    public int id;
-    public UnitInfo baseInfo = new UnitInfo();
-    public Vector2Serializable position;
-    public bool flippedX;
-    public float hp;
-    public int force;
 }

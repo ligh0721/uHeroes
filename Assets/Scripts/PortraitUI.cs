@@ -1,9 +1,11 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class PortraitUI : MonoBehaviour {
+public class PortraitUI : MonoBehaviour, IPointerClickHandler {
     public Text m_level;
     public Image m_portrait;
     public Image m_selected;
@@ -15,29 +17,45 @@ public class PortraitUI : MonoBehaviour {
     float m_maxHp = 1;
     int m_exp;
     int m_maxExp = 1;
-    Unit m_unit;
+    bool m_selectedValue = true;
+    UnitSafe m_unit;
+    internal PortraitGroupUI m_parent;
 
     // Use this for initialization
-    void Start () {
+    void Start() {
         transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
         Selected = false;
     }
 
-    public void SetUnit(Unit unit) {
-        m_unit = unit;
+    public Unit Unit {
+        get { return m_unit; }
+        set { m_unit.Set(value); }
     }
 	
 	// Update is called once per frame
-	void Update () {
-        if (MaxHp != m_unit.MaxHp) {
-            MaxHp = m_unit.MaxHp;
+	void Update() {
+        Unit u = m_unit;
+        if (u == null) {
+            return;
         }
-        
-        if (Hp != m_unit.Hp) {
-            Hp = m_unit.Hp;
+
+        if (MaxHp != u.MaxHp) {
+            MaxHp = u.MaxHp;
+        }
+        if (Hp != u.Hp) {
+            Hp = u.Hp;
         }
     }
-    
+
+    public void OnPointerClick(PointerEventData eventData) {
+        Unit u = m_unit;
+        if (u == null) {
+            return;
+        }
+
+        Selected = true;
+    }
+
     public int Level {
         get {
             return m_levelValue;
@@ -107,14 +125,39 @@ public class PortraitUI : MonoBehaviour {
 
     public bool Selected {
         get {
-            return m_selected.GetComponent<Renderer>().material.color.a != 0.0f;
+            return m_selectedValue;
         }
 
         set {
+            if (m_selectedValue == value) {
+                return;
+            }
+
             var img = m_selected.GetComponent<Image>();
             var color = img.color;
             color.a = value ? 1.0f : 0.0f;
             img.color = color;
+            m_selectedValue = value;
+            if (value == true) {
+                if (m_parent != null) {
+                    // 只允许选中一个
+                    foreach (PortraitUI portrait in m_parent.m_portraits) {
+                        if (portrait != this) {
+                            portrait.Selected = false;
+                        }
+                    }
+                }
+                OnSelected();
+            }
+        }
+    }
+
+    void OnSelected() {
+        Unit u = m_unit;
+        if (u != null) {
+            if (PlayerUnitController.Current.Controlling != u) {
+                PlayerUnitController.Current.Controlling = u;
+            }
         }
     }
 }

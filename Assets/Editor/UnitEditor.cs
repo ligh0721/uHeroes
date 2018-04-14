@@ -5,7 +5,7 @@ using UnityEditor;
 
 
 [CustomEditor(typeof(Unit))]
-public class UnitControllerEditor : Editor {
+public class UnitEditor : Editor {
     TextAsset m_modelTextAsset;
 
     void OnEnable() {

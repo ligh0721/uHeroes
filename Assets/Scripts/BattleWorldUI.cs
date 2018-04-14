@@ -4,19 +4,35 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 public class BattleWorldUI : MonoBehaviour {
+    public BottomStatusBarUI bottomStatusBar;
+    public PortraitGroupUI portraitGroup;
+
+    static BattleWorldUI _current;
+    
+    void Awake() {
+        Debug.Assert(_current == null);
+        _current = this;
+    }
+
+    void OnDestroy() {
+        _current = null;
+    }
 
 	// Use this for initialization
-	void Start () {
+	void Start() {
 		
 	}
 	
 	// Update is called once per frame
-	void Update () {
+	void Update() {
 		
 	}
+    public static BattleWorldUI Current {
+        get { return _current; }
+    }
 
     public void OnTestBtn() {
-        World.Main.StopWorld();
+        World.Current.StopWorld();
         GameManager.Reset();
 
         if (GameManager.isServer) {

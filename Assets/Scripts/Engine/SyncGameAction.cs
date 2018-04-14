@@ -19,7 +19,7 @@ public class SyncGameAction {
 
     public Unit Unit {
         get {
-            Unit u = World.Main.GetUnit(unitId);
+            Unit u = World.Current.GetUnit(unitId);
             return u;
         }
     }
@@ -32,7 +32,7 @@ public class SyncGameAction {
     }
 
     public World world {
-        get { return World.Main; }
+        get { return World.Current; }
     }
 
     public bool valid {
@@ -175,7 +175,7 @@ public class SyncCreateUnit : SyncGameAction {
 
     public override void Play() {
         Debug.Log("SyncCreateUnit");
-        World.Main.CreateUnit(syncInfo, playerId);
+        World.Current.CreateUnit(syncInfo, playerId);
     }
 
     SyncUnitInfo syncInfo;
@@ -184,15 +184,15 @@ public class SyncCreateUnit : SyncGameAction {
 
 [Serializable]
 public class SyncCreateProjectile : SyncGameAction {
-    public SyncCreateProjectile(SyncProjectileInfo syncInfo) {
+    public SyncCreateProjectile(ProjectileSyncInfo syncInfo) {
         this.syncInfo = syncInfo;
     }
 
     public override void Play() {
-        World.Main.CreateProjectile(syncInfo);
+        World.Current.CreateProjectile(syncInfo);
     }
 
-    SyncProjectileInfo syncInfo;
+    ProjectileSyncInfo syncInfo;
 }
 
 [Serializable]
@@ -232,16 +232,16 @@ public class SyncRemoveUnit : SyncGameAction {
 // ============ Tanks =============
 [Serializable]
 public class SyncCreateTank : SyncGameAction {
-    public SyncCreateTank(SyncTankInfo syncInfo, int playerId) {
+    public SyncCreateTank(TankSyncInfo syncInfo, int playerId) {
         this.syncInfo = syncInfo;
         this.playerId = playerId;
     }
 
     public override void Play() {
         Debug.Log("SyncCreateTank");
-        World.Main.CreateTank(syncInfo, playerId);
+        World.Current.CreateTank(syncInfo, playerId);
     }
 
-    SyncTankInfo syncInfo;
+    TankSyncInfo syncInfo;
     int playerId;
 }

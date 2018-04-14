@@ -19,7 +19,7 @@ public class CameraFollowPlayer : MonoBehaviour {
 
         Transform followedT = followed.transform;
         Vector3 pos = transform.position;
-        Vector2 hsz = Utils.halfCameraSize;
+        Vector2 hsz = Utils.HalfCameraSize;
 
         float slowX = hsz.x * CONST_SLOW;
         float fastDeltaX = hsz.x * CONST_FAST_DELTA;

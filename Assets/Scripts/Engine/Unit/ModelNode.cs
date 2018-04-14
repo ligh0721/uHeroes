@@ -7,21 +7,6 @@ public class ModelNode : NodeWithHeight {
     protected Dictionary<int, cca.Animation> m_animations = new Dictionary<int, cca.Animation>();
     protected Dictionary<int, Sprite> m_frames = new Dictionary<int, Sprite>();
 
-#if UNITY_EDITOR
-    void Reset() {
-        Awake();
-    }
-#endif
-
-    void Awake() {
-        // TODO: delete test 删掉是否会被调用
-        init();
-    }
-
-    void OnDestroy() {
-        cleanup();
-    }
-
     public override void cleanup() {
         m_animations.Clear();
         m_frames.Clear();

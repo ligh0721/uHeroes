@@ -71,15 +71,14 @@ public class ActiveSkill : Skill {
                 }
 
                 if (m_projectileTemplate != null && t != o) {
-                    SyncProjectileInfo syncInfo = new SyncProjectileInfo();
-                    syncInfo.baseInfo = m_projectileTemplate;
+                    ProjectileSyncInfo syncInfo = new ProjectileSyncInfo(Utils.IdGen.nextId, m_projectileTemplate);
                     syncInfo.fromTo = Projectile.FromToType.kUnitToUnit;
                     syncInfo.useFireOffset = true;
                     syncInfo.srcUnit = o.Id;
                     syncInfo.fromUnit = o.Id;
                     syncInfo.toUnit = t.Id;
 
-                    World.Main.CreateProjectile(syncInfo, this);
+                    World.Current.CreateProjectile(syncInfo, this);
 
                     //UnitNode td = t.Node;
                     //Debug.Assert(td != null);
@@ -92,14 +91,13 @@ public class ActiveSkill : Skill {
 
         case CommandTarget.Type.kPointTarget:
             if (m_projectileTemplate != null) {
-                SyncProjectileInfo syncInfo = new SyncProjectileInfo();
-                syncInfo.baseInfo = m_projectileTemplate;
+                ProjectileSyncInfo syncInfo = new ProjectileSyncInfo(Utils.IdGen.nextId, m_projectileTemplate);
                 syncInfo.fromTo = Projectile.FromToType.kUnitToPoint;
                 syncInfo.useFireOffset = true;
                 syncInfo.srcUnit = o.Id;
                 syncInfo.fromUnit = o.Id;
                 syncInfo.toPos = Utils.GetForwardPoint(d.position, o.CastTarget.TargetPoint, m_castRange);
-                World.Main.CreateProjectile(syncInfo, this);
+                World.Current.CreateProjectile(syncInfo, this);
             } else {
                 PlayEffectSound();
                 OnUnitSkillEffect(null, null);

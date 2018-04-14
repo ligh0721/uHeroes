@@ -43,19 +43,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_heroes:
   - {fileID: 4900000, guid: 5b91749bfb3641445a7e51eceab49a41, type: 3}
-  - {fileID: 4900000, guid: 5b91749bfb3641445a7e51eceab49a41, type: 3}
-  - {fileID: 4900000, guid: 5b91749bfb3641445a7e51eceab49a41, type: 3}
-  - {fileID: 4900000, guid: 5b91749bfb3641445a7e51eceab49a41, type: 3}
+  - {fileID: 4900000, guid: 990c3779fdeec8b48925126d70b8da84, type: 3}
+  - {fileID: 4900000, guid: dd22b14a12267f4409ca62bf52899e8d, type: 3}
+  - {fileID: 4900000, guid: 41607209b88fd8b44b543fd444f27af4, type: 3}
   m_testUnits:
   - {fileID: 4900000, guid: 189db4e938b85744388ad4512f8e520b, type: 3}
-  - {fileID: 4900000, guid: 189db4e938b85744388ad4512f8e520b, type: 3}
-  - {fileID: 4900000, guid: 189db4e938b85744388ad4512f8e520b, type: 3}
-  - {fileID: 4900000, guid: 189db4e938b85744388ad4512f8e520b, type: 3}
-  - {fileID: 4900000, guid: 189db4e938b85744388ad4512f8e520b, type: 3}
-  - {fileID: 4900000, guid: 189db4e938b85744388ad4512f8e520b, type: 3}
+  - {fileID: 4900000, guid: 5b91749bfb3641445a7e51eceab49a41, type: 3}
+  - {fileID: 4900000, guid: 990c3779fdeec8b48925126d70b8da84, type: 3}
+  - {fileID: 4900000, guid: dd22b14a12267f4409ca62bf52899e8d, type: 3}
+  - {fileID: 4900000, guid: 41607209b88fd8b44b543fd444f27af4, type: 3}
+  - {fileID: 4900000, guid: fd16834e9b741a74da4eecd5532b6e08, type: 3}
   m_testPlayerCount: 3
   m_testCreateRate: 1.4
-  m_testMax: 1
+  m_testMax: 20
 --- !u!114 &11462970
 MonoBehaviour:
   m_ObjectHideFlags: 1

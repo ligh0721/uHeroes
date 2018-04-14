@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [ExecuteInEditMode]
-public class CanvasHUD : MonoBehaviour {
+public class UnitHUDCanvas : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {

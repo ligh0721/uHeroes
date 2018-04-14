@@ -122,6 +122,18 @@ public class AttackAct : ActiveSkill {
         set { m_attackValue.coeff = value; }
     }
 
+    public float AttackValueRandomRange {
+        get { return m_attackValueRandomRange.v; }
+    }
+
+    public float AttackValueRandomRangeBase {
+        get { return m_attackValueRandomRange.x; }
+    }
+
+    public Coeff AttackValueRandomRangeCoeff {
+        get { return m_attackValueRandomRange.coeff; }
+    }
+
     // 攻击间隔
     public override float coolDown {
         get {
@@ -157,5 +169,5 @@ public class AttackAct : ActiveSkill {
 
     protected AttackValue m_attackValue;
     protected Value m_attackValueRandomRange;
-    protected ActiveSkill m_origin;
+    protected AttackAct m_origin;
 }

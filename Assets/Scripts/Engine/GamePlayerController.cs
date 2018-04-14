@@ -7,7 +7,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using LitJson;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 
 
 /// <summary>
@@ -15,8 +17,11 @@ using UnityEditor;
 /// </summary>
 public class GamePlayerController : NetworkBehaviour {
     public List<TextAsset> m_heroes;
-
     public List<TextAsset> m_testUnits;
+
+    [SyncVar]
+    internal Player m_player = new Player();
+
     string[] m_testProjectilesDatas =
     {
         "Projectiles/ArcaneRay",
@@ -54,7 +59,7 @@ public class GamePlayerController : NetworkBehaviour {
             return s_localClient;
         }
     }
-
+#if UNITY_EDITOR
     static void fakeClientForEditor() {
         if (s_localClient != null) {
             return;
@@ -63,13 +68,10 @@ public class GamePlayerController : NetworkBehaviour {
         var gamePlayer = Instantiate(prefab);
         s_localClient = gamePlayer.GetComponent<GamePlayerController>();
     }
-
+#endif
     public int playerId {
         get { return m_player.id; }
     }
-
-    [SyncVar]
-    internal Player m_player = new Player();
 
     public Player Player {
         get { return m_player; }
@@ -157,7 +159,7 @@ public class GamePlayerController : NetworkBehaviour {
     [Command]
     void CmdAddPlayer(Player playerInfo) {
         // 服务器补全信息
-        playerInfo.id = Utils.IdGenerator.nextId;
+        playerInfo.id = Utils.IdGen.nextId;
         playerInfo.force = GameManager.ServerAddNewForce();
 
         // 下发到所有客户端
@@ -304,21 +306,23 @@ public class GamePlayerController : NetworkBehaviour {
     // ======== 创建单位, 需在World实例化之后调用 ========
     [Server]
     public void ServerCreateUnits() {
-        Vector2 sz = Utils.halfCameraSize;
+        Vector2 sz = Utils.HalfCameraSize;
         // 创建玩家单位
         foreach (GamePlayerController ctrl in GameManager.AllPlayers.Values) {
             Player playerInfo = ctrl.Player;
-            string path = string.Format("Units/[Player{0}]", ctrl.playerId);
-            SyncUnitInfo syncInfo = new SyncUnitInfo();
-            syncInfo.baseInfo = ResourceManager.instance.LoadUnit(path, playerInfo.heroData);
-            syncInfo.id = Utils.IdGenerator.nextId;
+            SyncUnitInfo syncInfo = new SyncUnitInfo(Utils.IdGen.nextId, ResourceManager.instance.LoadUnit(string.Format("Units/[Player{0}]", ctrl.playerId), playerInfo.heroData));
             syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
             syncInfo.force = playerInfo.force;
             syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-            Unit unit = World.Main.CreateUnit(syncInfo, ctrl.playerId);
-            if (ctrl.isLocalPlayer) {
-                World.Main.SetCameraFollowed(unit.gameObject);
-            }
+            Unit unit = World.Current.CreateUnit(syncInfo, ctrl.playerId);
+            PlayerUnitController.Current.Controlling = unit;
+
+            // create 2nd test player unit
+            syncInfo = new SyncUnitInfo(Utils.IdGen.nextId, ResourceManager.instance.LoadUnit(null, m_heroes[Utils.Random.Next(m_heroes.Count)].text));
+            syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
+            syncInfo.force = playerInfo.force;
+            syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
+            World.Current.CreateUnit(syncInfo, ctrl.playerId);
         }
 
         // 随即创建单位
@@ -327,7 +331,7 @@ public class GamePlayerController : NetworkBehaviour {
         //CreateOneTestUnit();
 
         // 世界开始运转
-        World.Main.StartWorld();
+        World.Current.StartWorld();
     }
 
     IEnumerator RepeatCreateUnit(string name) {
@@ -338,26 +342,23 @@ public class GamePlayerController : NetworkBehaviour {
     }
 
     void CreateOneTestUnit() {
-        Vector2 sz = Utils.halfCameraSize;
-        SyncUnitInfo syncInfo = new SyncUnitInfo();
-        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("Units/Arcane");
+        string path = "Units/Arcane";
+        Vector2 sz = Utils.HalfCameraSize;
+        SyncUnitInfo syncInfo = new SyncUnitInfo(Utils.IdGen.nextId, ResourceManager.instance.LoadUnit(path));
         syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-        syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        World.Main.CreateUnit(syncInfo);
+        World.Current.CreateUnit(syncInfo);
     }
 
     void CreateTestUnit() {
-        Vector2 sz = Utils.halfCameraSize;
+        Vector2 sz = Utils.HalfCameraSize;
         // 创建普通单位
-        SyncUnitInfo syncInfo = new SyncUnitInfo();
-        syncInfo.baseInfo = ResourceManager.instance.LoadUnit("", m_testUnits[Utils.Random.Next(m_testUnits.Count)].text);
+        SyncUnitInfo syncInfo = new SyncUnitInfo(Utils.IdGen.nextId, ResourceManager.instance.LoadUnit(null, m_testUnits[Utils.Random.Next(m_testUnits.Count)].text));
         syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
-        syncInfo.id = Utils.IdGenerator.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        World.Main.CreateUnit(syncInfo);
+        World.Current.CreateUnit(syncInfo);
     }
 
     [Command]
@@ -365,20 +366,20 @@ public class GamePlayerController : NetworkBehaviour {
         //RpcMove(transform.localPosition, pos, obstinate);
         //Unit unit = WorldController.instance.World.GetUnit(id);
         //Debug.LogFormat("ServerMove, unitId({0}) <-> playerId({1}), force({2}), hp({3}/{4})", m_unitCtrl.Unit.Id, PlayerId, m_unitCtrl.Unit.Force, m_unitCtrl.Unit.Hp, m_unitCtrl.Unit.MaxHp);
-        Unit unit = World.Main.GetUnit(unitId);
+        Unit unit = World.Current.GetUnit(unitId);
         unit.CommandMove(pos, obstinate);
     }
 
     [Command]
     public void CmdCastSpell(int unitId, CommandTarget.Type targetType, int targetUnitId, Vector2 targetPoint, string activeSkill, bool obstinate) {
-        Unit unit = World.Main.GetUnit(unitId);
+        Unit unit = World.Current.GetUnit(unitId);
         CommandTarget target;
         switch (targetType) {
         default:
             target = new CommandTarget();
             break;
         case CommandTarget.Type.kUnitTarget:
-            target = new CommandTarget(World.Main.GetUnit(targetUnitId));
+            target = new CommandTarget(World.Current.GetUnit(targetUnitId));
             break;
         case CommandTarget.Type.kPointTarget:
             target = new CommandTarget(targetPoint);
@@ -429,12 +430,12 @@ public class GamePlayerController : NetworkBehaviour {
     // 创建坦克单位
     [Server]
     public void ServerCreateTanks() {
-        Vector2 sz = Utils.halfCameraSize;
+        Vector2 sz = Utils.HalfCameraSize;
         // 创建玩家单位
         foreach (GamePlayerController ctrl in GameManager.AllPlayers.Values) {
             Player playerInfo = ctrl.Player;
             //string path = string.Format("Units/[Player{0}]", ctrl.playerId);
-            SyncTankInfo syncInfo = new SyncTankInfo();
+            TankSyncInfo syncInfo = new TankSyncInfo();
             //syncInfo.baseInfo = ResourceManager.instance.LoadTank(path, playerInfo.heroData);
             syncInfo.baseInfo.model = "Player";
             syncInfo.baseInfo.maxHp = 2000;
@@ -452,20 +453,20 @@ public class GamePlayerController : NetworkBehaviour {
             attackSkill.animations = new string[0];
             attackSkill.projectile = "Projectiles/MageBolt";
             syncInfo.baseInfo.attackSkill = attackSkill;
-            syncInfo.id = Utils.IdGenerator.nextId;
+            syncInfo.id = Utils.IdGen.nextId;
             syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
             syncInfo.force = playerInfo.force;
            
             syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
             syncInfo.rotation = (float)Utils.Random.NextDouble() * 360.0f;
-            SyncTankGunInfo gunInfo = new SyncTankGunInfo();
+            TankGunSyncInfo gunInfo = new TankGunSyncInfo();
             gunInfo.position = new Vector3Serializable(0.0f, 0.0f, 0.0f);
             gunInfo.rotation = 0.0f;
             gunInfo.rotateSpeed = 1.0f;
             syncInfo.guns.Add(gunInfo);
-            Tank unit = World.Main.CreateTank(syncInfo, ctrl.playerId);
+            Tank unit = World.Current.CreateTank(syncInfo, ctrl.playerId);
             if (ctrl.isLocalPlayer) {
-                World.Main.SetCameraFollowed(unit.gameObject);
+                World.Current.SetCameraFollowed(unit.gameObject);
             }
         }
 
@@ -475,13 +476,13 @@ public class GamePlayerController : NetworkBehaviour {
         //CreateOneTestUnit();
 
         // 世界开始运转
-        World.Main.StartWorld();
+        World.Current.StartWorld();
     }
 
     void CreateTestTank() {
-        Vector2 sz = Utils.halfCameraSize;
+        Vector2 sz = Utils.HalfCameraSize;
         // 创建普通单位
-        SyncTankInfo syncInfo = new SyncTankInfo();
+        TankSyncInfo syncInfo = new TankSyncInfo();
         //syncInfo.baseInfo = ResourceManager.instance.LoadUnit("", m_testUnits[Utils.Random.Next(m_testUnits.Count)].text);
         syncInfo.baseInfo.model = "Test";
         syncInfo.baseInfo.maxHp = 500;
@@ -491,14 +492,14 @@ public class GamePlayerController : NetworkBehaviour {
         syncInfo.baseInfo.move = 2;
         syncInfo.position = new Vector2((float)(-sz.x + Utils.Random.NextDouble() * sz.x * 2), (float)(-sz.y + Utils.Random.NextDouble() * sz.y * 2));
         syncInfo.rotation = (float)Utils.Random.NextDouble() * 360.0f;
-        syncInfo.id = Utils.IdGenerator.nextId;
+        syncInfo.id = Utils.IdGen.nextId;
         syncInfo.hp = (float)syncInfo.baseInfo.maxHp;
         syncInfo.force = Utils.Random.Next(8);
-        SyncTankGunInfo gunInfo = new SyncTankGunInfo();
+        TankGunSyncInfo gunInfo = new TankGunSyncInfo();
         gunInfo.position = new Vector3(0.0f, 0.0f, 0.0f);
         gunInfo.rotation = 0.0f;
         syncInfo.guns.Add(gunInfo);
-        World.Main.CreateTank(syncInfo);
+        World.Current.CreateTank(syncInfo);
     }
 }
 
