@@ -583,7 +583,7 @@ PlayerSettings:
   vrEditorSettings: {}
   cloudServicesEnabled:
     Analytics: 0
-    Build: 1
+    Build: 0
     Collab: 1
     ErrorHub: 0
     Game_Performance: 0
@@ -591,7 +591,7 @@ PlayerSettings:
     Purchasing: 0
     UNet: 1
     Unity_Ads: 0
-  cloudProjectId: 88b9fe21-3b73-4dc8-989c-28ce09e11f35
+  cloudProjectId: ba7a8311-b43b-4475-815b-1b19a0979086
   projectName: uHeroes
   organizationId: ligh0721
   cloudEnabled: 0

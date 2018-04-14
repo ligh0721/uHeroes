@@ -63,14 +63,14 @@ public class MoveToNode : ActionInterval {
         fA = -4 * _fMaxHeightDelta / (fA * fA);
         float fHeightDelta = fA * fX * fX + _fMaxHeightDelta;
 
-        NodeWithHeight rendererTarget = _target as NodeWithHeight;
-        rendererTarget.position = _oStartPos + _oDeltaPos * time;
-        rendererTarget.height = _fFromHeight + _fDeltaHeight * time + fHeightDelta;
+        NodeWithHeight target = _target as NodeWithHeight;
+        target.position = _oStartPos + _oDeltaPos * time;
+        target.height = _fFromHeight + _fDeltaHeight * time + fHeightDelta;
 
         if (_bFixRotation) {
             // 修正角度
             //float fOffsetR = Mathf.Atan(fA * fX);
-            rendererTarget.rotation = (
+            target.rotation = (
                 Mathf.Atan2(_oEndPos.y - _oStartPos.y, _oEndPos.x - _oStartPos.x) +
                 (_oStartPos.x < _oEndPos.x ? Mathf.Atan(fA * fX) : -Mathf.Atan(fA * fX))
             ) * Mathf.Rad2Deg;

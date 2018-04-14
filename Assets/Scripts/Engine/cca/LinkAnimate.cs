@@ -4,6 +4,14 @@ using cca;
 
 
 class LinkAnimate : Animate {
+    protected Projectile.FromToType m_fromToType;
+    protected UnitSafe m_from;
+    protected Vector2 m_fromPos;
+    protected UnitSafe m_to;
+    protected Vector2 m_toPos;
+    // 用来区分这段link是刚发射的，还是传递中（闪电链）的，他们的出发点位置不同
+    protected bool m_fireFrom;
+
     public LinkAnimate(cca.Animation animation, Animate.Function onSpecial, UnitNode from, UnitNode to)
         : base(animation, onSpecial) {
         m_fromToType = Projectile.FromToType.kUnitToUnit;
@@ -30,6 +38,7 @@ class LinkAnimate : Animate {
         ProjectileNode r = target as ProjectileNode;
         Projectile p = r.Projectile;
         m_fireFrom = m_fromToType == Projectile.FromToType.kUnitToUnit && p.SourceUnit != null && m_from.Node == p.SourceUnit.Node;
+        r.height = 0.0f;
         //target.visible = false;
     }
 
@@ -51,6 +60,7 @@ class LinkAnimate : Animate {
             return;
         }
 
+        ProjectileNode target = _target as ProjectileNode;
         m_fromPos = from.position;
 
         float fFromOffsetX = 0.0f;
@@ -76,22 +86,19 @@ class LinkAnimate : Animate {
         //RendererNode rendererTarget = _target as RendererNode;
         //rendererTarget.height = (fFromHeight + fToHeight) / 2;
 
+        //World.Main.dbgPos[0].transform.position = new Vector3(m_fromPos.x, m_fromPos.y, -200);
+        //World.Main.dbgPos[1].transform.position = new Vector3(m_toPos.x, m_toPos.y, -200);
+
         Vector2 delta = m_toPos - m_fromPos;
         float fR = Utils.GetAngle(delta);
 
-        float fScale = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y) / _target.size.x;
-        _target.position = new Vector2((m_fromPos.x + m_toPos.x) / 2, (m_fromPos.y + m_toPos.y) / 2);
-        _target.rotation = fR;
-        Vector2 scale = _target.scale;
+        float fScale = Mathf.Sqrt(delta.x * delta.x + delta.y * delta.y) / target.size.x;
+        target.position = new Vector2((m_fromPos.x + m_toPos.x) / 2, (m_fromPos.y + m_toPos.y) / 2);
+        //World.Main.dbgPos[2].transform.position = new Vector3(_target.gameObject.transform.position.x, _target.gameObject.transform.position.y, -200);
+        //World.Main.dbgPos[2].transform.position = new Vector3(target.position.x, target.position.y, -200);
+        target.rotation = fR;
+        Vector2 scale = target.scale;
         scale.x = fScale;
-        _target.scale = scale;
+        target.scale = scale;
     }
-
-    protected Projectile.FromToType m_fromToType;
-    protected UnitSafe m_from;
-    protected Vector2 m_fromPos;
-    protected UnitSafe m_to;
-    protected Vector2 m_toPos;
-    protected bool m_fireFrom;
-    // 用来区分这段link是刚发射的，还是传递中的，他们的出发点位置不同
 }

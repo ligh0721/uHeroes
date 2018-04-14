@@ -5,6 +5,9 @@ using cca;
 public class World : MonoBehaviour {
     static World _main;
 
+    //public Dictionary<string, GameObject> dbgPosPrefabs = new Dictionary<string, GameObject>();
+    public List<GameObject> dbgPos = new List<GameObject>();
+
     // 用于对象池分配Unit对象
     public GameObject unitPrefab;
     // 用于对象池分配Projectile对象
@@ -54,17 +57,18 @@ public class World : MonoBehaviour {
             sr.enabled = true;
             sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
             UnitNode node = obj.GetComponent<UnitNode>();
+            node.init();
             node.enabled = true;
             Unit unit = obj.GetComponent<Unit>();
             unit.enabled = true;
         };
         GameObjectPool.DestroyFunction unitDestroy = delegate(GameObject obj) {
             UnitNode node = obj.GetComponent<UnitNode>();
-            node.cleanup();
             node.enabled = false;
+            node.cleanup();
             Unit unit = obj.GetComponent<Unit>();
-            unit.Cleanup();
             unit.enabled = false;
+            unit.Cleanup();
         };
         GameObjectPool.instance.Alloc(unitPrefab, 50, unitReset, unitDestroy);
 
@@ -76,17 +80,18 @@ public class World : MonoBehaviour {
             sr.enabled = true;
             sr.color = new Color(1.0f, 1.0f, 1.0f, 1.0f);
             ProjectileNode node = obj.GetComponent<ProjectileNode>();
+            node.init();
             node.enabled = true;
-            Projectile unit = obj.GetComponent<Projectile>();
-            unit.enabled = true;
+            Projectile projectile = obj.GetComponent<Projectile>();
+            projectile.enabled = true;
         };
         GameObjectPool.DestroyFunction projectileDestroy = delegate (GameObject obj) {
             ProjectileNode node = obj.GetComponent<ProjectileNode>();
-            node.cleanup();
             node.enabled = false;
+            node.cleanup();
             Projectile projectile = obj.GetComponent<Projectile>();
-            //projectile.Cleanup();
             projectile.enabled = false;
+            //projectile.Cleanup();
         };
         GameObjectPool.instance.Alloc(projectilePrefab, 50, projectileReset, projectileDestroy);
 
@@ -97,8 +102,8 @@ public class World : MonoBehaviour {
         };
         GameObjectPool.DestroyFunction unitHUDDestroy = delegate(GameObject obj) {
             UnitHUD unitHUD = obj.GetComponent<UnitHUD>();
-            unitHUD.m_unit. Set(null);
             unitHUD.enabled = false;
+            unitHUD.m_unit. Set(null);
         };
         GameObjectPool.instance.Alloc(unitHUDPrefab, 50, unitHUDReset, unitHUDDestroy);
     }

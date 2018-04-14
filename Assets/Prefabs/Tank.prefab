@@ -52,8 +52,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a5d10570580938489b81fc6a3673fb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_texHpBorder: {fileID: 2800000, guid: c0b6f3490178b405296d4e6f3bec394e, type: 3}
-  m_texHpFill: {fileID: 2800000, guid: d9b1e6861893d47738e0ff9909dd2423, type: 3}
 --- !u!212 &212431878039051348
 SpriteRenderer:
   m_ObjectHideFlags: 1

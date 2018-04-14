@@ -4,22 +4,6 @@ using cca;
 
 
 public class TankGunNode : UnitNode {
-
-#if UNITY_EDITOR
-    void Reset() {
-        Awake();
-    }
-#endif
-
-    void Awake() {
-        // TODO: delete test 删掉是否会被调用
-        init();
-    }
-
-    void OnDestroy() {
-        cleanup();
-    }
-
     public override void init() {
         base.init();
     }

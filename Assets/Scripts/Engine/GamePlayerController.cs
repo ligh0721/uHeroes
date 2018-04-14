@@ -59,7 +59,7 @@ public class GamePlayerController : NetworkBehaviour {
         if (s_localClient != null) {
             return;
         }
-        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Scripts/Engine/GamePlayer.prefab");
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/GamePlayer.prefab");
         var gamePlayer = Instantiate(prefab);
         s_localClient = gamePlayer.GetComponent<GamePlayerController>();
     }

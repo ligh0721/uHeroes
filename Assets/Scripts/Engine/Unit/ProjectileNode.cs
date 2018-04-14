@@ -3,22 +3,6 @@ using cca;
 
 
 public class ProjectileNode : ModelNode {
-
-#if UNITY_EDITOR
-    void Reset() {
-        Awake();
-    }
-#endif
-
-    void Awake() {
-        // TODO: delete test 删掉是否会被调用
-        init();
-    }
-
-    void OnDestroy() {
-        cleanup();
-    }
-
     public override void init() {
         base.init();
         m_projectile = GetComponent<Projectile>();
