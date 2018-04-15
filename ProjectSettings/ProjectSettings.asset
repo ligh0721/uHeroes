@@ -584,14 +584,14 @@ PlayerSettings:
   cloudServicesEnabled:
     Analytics: 0
     Build: 0
-    Collab: 1
+    Collab: 0
     ErrorHub: 0
     Game_Performance: 0
     Hub: 0
     Purchasing: 0
     UNet: 1
     Unity_Ads: 0
-  cloudProjectId: 
-  projectName: 
-  organizationId: 
+  cloudProjectId: 9a19c11c-cfd3-4855-98db-35284bf4a3f5
+  projectName: uHeroes
+  organizationId: ligh0721
   cloudEnabled: 0
