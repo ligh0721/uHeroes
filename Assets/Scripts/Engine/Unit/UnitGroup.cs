@@ -144,7 +144,7 @@ public class UnitGroup
         return m_units.Count;
     }
 
-    public void damaged(AttackData attack, Unit source, uint triggerMask = Unit.kTriggerMaskNoMasked)
+    public void damaged(AttackData attack, Unit source, UnitEventTrigger triggerMask = UnitEventTrigger.kTriggerMaskNoMasked)
     {
         AttackData ad = null;
         foreach(var u in m_units)
@@ -161,11 +161,11 @@ public class UnitGroup
 
     public static bool MatchFunctionLivingAlly(Unit unit, UnitForce force)
     {
-        return !unit.Dead && unit.force.IsMyAlly(force);
+        return !unit.isDead && unit.force.IsMyAlly(force);
     }
 
     public static bool MatchFunctionLivingEnemy(Unit unit, UnitForce force)
     {
-        return !unit.Dead && force.IsMyEnemy(unit.force);
+        return !unit.isDead && force.IsMyEnemy(unit.force);
     }
 }

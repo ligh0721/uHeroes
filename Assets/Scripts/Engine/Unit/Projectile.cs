@@ -161,13 +161,13 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     protected HashSet<Unit> m_contactedUnits = new HashSet<Unit>();
 
     // 决定能影响的势力群组
-    public uint EffectiveTypeFlags {
+    public ForceEffective EffectiveTypeFlags {
         get { return m_effectiveTypeFlags; }
 
         set { m_effectiveTypeFlags = value; }
     }
 
-    protected uint m_effectiveTypeFlags = UnitForce.kEnemy;
+    protected ForceEffective m_effectiveTypeFlags = ForceEffective.kEnemy;
 
     // fire
     // you need to set m_fireType, m_fromToType, m_toUnit or m_toPos, m_fromUnit or m_fromPos before call me
@@ -357,7 +357,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
         set { m_attackData = value; }
     }
 
-    public uint TriggerMask {
+    public UnitEventTrigger TriggerMask {
         get { return m_triggerMask; }
 
         set { m_triggerMask = value; }
@@ -439,7 +439,7 @@ public class Projectile : MonoBehaviour, INetworkable<GamePlayerController> {
     protected UnitSafe m_srcUnit;
     protected bool m_usingFirePoint = true;
     protected AttackData m_attackData;
-    protected uint m_triggerMask = Unit.kTriggerMaskNoMasked;
+    protected UnitEventTrigger m_triggerMask = UnitEventTrigger.kTriggerMaskNoMasked;
     protected Skill m_srcSkill;
     protected FromToType m_fromToType = FromToType.kPointToPoint;
     protected FireType m_fireType = FireType.kFollow;

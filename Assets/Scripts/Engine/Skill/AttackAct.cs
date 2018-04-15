@@ -11,7 +11,7 @@ public class AttackAct : ActiveSkill {
     public const float CONST_MAX_ATTACK_SPEED_MULRIPLE = 100.0f;
 
     public AttackAct(string name, float coolDown, AttackValue attackValue, float attackValueRandomRange = 0.15f)
-        : base(name, coolDown, CommandTarget.Type.kUnitTarget, UnitForce.kEnemy) {
+        : base(name, coolDown, CommandTarget.Type.kUnitTarget, ForceEffective.kEnemy) {
         m_attackValue = attackValue;
         m_attackValueRandomRange = new Value(attackValueRandomRange);
     }
@@ -58,7 +58,7 @@ public class AttackAct : ActiveSkill {
 
     public override bool CheckConditions(CommandTarget rTarget) {
         Unit t = rTarget.TargetUnit;
-        if (t == null || t.Dead) {
+        if (t == null || t.isDead) {
             return false;
         }
 

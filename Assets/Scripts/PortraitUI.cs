@@ -29,7 +29,6 @@ public class PortraitUI : MonoBehaviour, IPointerClickHandler {
 
     public Unit Unit {
         get { return m_unit; }
-        set { m_unit.Set(value); }
     }
 	
 	// Update is called once per frame
@@ -44,6 +43,19 @@ public class PortraitUI : MonoBehaviour, IPointerClickHandler {
         }
         if (Hp != u.Hp) {
             Hp = u.Hp;
+        }
+
+        int maxExp = u.level.MaxExp - u.level.BaseExp;
+        if (MaxExp != maxExp) {
+            MaxExp = maxExp;
+        }
+        int exp = u.level.Exp - u.level.BaseExp;
+        if (Exp != exp) {
+            Exp = exp;
+        }
+
+        if (Level != u.level.Level) {
+            Level = u.level.Level;
         }
     }
 
@@ -118,9 +130,20 @@ public class PortraitUI : MonoBehaviour, IPointerClickHandler {
         }
 
         set {
-            m_exp = (int)((float)m_exp / m_maxExp * value);
             m_maxExp = value;
+            float per = (float)m_exp / m_maxExp;
+            m_expSlider.value = per;
         }
+    }
+
+    public void SetUnit(Unit unit) {
+        m_unit.Set(unit);
+        Portrait = Resources.Load<Sprite>(string.Format("{0}/portrait_hero", unit.Model));
+        MaxHp = (int)unit.MaxHp;
+        Hp = (int)unit.Hp;
+        MaxExp = unit.level.MaxExp - unit.level.BaseExp;
+        Exp = unit.level.Exp - unit.level.BaseExp;
+        Level = unit.level.Level;
     }
 
     public bool Selected {

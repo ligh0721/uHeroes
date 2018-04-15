@@ -4,16 +4,19 @@ using System.Collections.Generic;
 
 
 [RequireComponent(typeof(UnitNode))]
-public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
+public class Unit : MonoBehaviour, ILevelableHandler, INetworkable<GamePlayerController> {
     UnitNode m_node;
     [HideInInspector]
-    public UnitForce force = new UnitForce();
+    public UnitForce force;
+    public Levelable level;
     protected internal World m_world;
     protected string m_name;
     protected internal int m_id;
     protected internal string m_model;
 
-    // 用来累加伤害/治疗数字ff
+    protected UnitAI m_AI;
+
+    // 用来累加伤害/治疗数字
     protected Dictionary<int, float> m_hpChanged = new Dictionary<int, float>();
     protected HashSet<Skill> m_onAttackTargetTriggerSkills = new HashSet<Skill>();
     protected HashSet<Skill> m_onAttackedTriggerSkills = new HashSet<Skill>();
@@ -62,7 +65,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     protected ArmorValue m_armorValue = new ArmorValue(global::ArmorValue.Type.kHeavy, 0);
     // 暴击率
     protected Value m_critRate = new Value(0.2f);
-    // 暴击伤害
+    // 暴击率
     protected Value m_critDmg = new Value(0.5f);
     // 移动速度
     protected Value m_moveSpeed = new Value(1.0f);
@@ -78,6 +81,9 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     void Awake() {
         m_node = GetComponent<UnitNode>();
         Debug.Assert(m_node != null);
+        force = new UnitForce();
+        level = new Levelable(this);
+        level.Level = 1;
     }
 
     public UnitNode Node {
@@ -116,7 +122,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // event
     // 等级变化时被通知，在通过addExp升级的时候，通常来讲changed总是为1，尽管经验有时会足够多以至于连升2级
-    public void OnLevelChanged(int changed) {
+    public void OnLevelChanged(Levelable level, int changed) {
         if (!isServer) {
             return;
         }
@@ -124,6 +130,16 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         if (m_AI != null) {
             m_AI.OnUnitLevelChanged(this, changed);
         }
+    }
+
+    public void OnUpdateExpRange(Levelable level) {
+        int lv = level.Level;
+        // maxExp = 10 * 1.5 ^ (level - 1)
+        int x = 10;
+        float n = 1.5f;
+        int baseExp = (int)(lv > 1 ? x * Mathf.Pow(n, lv - 2) : 0);
+        int maxExp = (int)(x * Mathf.Pow(n, lv - 1));
+        level.SetExpRange(baseExp, maxExp);
     }
 
     // 复活时被通知
@@ -141,7 +157,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
             return;
         }
 
-        if (Dead) {
+        if (isDead) {
             Die();
         }
 
@@ -160,7 +176,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
         TriggerOnDead();
 
-        if (!Dead) {
+        if (!isDead) {
             return;
         }
 
@@ -212,13 +228,13 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     protected void OnTick(float dt) {
-        if (!Dead) {
+        if (!isDead) {
             OnCommandTick(dt);
         }
 
         // TODO: TriggerOnTick(dt);
 
-        if (m_AI != null && !Dead) {
+        if (m_AI != null && !isDead) {
             m_AI.OnUnitTick(this, dt);
         }
     }
@@ -272,7 +288,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
                 if (bUnitTarget) {
                     // 如果是以单位为目标的技能
                     t = m_castTarget.TargetUnit;
-                    if (t != null && !t.Dead) {
+                    if (t != null && !t.isDead) {
                         // 单位存在且单位没有死亡
                         td = t.Node;
                         Debug.Assert(td != null);
@@ -306,12 +322,12 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         }
     }
     // 攻击发出时，攻击者被通知
-    void OnAttackTarget(AttackData attack, Unit target, uint triggerMask) {
+    void OnAttackTarget(AttackData attack, Unit target, UnitEventTrigger triggerMask) {
         if (!isServer) {
             return;
         }
 
-        if ((triggerMask & kTriggerOnAttackTargetTrigger) == 0) {
+        if ((triggerMask & UnitEventTrigger.kTriggerOnAttackTargetTrigger) == 0) {
             TriggerOnAttackTarget(attack, target);
         }
 
@@ -321,13 +337,13 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // 攻击抵达时，受害者被通知
-    bool OnAttacked(AttackData attack, Unit source, uint triggerMask) {
+    bool OnAttacked(AttackData attack, Unit source, UnitEventTrigger triggerMask) {
         if (!isServer) {
             return true;
         }
 
         bool res = true;
-        if ((triggerMask & kTriggerOnAttackedTrigger) == 0) {
+        if ((triggerMask & UnitEventTrigger.kTriggerOnAttackedTrigger) == 0) {
             res = TriggerOnAttacked(attack, source);
         }
 
@@ -339,16 +355,16 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // 攻击命中时，受害者被通知
-    void OnDamaged(AttackData attack, Unit source, uint triggerMask) {
+    void OnDamaged(AttackData attack, Unit source, UnitEventTrigger triggerMask) {
         if (!isServer) {
             return;
         }
 
-        if ((triggerMask & kTriggerOnDamagedSurfaceTrigger) == 0) {
+        if ((triggerMask & UnitEventTrigger.kTriggerOnDamagedSurfaceTrigger) == 0) {
             TriggerOnDamagedSurface(attack, source);
         }
 
-        if ((triggerMask & kTriggerOnDamagedInnerTrigger) == 0) {
+        if ((triggerMask & UnitEventTrigger.kTriggerOnDamagedInnerTrigger) == 0) {
             TriggerOnDamagedInner(attack, source);
         }
 
@@ -358,12 +374,12 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // 攻击命中时，受害者被通知
-    void OnDamagedDone(float fDamage, Unit source, uint triggerMask) {
+    void OnDamagedDone(float fDamage, Unit source, UnitEventTrigger triggerMask) {
         if (!isServer) {
             return;
         }
 
-        if ((triggerMask & kTriggerOnDamagedDoneTrigger) == 0) {
+        if ((triggerMask & UnitEventTrigger.kTriggerOnDamagedDoneTrigger) == 0) {
             TriggerOnDamagedDone(fDamage, source);
         }
 
@@ -373,12 +389,12 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // 攻击命中时，攻击者被通知
-    void OnDamageTargetDone(float fDamage, Unit target, uint triggerMask) {
+    void OnDamageTargetDone(float fDamage, Unit target, UnitEventTrigger triggerMask) {
         if (!isServer) {
             return;
         }
 
-        if ((triggerMask & kTriggerOnDamageTargetDoneTrigger) == 0) {
+        if ((triggerMask & UnitEventTrigger.kTriggerOnDamageTargetDoneTrigger) == 0) {
             TriggerOnDamageTargetDone(fDamage, target);
         }
 
@@ -503,30 +519,10 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         }
     }
 
-    // Trigger
-    public const uint kTriggerOnReviveTrigger = 1 << 0;
-    public const uint kTriggerOnDyingTrigger = 1 << 1;
-    public const uint kTriggerOnDeadTrigger = 1 << 2;
-    public const uint kTriggerOnHpChangedTrigger = 1 << 3;
-    public const uint kTriggerOnTickTrigger = 1 << 4;
-    public const uint kTriggerOnAttackTargetTrigger = 1 << 5;
-    public const uint kTriggerOnAttackedTrigger = 1 << 6;
-    public const uint kTriggerOnDamagedSurfaceTrigger = 1 << 7;
-    public const uint kTriggerOnDamagedInnerTrigger = 1 << 8;
-    public const uint kTriggerOnDamagedDoneTrigger = 1 << 9;
-    public const uint kTriggerOnDamageTargetDoneTrigger = 1 << 10;
-    public const uint kTriggerOnProjectileEffectTrigger = 1 << 11;
-    public const uint kTriggerOnProjectileArriveTrigger = 1 << 12;
-    public const uint kTriggerOnCalcDamageTargetTrigger = 1 << 13;
-
-    public const uint kTriggerMaskNoMasked = 0;
-    public const uint kTriggerMaskAll = 0xFFFFFFFF;
-    public const uint kTriggerMaskActiveTrigger = kTriggerOnAttackTargetTrigger | kTriggerOnDamageTargetDoneTrigger;
-
     // 添加触发器
     public void AddSkillToTriggers(Skill skill) {
         Debug.Assert(skill != null);
-        uint triggerFlags = skill.triggerFlags;
+        UnitEventTrigger triggerFlags = skill.triggerFlags;
         if (triggerFlags == 0) {
             return;
         }
@@ -536,59 +532,59 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
             return;
         }
 
-        if ((triggerFlags & kTriggerOnReviveTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnReviveTrigger) != 0) {
             m_onReviveTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDyingTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDyingTrigger) != 0) {
             m_onDyingTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDeadTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDeadTrigger) != 0) {
             m_onDeadTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnHpChangedTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnHpChangedTrigger) != 0) {
             m_onHpChangedTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnTickTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnTickTrigger) != 0) {
             m_onTickTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnAttackTargetTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnAttackTargetTrigger) != 0) {
             m_onAttackTargetTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnAttackedTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnAttackedTrigger) != 0) {
             m_onAttackedTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamagedSurfaceTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamagedSurfaceTrigger) != 0) {
             m_onDamagedSurfaceTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamagedInnerTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamagedInnerTrigger) != 0) {
             m_onDamagedInnerTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamagedDoneTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamagedDoneTrigger) != 0) {
             m_onDamagedDoneTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamageTargetDoneTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamageTargetDoneTrigger) != 0) {
             m_onDamageTargetDoneTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnProjectileEffectTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnProjectileEffectTrigger) != 0) {
             m_onProjectileEffectTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnProjectileArriveTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnProjectileArriveTrigger) != 0) {
             m_onProjectileArriveTriggerSkills.Add(skill);
         }
 
-        if ((triggerFlags & kTriggerOnCalcDamageTargetTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnCalcDamageTargetTrigger) != 0) {
             m_onCalcDamageTargetTriggerSkills.Add(skill);
         }
     }
@@ -596,7 +592,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // 删除触发器
     public void RemoveSkillFromTriggers(Skill skill) {
         Debug.Assert(skill != null);
-        uint triggerFlags = skill.triggerFlags;
+        UnitEventTrigger triggerFlags = skill.triggerFlags;
         if (triggerFlags == 0) {
             return;
         }
@@ -606,59 +602,59 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
             return;
         }
 
-        if ((triggerFlags & kTriggerOnReviveTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnReviveTrigger) != 0) {
             m_onReviveTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDyingTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDyingTrigger) != 0) {
             m_onDyingTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDeadTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDeadTrigger) != 0) {
             m_onDeadTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnHpChangedTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnHpChangedTrigger) != 0) {
             m_onHpChangedTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnTickTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnTickTrigger) != 0) {
             m_onTickTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnAttackTargetTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnAttackTargetTrigger) != 0) {
             m_onAttackTargetTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnAttackedTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnAttackedTrigger) != 0) {
             m_onAttackedTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamagedSurfaceTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamagedSurfaceTrigger) != 0) {
             m_onDamagedSurfaceTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamagedInnerTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamagedInnerTrigger) != 0) {
             m_onDamagedInnerTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamagedDoneTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamagedDoneTrigger) != 0) {
             m_onDamagedDoneTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnDamageTargetDoneTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnDamageTargetDoneTrigger) != 0) {
             m_onDamageTargetDoneTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnProjectileEffectTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnProjectileEffectTrigger) != 0) {
             m_onProjectileEffectTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnProjectileArriveTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnProjectileArriveTrigger) != 0) {
             m_onProjectileArriveTriggerSkills.Remove(skill);
         }
 
-        if ((triggerFlags & kTriggerOnCalcDamageTargetTrigger) != 0) {
+        if ((triggerFlags & UnitEventTrigger.kTriggerOnCalcDamageTargetTrigger) != 0) {
             m_onCalcDamageTargetTriggerSkills.Remove(skill);
         }
     }
@@ -1033,7 +1029,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         get { return m_hp; }
 
         set {
-            if (Dead) {
+            if (isDead) {
                 return;
             }
 
@@ -1089,12 +1085,12 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         }
     }
 
-    public bool Dead {
+    public bool isDead {
         get { return m_hp <= 0; }
     }
 
     public bool Revive(float hp) {
-        if (Dead) {
+        if (isDead) {
             m_hp = Mathf.Min(Mathf.Max(hp, 1), MaxHp);
             OnHpChanged(m_hp);
             OnRevive();
@@ -1120,7 +1116,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     void OnDyingDone() {
-        if (Dead == false) {
+        if (isDead == false) {
             return;
         }
 
@@ -1133,7 +1129,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         //         u->onDead();
         //     }
 
-        if (Dead) {
+        if (isDead) {
             m_world.RemoveUnit(this, Revivable);
         }
     }
@@ -1145,7 +1141,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     public void CommandStop() {
-        if (Dead || Suspended || Fixed) {
+        if (isDead || Suspended || Fixed) {
             return;
         }
 
@@ -1182,7 +1178,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // 内部会自行调用中层、底层攻击函数，对攻击数据进行传递并处理，通常返回处理后的攻击数据，也可以返回 null
     // 内部会根据人物属性对攻击数据进行一次变换，如力量加成等
     // 触发 OnAttackTarget，
-    public bool Attack(AttackData attack, Unit target, uint triggerMask = kTriggerMaskNoMasked) {
+    public bool Attack(AttackData attack, Unit target, UnitEventTrigger triggerMask = UnitEventTrigger.kTriggerMaskNoMasked) {
         OnAttackTarget(attack, target, triggerMask);
 
         if (target == null || target.OnAttacked(attack, this, triggerMask) == false) {
@@ -1195,7 +1191,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     }
 
     // 底层攻击函数，目前无逻辑，只是将传递过来的攻击数据返回给上层
-    public void AttackLow(AttackData attack, Unit target, uint triggerMask = kTriggerMaskNoMasked) {
+    public void AttackLow(AttackData attack, Unit target, UnitEventTrigger triggerMask = UnitEventTrigger.kTriggerMaskNoMasked) {
     }
 
     // 高层伤害函数，攻击者生成的攻击到达目标后，目标将调用该函数，计算自身伤害
@@ -1205,8 +1201,8 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // 遍历攻击数据携带的BUFF链，根据附着概率对单位自身进行BUFF附加
     // 根据单位属性，进行攻击数据变换，如抗性对攻击数据的影响
     // 根据单位护甲，进行攻击数据中的攻击数值变换
-    public void Damaged(AttackData attack, Unit source, uint triggerMask = kTriggerMaskNoMasked) {
-        if (Dead) {
+    public void Damaged(AttackData attack, Unit source, UnitEventTrigger triggerMask = UnitEventTrigger.kTriggerMaskNoMasked) {
+        if (isDead) {
             return;
         }
 
@@ -1248,8 +1244,8 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // 底层伤害函数，直接扣除指定量的HP值
     // 触发伤害源的 OnDamaeTarget
     // 调用 Hp = x，从而会触发 OnHpChanged，可能会触发OnDying
-    public void DamagedLow(float fDamage, Unit source, uint triggerMask = kTriggerMaskNoMasked) {
-        if (Dead) {
+    public void DamagedLow(float fDamage, Unit source, UnitEventTrigger triggerMask = UnitEventTrigger.kTriggerMaskNoMasked) {
+        if (isDead) {
             return;
         }
 
@@ -1289,7 +1285,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         return ret;
     }
 
-    public void healLow(float heal, Unit source, uint triggerMask = kTriggerMaskNoMasked) {
+    public void healLow(float heal, Unit source, UnitEventTrigger triggerMask = UnitEventTrigger.kTriggerMaskNoMasked) {
         float newHp = Mathf.Min(MaxHp, Hp + heal);
         float value = newHp - Hp;
         if (m_hpChanged.ContainsKey(0)) {
@@ -1308,8 +1304,6 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
         set { m_AI = value; }
     }
-
-    protected UnitAI m_AI;
 
     // Fixed
     public bool Fixed {
@@ -1455,7 +1449,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
     // 等待目标的技能
 
     public int CommandCastSpell(CommandTarget target, ActiveSkill activeSkill, bool obstinate = true) {  // 可能是施法失败，施法中，施法追逐中，所以返回类型为int
-        if (Suspended || Dead) {
+        if (Suspended || isDead) {
             return -1;
         }
 
@@ -1677,7 +1671,7 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
 
     // Move
     public void CommandMove(Vector2 pos, bool obstinate = true, cca.Function onFinished = null) {
-        if (Dead || Suspended || Fixed) {
+        if (isDead || Suspended || Fixed) {
             return;
         }
 
@@ -1869,6 +1863,29 @@ public class Unit : MonoBehaviour, INetworkable<GamePlayerController> {
         GamePlayerController.localClient.ServerAddSyncAction(new SyncSetHp(this, hp));
         Hp = hp;
     }
+}
+
+// Trigger
+[Flags]
+public enum UnitEventTrigger : uint {
+    kTriggerMaskNoMasked = 0,
+    kTriggerOnReviveTrigger = 1 << 0,
+    kTriggerOnDyingTrigger = 1 << 1,
+    kTriggerOnDeadTrigger = 1 << 2,
+    kTriggerOnHpChangedTrigger = 1 << 3,
+    kTriggerOnTickTrigger = 1 << 4,
+    kTriggerOnAttackTargetTrigger = 1 << 5,
+    kTriggerOnAttackedTrigger = 1 << 6,
+    kTriggerOnDamagedSurfaceTrigger = 1 << 7,
+    kTriggerOnDamagedInnerTrigger = 1 << 8,
+    kTriggerOnDamagedDoneTrigger = 1 << 9,
+    kTriggerOnDamageTargetDoneTrigger = 1 << 10,
+    kTriggerOnProjectileEffectTrigger = 1 << 11,
+    kTriggerOnProjectileArriveTrigger = 1 << 12,
+    kTriggerOnCalcDamageTargetTrigger = 1 << 13,
+
+    kTriggerMaskAll = 0xFFFFFFFF,
+    kTriggerMaskActiveTrigger = kTriggerOnAttackTargetTrigger | kTriggerOnDamageTargetDoneTrigger
 }
 
 public class UnitPath {

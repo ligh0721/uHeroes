@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System;
 
+
 public class PassiveSkill : Skill {
     new protected class SkillData : Skill.SkillData {
     }
@@ -31,19 +32,19 @@ public class SplashPas : PassiveSkill {
     new protected class SkillData : Skill.SkillData {
     }
 
-    public SplashPas(string pName, float fNearRange, Coeff roExNearDamage, float fFarRange, Coeff roExFarDamage, uint dwTriggerMask = Unit.kTriggerOnAttackTargetTrigger, uint dwEffectiveTypeFlags = UnitForce.kEnemy)
+    public SplashPas(string pName, float fNearRange, Coeff roExNearDamage, float fFarRange, Coeff roExFarDamage, UnitEventTrigger dwTriggerMask = UnitEventTrigger.kTriggerOnAttackTargetTrigger, ForceEffective dwEffectiveTypeFlags = ForceEffective.kEnemy)
         : base(pName, 0) {
         m_fNearRange = fNearRange;
         m_oExNearDamage = roExNearDamage;
         m_fFarRange = fFarRange;
         m_oExFarDamage = roExFarDamage;
         m_dwTriggerMask = dwTriggerMask;
-        m_dwEffectiveTypeFlags = dwEffectiveTypeFlags;
-        SetTriggerFlags(Unit.kTriggerOnAttackTargetTrigger);
+        m_effectiveTypeFlags = dwEffectiveTypeFlags;
+        SetTriggerFlags(UnitEventTrigger.kTriggerOnAttackTargetTrigger);
     }
 
     public override Skill Clone() {
-        SplashPas ret = new SplashPas(m_name, m_fNearRange, m_oExNearDamage, m_fFarRange, m_oExFarDamage, m_dwTriggerMask, m_dwEffectiveTypeFlags);
+        SplashPas ret = new SplashPas(m_name, m_fNearRange, m_oExNearDamage, m_fFarRange, m_oExFarDamage, m_dwTriggerMask, m_effectiveTypeFlags);
         ret.CopyDataFrom(this);
         return ret;
     }
@@ -53,7 +54,7 @@ public class SplashPas : PassiveSkill {
     }
 
     public override Skill Clone(string data) {
-        SplashPas ret = new SplashPas(m_name, m_fNearRange, m_oExNearDamage, m_fFarRange, m_oExFarDamage, m_dwTriggerMask, m_dwEffectiveTypeFlags);
+        SplashPas ret = new SplashPas(m_name, m_fNearRange, m_oExNearDamage, m_fFarRange, m_oExFarDamage, m_dwTriggerMask, m_effectiveTypeFlags);
         SkillData sd = JsonUtility.FromJson<SkillData>(data);
         ret.CopyDataFrom(sd);
         return ret;
@@ -84,7 +85,7 @@ public class SplashPas : PassiveSkill {
             }
 
             fDis = Mathf.Max(0.0f, Vector2.Distance(pDraw.position, td.position) - pDraw.HalfOfWidth);
-            if (fDis <= m_fFarRange && o.force.CanEffect(pUnit.force, m_dwEffectiveTypeFlags)) {
+            if (fDis <= m_fFarRange && o.force.CanEffect(pUnit.force, m_effectiveTypeFlags)) {
                 AttackData ad = pAttack.Clone();
                 AttackValue av = ad.attackValue;
 
@@ -103,6 +104,5 @@ public class SplashPas : PassiveSkill {
     Coeff m_oExNearDamage;
     float m_fFarRange;
     Coeff m_oExFarDamage;
-    uint m_dwTriggerMask;
-    uint m_dwEffectiveTypeFlags;
+    UnitEventTrigger m_dwTriggerMask;
 }

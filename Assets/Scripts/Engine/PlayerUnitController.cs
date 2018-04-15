@@ -19,6 +19,8 @@ public class PlayerUnitController : MonoBehaviour, INetworkable<GamePlayerContro
 
     // Use this for initialization
     void Start() {
+        // FIXME: Test
+        InvokeRepeating("AddExpForControllingUnit", 5.0f, 5.0f);
 	}
 	
     void OnDestroy() {
@@ -98,6 +100,13 @@ public class PlayerUnitController : MonoBehaviour, INetworkable<GamePlayerContro
         }
     }
 
+    void AddExpForControllingUnit() {
+        Unit u = m_controlling;
+        if (u != null) {
+            u.level.AddExp(Utils.Random.Next() % 10);
+        }
+    }
+
     public GamePlayerController localClient {
         get {
             return GamePlayerController.localClient;
@@ -109,5 +118,4 @@ public class PlayerUnitController : MonoBehaviour, INetworkable<GamePlayerContro
             return GamePlayerController.localClient.isServer;
         }
     }
-
 }

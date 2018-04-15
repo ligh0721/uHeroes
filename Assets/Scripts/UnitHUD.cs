@@ -1,10 +1,12 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 [ExecuteInEditMode]
-public class UnitHUD : MonoBehaviour {
+public class UnitHUD : MonoBehaviour, IPointerClickHandler {
     [HideInInspector]
     public UnitSafe m_unit;
     public Slider m_hpSlider;
@@ -61,5 +63,9 @@ public class UnitHUD : MonoBehaviour {
         rt.anchoredPosition = pos;
 
         Update();
+    }
+
+    public void OnPointerClick(PointerEventData eventData) {
+        
     }
 }

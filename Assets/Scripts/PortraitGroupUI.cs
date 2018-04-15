@@ -26,11 +26,7 @@ public class PortraitGroupUI : MonoBehaviour {
         PortraitUI portraitUI = obj.GetComponent<PortraitUI>();
         portraitUI.m_parent = this;
 
-        portraitUI.Unit = unit;
-        portraitUI.Portrait = Resources.Load<Sprite>(string.Format("{0}/portrait_hero", unit.Model));
-        portraitUI.MaxHp = (int)unit.MaxHp;
-        portraitUI.Hp = (int)unit.Hp;
-        portraitUI.Level = 1;
+        portraitUI.SetUnit(unit);
         m_portraits.Add(portraitUI);
     }
 

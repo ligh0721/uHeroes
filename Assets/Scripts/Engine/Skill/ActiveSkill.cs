@@ -6,7 +6,7 @@ public class ActiveSkill : Skill {
     new protected class SkillData : Skill.SkillData {
     }
 
-    public ActiveSkill(string name, float coolDown, CommandTarget.Type castType = CommandTarget.Type.kNoTarget, uint effectiveTypeFlags = UnitForce.kSelf | UnitForce.kOwn | UnitForce.kAlly | UnitForce.kEnemy)
+    public ActiveSkill(string name, float coolDown, CommandTarget.Type castType = CommandTarget.Type.kNoTarget, ForceEffective effectiveTypeFlags = ForceEffective.kSelf | ForceEffective.kOwn | ForceEffective.kAlly | ForceEffective.kEnemy)
         : base(name, coolDown) {
         m_castTargetType = castType;
         m_effectiveTypeFlags = effectiveTypeFlags;
@@ -66,7 +66,7 @@ public class ActiveSkill : Skill {
             {
                 Unit t = o.CastTarget.TargetUnit;
 
-                if (t == null || t.Dead) {
+                if (t == null || t.isDead) {
                     return;
                 }
 

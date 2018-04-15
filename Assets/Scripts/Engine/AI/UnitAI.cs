@@ -34,7 +34,7 @@ public class UnitAI : IUnitEvent {
         }
 
         Unit t = UnitGroup.getNearestUnitInRange(unit.World, d.position, unit.HostilityRange, UnitGroup.MatchFunctionLivingEnemy, unit.force);
-        if (t == null || t.Dead) {
+        if (t == null || t.isDead) {
             // 搜不到仇恨区内的目标，有没有必要设置为doNothing？
             return;
         }
@@ -50,7 +50,7 @@ public class UnitAI : IUnitEvent {
             return;
         }
         //Debug.LogErrorFormat("{0}.", u.isDoingAnd(Unit.kDoingObstinate) ? "Obs" : "NOT");
-        if (source == null || source.Dead || source.force.IsMyAlly(unit.force)) {
+        if (source == null || source.isDead || source.force.IsMyAlly(unit.force)) {
             return;
         }
 

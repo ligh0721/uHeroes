@@ -193,7 +193,7 @@ public class Skill {
                 return;
             }
 
-            m_triggerFlags = Unit.kTriggerOnTickTrigger;
+            m_triggerFlags = UnitEventTrigger.kTriggerOnTickTrigger;
             m_interval = value;
         }
     }
@@ -204,17 +204,17 @@ public class Skill {
         set { m_intervalElapsed = value; }
     }
 
-    public uint triggerFlags {
+    public UnitEventTrigger triggerFlags {
         get { return m_triggerFlags; }
 
         set { m_triggerFlags = value; }
     }
 
-    public void SetTriggerFlags(uint triggerFlags) {
+    public void SetTriggerFlags(UnitEventTrigger triggerFlags) {
         m_triggerFlags |= triggerFlags;
     }
 
-    public void UnsetTriggerFlags(uint triggerFlags) {
+    public void UnsetTriggerFlags(UnitEventTrigger triggerFlags) {
         m_triggerFlags &= ~triggerFlags;
     }
 
@@ -236,7 +236,7 @@ public class Skill {
         }
     }
 
-    public uint effectiveTypeFlags {
+    public ForceEffective effectiveTypeFlags {
         get { return m_effectiveTypeFlags; }
 
         set { m_effectiveTypeFlags = value; }
@@ -248,9 +248,9 @@ public class Skill {
     protected float m_coolingDownElapsed = float.MaxValue;
     protected float m_interval = 0;
     protected float m_intervalElapsed = 0;
-    protected uint m_triggerFlags = 0;
+    protected UnitEventTrigger m_triggerFlags = 0;
     protected List<int> m_castAnimations = new List<int>();
-    protected uint m_effectiveTypeFlags;
+    protected ForceEffective m_effectiveTypeFlags;
     List<string> m_effectSounds = new List<string>();
     protected string m_base;
 }

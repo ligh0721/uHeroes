@@ -21,6 +21,7 @@ public class BottomStatusBarUI : MonoBehaviour {
     UnitSafe m_unit;
     int m_hpValue;
     int m_maxHpValue;
+    int m_levelValue;
 
 	// Use this for initialization
 	void Start () {
@@ -33,6 +34,11 @@ public class BottomStatusBarUI : MonoBehaviour {
         if (u == null) {
             Hide();
             return;
+        }
+
+        if (m_levelValue != u.level.Level) {
+            m_levelValue = u.level.Level;
+            m_level.text = string.Format("Lv {0}", m_levelValue);
         }
 
         int hpValue = (int)u.Hp;
@@ -58,7 +64,10 @@ public class BottomStatusBarUI : MonoBehaviour {
         string path = string.Format("{0}/portrait_sel", u.Model);
         m_portrait.sprite = Resources.Load<Sprite>(path);
         m_name.text = u.Name;
-        m_level.text = string.Format("Lv {0}", 1);
+
+        // level
+        m_levelValue = u.level.Level;
+        m_level.text = string.Format("Lv {0}", m_levelValue);
 
         // hp
         m_hpValue = (int)u.Hp;

@@ -204,6 +204,8 @@ public class World : MonoBehaviour, INetworkable<GamePlayerController> {
         unit.MoveSpeedBase = (float)syncInfo.baseInfo.move;
         unit.Revivable = syncInfo.baseInfo.revivable;
         unit.Fixed = syncInfo.baseInfo.isfixed;
+        unit.level.MaxLevel = 100;
+        unit.level.Level = 10;
 
         if (player != null) {
             // 玩家单位
@@ -213,7 +215,7 @@ public class World : MonoBehaviour, INetworkable<GamePlayerController> {
             }
 
             // TEST !!!!
-            unit.InitHp(1000, 1000);
+            unit.InitHp(5000, 5000);
             unit.AttackSkill.coolDownBase = 2.0f;
             unit.AttackSkill.coolDownSpeedCoeff = 2;
             unit.CriticalRateBase = 0.2f;
@@ -468,7 +470,7 @@ public class World : MonoBehaviour, INetworkable<GamePlayerController> {
     protected void SkillReady(Skill skill) {
         // 由于技能的所有者可能在等待重生，所以主世界可能不存在该单位，但是单位仍未被释放
         Unit o = skill.owner;
-        if (o != null && !o.Dead) {
+        if (o != null && !o.isDead) {
             // 存在于主世界中，则触发事件
             o.OnSkillReady(skill);
         }
@@ -500,7 +502,7 @@ public class World : MonoBehaviour, INetworkable<GamePlayerController> {
         if (isServer) {
             foreach (Unit unit in units.Keys) {
                 unit.Step(dt);
-                if (unit.Dead && !unit.IsDoingOr(Unit.kDoingDying)) {
+                if (unit.isDead && !unit.IsDoingOr(Unit.kDoingDying)) {
                     // 刚死，计划最后移除该单位
                     unit.OnDying();
                     RemoveUnitHUD(unit);
