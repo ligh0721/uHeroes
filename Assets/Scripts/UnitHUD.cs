@@ -14,13 +14,11 @@ public class UnitHUD : MonoBehaviour {
 
     // Use this for initialization
     void Awake() {
-        if (m_rt == null) {
-            m_rt = GetComponent<RectTransform>();
-        }
+        m_rt = GetComponent<RectTransform>();
     }
-	
-	// Update is called once per frame
-	void Update() {
+
+    // Update is called once per frame
+    void Update() {
         Unit u = m_unit;
         if (u != null) {
             var pos = u.transform.position;
