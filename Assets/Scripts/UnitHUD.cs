@@ -48,7 +48,7 @@ public class UnitHUD : MonoBehaviour {
         }
         m_rt.pivot = pivot;
         size.x = m_unit.Node.HalfOfWidth * 2;
-        size.y = m_unit.Node.HalfOfHeight * 2);
+        size.y = m_unit.Node.HalfOfHeight * 2;
         m_rt.sizeDelta = size;
 
         // set hp bar width
