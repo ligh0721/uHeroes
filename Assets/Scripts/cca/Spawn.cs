@@ -48,7 +48,7 @@ namespace cca
 		//
 		public override Action clone ()
 		{
-			return new Sequence (_one.clone () as FiniteTimeAction, _two.clone () as FiniteTimeAction);
+			return new Spawn (_one.clone () as FiniteTimeAction, _two.clone () as FiniteTimeAction);
 		}
 
 		public override Action reverse ()
