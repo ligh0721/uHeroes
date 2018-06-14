@@ -61,14 +61,16 @@ namespace cca
 
 		public override void startWithTarget (Node target)
 		{
-			base.startWithTarget (target);
-			_split = _actions [0].duration / _duration;
+            if (_duration > float.Epsilon) {
+                _split = _actions[0].duration > float.Epsilon ? (_actions[0].duration / _duration) : 0;
+            }
+            base.startWithTarget (target);
 			_last = -1;
 		}
 
 		public override void stop ()
 		{
-			if (_last != -1) {
+			if (_last != -1 && _actions[_last] != null) {
 				_actions [_last].stop ();
 			}
 			base.stop ();
