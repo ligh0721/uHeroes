@@ -78,6 +78,7 @@ namespace cca
 		public override void stop ()
 		{
 			_innerAction.stop ();
+			base.stop ();
 		}
 
 		/**
