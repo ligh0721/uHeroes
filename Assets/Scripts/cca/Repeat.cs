@@ -19,11 +19,7 @@ namespace cca
 		{
 			_innerAction = action;
 			_times = times;
-			_actionInstant = _innerAction as ActionInstant != null ? true : false;
-			//an instant action needs to be executed one time less in the update method since it uses startWithTarget to execute the action
-			if (_actionInstant) {
-				_times -= 1;
-			}
+			_actionInstant = _innerAction is ActionInstant;
 			_total = 0;
 		}
 
@@ -88,14 +84,13 @@ namespace cca
 				}
 
 				// fix for issue #1288, incorrect end value of repeat
-				if (time >= 1.0f && _total < _times) {
+				if (Mathf.Abs(time - 1.0f) < float.Epsilon && _total < _times) {
 					++_total;
 				}
 
 				// don't set an instant action back or update it, it has no use because it has no duration
 				if (!_actionInstant) {
 					if (_total == _times) {
-						_innerAction.update (1);
 						_innerAction.stop ();
 					} else {
 						// issue #390 prevent jerk, use right update
